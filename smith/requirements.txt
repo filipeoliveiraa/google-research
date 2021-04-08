@@ -3,6 +3,6 @@
 # tensorflow==1.15.2   # CPU Version of TensorFlow; The Python version should be <=3.7
 tensorflow-gpu==1.15  # GPU version of TensorFlow; The Python version should be <=3.7
 tf_slim==1.1.0
-nltk>=3.5
+nltk>=3.6
 tqdm>=4.50.1
 numpy>=1.13.3
