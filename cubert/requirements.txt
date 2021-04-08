@@ -3,3 +3,4 @@ dopamine-rl==3.0.1
 regex
 tensor2tensor
 tensorflow==1.15
+pillow>=8.1.0 # not directly required, pinned by Snyk to avoid a vulnerability
