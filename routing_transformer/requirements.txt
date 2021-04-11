@@ -2,3 +2,4 @@ absl-py>=0.6.0
 gast==0.2.2
 numpy>=1.15.4
 tensor2tensor>=1.11.0
+pillow>=8.1.0 # not directly required, pinned by Snyk to avoid a vulnerability
