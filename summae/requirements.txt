@@ -1,3 +1,4 @@
 tensorflow>=1.11.0, <2.0
 rouge-score>=0.0.2
 tensorflow-probability>=0.9
+nltk>=3.6 # not directly required, pinned by Snyk to avoid a vulnerability
