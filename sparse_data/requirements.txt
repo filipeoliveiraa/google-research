@@ -6,3 +6,4 @@ sklearn
 keras
 matplotlib
 pandas
+scikit-learn>=0.24.2 # not directly required, pinned by Snyk to avoid a vulnerability
