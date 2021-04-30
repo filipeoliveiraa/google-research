@@ -9,3 +9,4 @@ pyyaml>=5.1
 tf-nightly-gpu
 tfds-nightly
 tfp-nightly
+scikit-learn>=0.24.2 # not directly required, pinned by Snyk to avoid a vulnerability
