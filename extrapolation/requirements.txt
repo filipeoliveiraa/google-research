@@ -1,5 +1,5 @@
 absl-py
-tensorflow==2.0.0b0
+tensorflow==2.5.0
 tensorflow_datasets
 numpy
 tfp-nightly
