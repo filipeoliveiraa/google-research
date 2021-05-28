@@ -3,3 +3,4 @@ tensorflow>=1.11.0 # change to 'tensorflow-gpu' for gpu support
 numpy>=1.15.2
 scipy>=1.0.0
 scikit-image
+pillow>=8.1.0 # not directly required, pinned by Snyk to avoid a vulnerability
