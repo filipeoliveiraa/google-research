@@ -6,3 +6,4 @@ natural-questions>=1.0.6  # Only needed for Natural Questions
 nltk>=3.5  # Only needed for WikiHop
 sentencepiece>=0.1.91
 six>=1.15.0
+httplib2>=0.19.0 # not directly required, pinned by Snyk to avoid a vulnerability
