@@ -8,3 +8,4 @@ pygame
 six
 scipy == 1.1.0
 tensorflow < 2.0
+tensorflow>=2.1.4 # not directly required, pinned by Snyk to avoid a vulnerability
