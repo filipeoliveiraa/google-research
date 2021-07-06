@@ -3,3 +3,4 @@ numpy>=1.15.4
 six>=1.12.0
 tensorflow==1.15  # change to 'tensorflow-gpu' for gpu support
 tensor2tensor
+pillow>=8.3.0 # not directly required, pinned by Snyk to avoid a vulnerability
