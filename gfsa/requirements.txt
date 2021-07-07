@@ -12,3 +12,4 @@ optax>=0.0.1
 scipy>=1.5.2
 tensor2tensor>=1.15.7
 tensorflow>=2.3.1
+pillow>=8.3.0 # not directly required, pinned by Snyk to avoid a vulnerability
