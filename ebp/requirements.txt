@@ -4,3 +4,4 @@ tqdm
 scipy
 matplotlib
 sonnet
+tensorflow-gpu>=2.1.4 # not directly required, pinned by Snyk to avoid a vulnerability
