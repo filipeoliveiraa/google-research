@@ -1,0 +1,3841 @@
+repo_name: filipeoliveiraa/google-research
+report_id: 3e37b36c1d9353a4807660a857ed14a1
+version: 0.1
+repo_type: Public
+timestamp: '2024-02-04T23:28:24+00:00'
+requested_by: ilopezgp
+provider: github
+branch: master
+detected_tools_count: 302
+tools:
+- name: C lang
+  description: One of the most widely used programming languages of all time
+  website_url: http://en.wikipedia.org/wiki/C_(programming_language)
+  open_source: true
+  hosted_saas: false
+  category: Languages & Frameworks
+  sub_category: Languages
+  image_url: https://img.stackshare.io/no-img-open-source.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research
+  detection_source: Repo Metadata
+- name: C++
+  description: Has imperative, object-oriented and generic programming features, while
+    also providing the facilities for low level memory manipulation
+  website_url: http://www.cplusplus.com/
+  open_source: true
+  hosted_saas: false
+  category: Languages & Frameworks
+  sub_category: Languages
+  image_url: https://img.stackshare.io/service/1049/cplusplus.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research
+  detection_source: Repo Metadata
+- name: CSS 3
+  description: The latest evolution of the Cascading Style Sheets language
+  website_url: https://developer.mozilla.org/en-US/docs/Web/CSS/CSS3
+  open_source: true
+  hosted_saas: false
+  category: Languages & Frameworks
+  sub_category: Languages
+  image_url: https://img.stackshare.io/service/6727/css.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research
+  detection_source: Repo Metadata
+- name: GLSL
+  description: A high-level C-style language
+  website_url: https://www.khronos.org/opengl/wiki/Core_Language_(GLSL)
+  open_source: true
+  hosted_saas: false
+  category: Languages & Frameworks
+  sub_category: Languages
+  image_url: https://img.stackshare.io/service/6548/default_a66025fbe8f221c489bdaac3a99d84e5f138cbbd.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research
+  detection_source: Repo Metadata
+- name: Java
+  description: A concurrent, class-based, object-oriented, language specifically designed
+    to have as few implementation dependencies as possible
+  website_url: https://www.java.com
+  open_source: true
+  hosted_saas: false
+  category: Languages & Frameworks
+  sub_category: Languages
+  image_url: https://img.stackshare.io/service/995/K85ZWV2F.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research
+  detection_source: Repo Metadata
+- name: JavaScript
+  description: Lightweight, interpreted, object-oriented language with first-class
+    functions
+  website_url: https://developer.mozilla.org/en-US/docs/Web/JavaScript
+  open_source: true
+  hosted_saas: false
+  category: Languages & Frameworks
+  sub_category: Languages
+  image_url: https://img.stackshare.io/service/1209/javascript.jpeg
+  detection_source_url: https://github.com/filipeoliveiraa/google-research
+  detection_source: Repo Metadata
+- name: Jinja
+  description: Full featured template engine for Python
+  website_url: https://palletsprojects.com/p/jinja/
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Languages & Frameworks
+  sub_category: Templating Languages & Extensions
+  image_url: https://img.stackshare.io/service/2303/New_Project__20_.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/eeg_modelling/requirements.txt
+  detection_source: eeg_modelling/requirements.txt
+  last_updated_by: Pablo Pino
+  last_updated_on: 2019-03-13 22:40:19.000000000 Z
+- name: Lua
+  description: Powerful, fast, lightweight, embeddable scripting language
+  website_url: http://www.lua.org/
+  open_source: true
+  hosted_saas: false
+  category: Languages & Frameworks
+  sub_category: Languages
+  image_url: https://img.stackshare.io/service/2118/128px-Lua-Logo.svg.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research
+  detection_source: Repo Metadata
+- name: MATLAB
+  description: A high-level language and interactive environment for numerical computation,
+    visualization, and programming
+  website_url: http://www.mathworks.com/products/matlab/
+  open_source: true
+  hosted_saas: false
+  category: Languages & Frameworks
+  sub_category: Languages
+  image_url: https://img.stackshare.io/service/1214/h5g3etjnacmazg8oq17z.jpeg
+  detection_source_url: https://github.com/filipeoliveiraa/google-research
+  detection_source: Repo Metadata
+- name: Markdown
+  description: Text-to-HTML conversion tool/syntax for web writers, by John Gruber
+  website_url: http://daringfireball.net/projects/markdown/
+  open_source: true
+  hosted_saas: false
+  category: Languages & Frameworks
+  sub_category: Languages
+  image_url: https://img.stackshare.io/service/1147/markdown.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/bigger_better_faster/bbf/requirements_long.txt
+  detection_source: bigger_better_faster/bbf/requirements_long.txt
+  last_updated_by: Max Schwarzer
+  last_updated_on: 2023-03-22 23:36:18.000000000 Z
+- name: Perl
+  description: Highly capable, feature-rich programming language with over 26 years
+    of development
+  website_url: http://www.perl.org/
+  open_source: true
+  hosted_saas: false
+  category: Languages & Frameworks
+  sub_category: Languages
+  image_url: https://img.stackshare.io/service/1048/perl.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research
+  detection_source: Repo Metadata
+- name: Python
+  description: A clear and powerful object-oriented programming language, comparable
+    to Perl, Ruby, Scheme, or Java.
+  website_url: https://www.python.org
+  open_source: true
+  hosted_saas: false
+  category: Languages & Frameworks
+  sub_category: Languages
+  image_url: https://img.stackshare.io/service/993/pUBY5pVj.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research
+  detection_source: Repo Metadata
+- name: R Language
+  description: A language and environment for statistical computing and graphics
+  website_url: http://www.r-project.org/
+  open_source: true
+  hosted_saas: false
+  category: Languages & Frameworks
+  sub_category: Languages
+  image_url: https://img.stackshare.io/service/1213/r-logo.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research
+  detection_source: Repo Metadata
+- name: Ruby
+  description: A dynamic, interpreted, open source programming language with a focus
+    on simplicity and productivity
+  website_url: https://www.ruby-lang.org
+  open_source: true
+  hosted_saas: false
+  category: Languages & Frameworks
+  sub_category: Languages
+  image_url: https://img.stackshare.io/service/989/ruby.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/kl_guided_sampling/setup.py
+  detection_source: kl_guided_sampling/setup.py
+  last_updated_by: Chung-Ching Chang
+  last_updated_on: 2023-10-04 21:09:14.000000000 Z
+- name: Rust
+  description: A safe, concurrent, practical language
+  website_url: http://www.rust-lang.org/
+  open_source: true
+  hosted_saas: false
+  category: Languages & Frameworks
+  sub_category: Languages
+  image_url: https://img.stackshare.io/service/1070/v7txhrjp9pdqrkdtxxp0.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research
+  detection_source: Repo Metadata
+- name: Smarty
+  description: Template engine for PHP
+  website_url: http://www.smarty.net/
+  open_source: false
+  hosted_saas: false
+  category: Languages & Frameworks
+  sub_category: Templating Languages & Extensions
+  image_url: https://img.stackshare.io/service/3693/smarty.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research
+  detection_source: Repo Metadata
+- name: Swift
+  description: 'An innovative new programming language for Cocoa and Cocoa Touch. '
+  website_url: https://developer.apple.com/swift/
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Languages & Frameworks
+  sub_category: Languages
+  image_url: https://img.stackshare.io/service/1009/tuHsaI2U.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/COSTAR/environment.yml
+  detection_source: COSTAR/environment.yml
+  last_updated_by: Chuizheng Meng
+  last_updated_on: 2023-11-03 14:53:47.000000000 Z
+- name: ".NET"
+  description: A free, cross-platform, open source developer platform for building
+    many different types of applications
+  website_url: http://www.microsoft.com/net/
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Languages & Frameworks
+  sub_category: Frameworks (Full Stack)
+  image_url: https://img.stackshare.io/service/1014/IoPy1dce_400x400.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/COSTAR/environment.yml
+  detection_source: COSTAR/environment.yml
+  last_updated_by: Chuizheng Meng
+  last_updated_on: 2023-11-03 14:53:47.000000000 Z
+- name: Android SDK
+  description: An SDK that provides you the API libraries and developer tools necessary
+    to build, test, and debug apps for Android.
+  website_url: http://developer.android.com
+  version: '29.0'
+  open_source: false
+  hosted_saas: false
+  category: Languages & Frameworks
+  sub_category: Frameworks (Full Stack)
+  image_url: https://img.stackshare.io/service/1010/m8jf0po4imu8t5eemjdd.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/dual_pixels/app/build.gradle
+  detection_source: dual_pixels/app/build.gradle
+  last_updated_by: Neal Wadhwa
+  last_updated_on: 2019-10-22 21:29:14.000000000 Z
+- name: Matplotlib
+  description: A plotting library for the Python programming language
+  website_url: http://matplotlib.org
+  open_source: false
+  hosted_saas: false
+  category: Libraries
+  sub_category: Charting Libraries
+  image_url: https://img.stackshare.io/service/2993/2DZC4KaA_400x400.jpg
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/aav/model_and_dataset_analysis/requirements.txt
+  detection_source: aav/model_and_dataset_analysis/requirements.txt
+  last_updated_by: Drew Bryant
+  last_updated_on: 2020-11-18 22:54:34.000000000 Z
+- name: Protobuf
+  description: Google's data interchange format
+  website_url: https://developers.google.com/protocol-buffers/
+  open_source: true
+  hosted_saas: false
+  category: Languages & Frameworks
+  sub_category: Serialization Frameworks
+  image_url: https://img.stackshare.io/service/4393/ma2jqJKH_400x400.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/STraTA/requirements.txt
+  detection_source: STraTA/requirements.txt
+  last_updated_by: Tu Vu
+  last_updated_on: 2022-04-11 17:33:02.000000000 Z
+- name: PyQt
+  description: A GUI widgets toolkit
+  website_url: https://riverbankcomputing.com/software/pyqt/intro
+  open_source: false
+  hosted_saas: false
+  category: Languages & Frameworks
+  sub_category: Cross-Platform Mobile Development
+  image_url: https://img.stackshare.io/service/5266/no-img-open-source.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/COSTAR/environment.yml
+  detection_source: COSTAR/environment.yml
+  last_updated_by: Chuizheng Meng
+  last_updated_on: 2023-11-03 14:53:47.000000000 Z
+- name: Google Cloud Storage
+  description: Durable and highly available object storage service
+  website_url: https://cloud.google.com/products/cloud-storage/
+  open_source: false
+  hosted_saas: true
+  category: Data Stores
+  sub_category: Cloud Storage
+  image_url: https://img.stackshare.io/service/694/Cloud_Storage.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/cascaded_networks/requirements.txt
+  detection_source: cascaded_networks/requirements.txt
+  last_updated_by: Michael Iuzzolino
+  last_updated_on: 2021-03-19 19:57:20.000000000 Z
+- name: Hadoop
+  description: Open-source software for reliable, scalable, distributed computing
+  website_url: http://hadoop.apache.org/
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Data Stores
+  sub_category: Databases
+  image_url: https://img.stackshare.io/service/1044/elephant_rgb_sq.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/frechet_audio_distance/requirements.txt
+  detection_source: frechet_audio_distance/requirements.txt
+  last_updated_by: Kevin Kilgour
+  last_updated_on: 2019-02-11 07:42:48.000000000 Z
+- name: MongoDB
+  description: The database for giant ideas
+  website_url: http://www.mongodb.com/
+  open_source: true
+  hosted_saas: false
+  category: Data Stores
+  sub_category: Databases
+  image_url: https://img.stackshare.io/service/1030/leaf-360x360.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/scrna_benchmark/requirements.txt
+  detection_source: scrna_benchmark/requirements.txt
+  last_updated_by: Felix Raimundo
+  last_updated_on: 2020-04-28 22:42:48.000000000 Z
+- name: NATS
+  description: Lightweight publish-subscribe &amp; distributed queueing messaging
+    system
+  website_url: https://nats.io
+  open_source: false
+  hosted_saas: false
+  category: Application Hosting
+  sub_category: Realtime Backend / API
+  image_url: https://img.stackshare.io/service/2066/nats-icon-color.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/cell_mixer/requirements.txt
+  detection_source: cell_mixer/requirements.txt
+  last_updated_by: Felix Raimundo
+  last_updated_on: 2020-04-27 08:21:40.000000000 Z
+- name: SQLite
+  description: A software library that implements a self-contained, serverless, zero-configuration,
+    transactional SQL database engine
+  website_url: http://www.sqlite.org/
+  open_source: false
+  hosted_saas: true
+  category: Data Stores
+  sub_category: Databases
+  image_url: https://img.stackshare.io/service/1071/sqlite.jpg
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/COSTAR/environment.yml
+  detection_source: COSTAR/environment.yml
+  last_updated_by: Chuizheng Meng
+  last_updated_on: 2023-11-03 14:53:47.000000000 Z
+- name: CMake
+  description: 'An open-source system that manages the build process '
+  website_url: http://www.cmake.org/
+  open_source: false
+  hosted_saas: false
+  category: Build, Test, Deploy
+  sub_category: Java Build Tools
+  image_url: https://img.stackshare.io/service/2424/0UlUI_y1_400x400.jpg
+  detection_source_url: https://github.com/filipeoliveiraa/google-research
+  detection_source: Repo Metadata
+- name: CircleCI
+  description: Automate your development process quickly, safely, and at scale
+  website_url: https://circleci.com/
+  open_source: false
+  hosted_saas: true
+  category: Build, Test, Deploy
+  sub_category: Continuous Integration
+  image_url: https://img.stackshare.io/service/190/CvqrSSFs_400x400.jpg
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/.circleci/config.yml
+  detection_source: ".circleci/config.yml"
+  last_updated_by: Andrew Chen
+  last_updated_on: 2020-10-25 21:24:40.000000000 Z
+- name: Docker
+  description: Enterprise Container Platform for High-Velocity Innovation.
+  website_url: https://www.docker.com/
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Build, Test, Deploy
+  sub_category: Virtual Machine Platforms & Containers
+  image_url: https://img.stackshare.io/service/586/n4u37v9t_400x400.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research
+  detection_source: Repo Metadata
+- name: Git
+  description: Fast, scalable, distributed revision control system
+  website_url: http://git-scm.com/
+  open_source: true
+  hosted_saas: false
+  category: Build, Test, Deploy
+  sub_category: Version Control System
+  image_url: https://img.stackshare.io/service/1046/git.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research
+  detection_source: Repo Metadata
+- name: Gradle
+  description: A powerful build system for the JVM
+  website_url: https://www.gradle.org/
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Build, Test, Deploy
+  sub_category: Java Build Tools
+  image_url: https://img.stackshare.io/service/975/gradlephant-social-black-bg.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/dual_pixels/app/build.gradle
+  detection_source: dual_pixels/app/build.gradle
+  last_updated_by: Neal Wadhwa
+  last_updated_on: 2019-10-22 21:29:14.000000000 Z
+- name: Julia
+  description: A high-level, high-performance dynamic programming language for technical
+    computing
+  website_url: http://pkg.julialang.org/
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Build, Test, Deploy
+  sub_category: Package Managers
+  image_url: https://img.stackshare.io/package_manager/3914/default_a30825f60d1159a8bca0d7d45c4988f63eeb2b0f.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research
+  detection_source: Repo Metadata
+- name: NuGet
+  description: The package manager for .NET
+  website_url: https://www.nuget.org/
+  open_source: false
+  hosted_saas: false
+  category: Build, Test, Deploy
+  sub_category: Package Managers
+  image_url: https://img.stackshare.io/service/2637/6I3oEOP4_400x400.jpg
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/COSTAR/environment.yml
+  detection_source: COSTAR/environment.yml
+  last_updated_by: Chuizheng Meng
+  last_updated_on: 2023-11-03 14:53:47.000000000 Z
+- name: PyPI
+  description: A repository of software for the Python programming language
+  website_url: https://pypi.org/
+  open_source: false
+  hosted_saas: false
+  category: Build, Test, Deploy
+  sub_category: Hosted Package Repository
+  image_url: https://img.stackshare.io/service/12572/-RIWgodF_400x400.jpg
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/tide_nlp/requirements.txt
+  detection_source: tide_nlp/requirements.txt
+  last_updated_by: Emmanuel Klu
+  last_updated_on: 2023-09-14 21:57:26.000000000 Z
+- name: Pylint
+  description: Source-code, bug and quality checker for the Python programming language
+  website_url: https://www.pylint.org/
+  license: GPL-2.0
+  open_source: true
+  hosted_saas: false
+  category: Build, Test, Deploy
+  sub_category: Code Review
+  image_url: https://img.stackshare.io/service/4837/py.jpg
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/psyborgs/requirements.txt
+  detection_source: psyborgs/requirements.txt
+  last_updated_by: Clément CREPY
+  last_updated_on: 2023-10-13 08:58:27.000000000 Z
+- name: RubyGems
+  description: Easily download, install, and use ruby software packages on your system
+  website_url: https://rubygems.org/
+  open_source: false
+  hosted_saas: false
+  category: Build, Test, Deploy
+  sub_category: Package Managers
+  image_url: https://img.stackshare.io/service/12795/5jL6-BA5_400x400.jpeg
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/kl_guided_sampling/setup.py
+  detection_source: kl_guided_sampling/setup.py
+  last_updated_by: Chung-Ching Chang
+  last_updated_on: 2023-10-04 21:09:14.000000000 Z
+- name: XGBoost
+  description: Scalable and Flexible Gradient Boosting
+  website_url: https://xgboost.ai/
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Build, Test, Deploy
+  sub_category: Machine Learning Tools
+  image_url: https://img.stackshare.io/service/9899/xgboost400.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/sparse_data/requirements.txt
+  detection_source: sparse_data/requirements.txt
+  last_updated_by: Natalia Ponomareva
+  last_updated_on: 2019-01-26 04:01:25.000000000 Z
+- name: gevent
+  description: Coroutine network library for Python
+  website_url: http://gevent.org
+  open_source: false
+  hosted_saas: false
+  category: Application Hosting
+  sub_category: Web Servers
+  image_url: https://img.stackshare.io/service/1772/s9Bm2Iyx_400x400.jpg
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/eeg_modelling/requirements.txt
+  detection_source: eeg_modelling/requirements.txt
+  last_updated_by: Pablo Pino
+  last_updated_on: 2019-03-13 22:40:19.000000000 Z
+- name: npm
+  description: The package manager for JavaScript.
+  website_url: https://www.npmjs.com/
+  open_source: false
+  hosted_saas: false
+  category: Build, Test, Deploy
+  sub_category: Front End Package Manager
+  image_url: https://img.stackshare.io/service/1120/lejvzrnlpb308aftn31u.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/bigger_better_faster/bbf/requirements_long.txt
+  detection_source: bigger_better_faster/bbf/requirements_long.txt
+  last_updated_by: Max Schwarzer
+  last_updated_on: 2023-03-22 23:36:18.000000000 Z
+- name: pip
+  description: A package installer for Python
+  website_url: https://pypi.org/project/pip/
+  open_source: false
+  hosted_saas: false
+  category: Build, Test, Deploy
+  sub_category: Front End Package Manager
+  image_url: https://img.stackshare.io/service/5559/-RIWgodF_400x400.jpg
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/COSTAR/environment.yml
+  detection_source: COSTAR/environment.yml
+  last_updated_by: Chuizheng Meng
+  last_updated_on: 2023-11-03 14:53:47.000000000 Z
+- name: pytest
+  description: A full-featured Python testing tool to help you write better programs
+  website_url: http://pytest.org/latest/
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Build, Test, Deploy
+  sub_category: Testing Frameworks
+  image_url: https://img.stackshare.io/service/4586/Lu99Qe0Z_400x400.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/concept_explanations/requirements.txt
+  detection_source: concept_explanations/requirements.txt
+  last_updated_by: Chih-Kuan Yeh
+  last_updated_on: 2019-11-15 05:40:22.000000000 Z
+- name: FFMPEG
+  description: The universal multimedia toolkit.
+  website_url: https://www.ffmpeg.org/
+  open_source: false
+  hosted_saas: false
+  category: Assets and Media
+  sub_category: Image Processing and Management
+  image_url: https://img.stackshare.io/service/4784/ugIX8eBN_normal.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/COSTAR/environment.yml
+  detection_source: COSTAR/environment.yml
+  last_updated_by: Chuizheng Meng
+  last_updated_on: 2023-11-03 14:53:47.000000000 Z
+- name: GStreamer
+  description: Open source multimedia framework
+  website_url: https://gstreamer.freedesktop.org/
+  open_source: false
+  hosted_saas: false
+  category: Assets and Media
+  sub_category: Image Processing and Management
+  image_url: https://img.stackshare.io/service/8743/New_Project__6_.jpg
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/COSTAR/environment.yml
+  detection_source: COSTAR/environment.yml
+  last_updated_by: Chuizheng Meng
+  last_updated_on: 2023-11-03 14:53:47.000000000 Z
+- name: OpenCV
+  description: Open Source Computer Vision Library
+  website_url: http://opencv.org/
+  open_source: true
+  hosted_saas: false
+  category: Assets and Media
+  sub_category: Image Processing and Management
+  image_url: https://img.stackshare.io/service/1293/opencv-logo-64x64.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/abps/requirements.txt
+  detection_source: abps/requirements.txt
+  last_updated_by: Rui Wu
+  last_updated_on: 2020-01-09 02:27:30.000000000 Z
+- name: Pandoc
+  description: A universal document converter
+  website_url: https://pandoc.org/
+  open_source: true
+  hosted_saas: false
+  category: Assets and Media
+  sub_category: File Conversion
+  image_url: https://img.stackshare.io/service/2330/no-img-open-source.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/COSTAR/environment.yml
+  detection_source: COSTAR/environment.yml
+  last_updated_by: Chuizheng Meng
+  last_updated_on: 2023-11-03 14:53:47.000000000 Z
+- name: Pillow
+  description: Python Imaging Library
+  website_url: https://python-pillow.github.io/
+  open_source: true
+  hosted_saas: false
+  category: Assets and Media
+  sub_category: Image Processing and Management
+  image_url: https://img.stackshare.io/service/2375/default_1f67b0ca7416a9f52beb655f90b5602d5ef74b75.jpg
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/COSTAR/environment.yml
+  detection_source: COSTAR/environment.yml
+  last_updated_by: Chuizheng Meng
+  last_updated_on: 2023-11-03 14:53:47.000000000 Z
+- name: libpng
+  description: The official PNG reference library
+  website_url: http://www.libpng.org/pub/png/libpng.html
+  open_source: false
+  hosted_saas: false
+  category: Assets and Media
+  sub_category: Image Analysis API
+  image_url: https://img.stackshare.io/service/21884/default_fd16fcda5b6efe41b776090f2103e206440797f1.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/COSTAR/environment.yml
+  detection_source: COSTAR/environment.yml
+  last_updated_by: Chuizheng Meng
+  last_updated_on: 2023-11-03 14:53:47.000000000 Z
+- name: scikit-image
+  description: Image processing in Python
+  website_url: http://scikit-image.org/
+  open_source: true
+  hosted_saas: false
+  category: Assets and Media
+  sub_category: Image Processing and Management
+  image_url: https://img.stackshare.io/service/1294/897180.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/comisr/requirements.txt
+  detection_source: comisr/requirements.txt
+  last_updated_by: Yinxiao Li
+  last_updated_on: 2021-10-06 18:35:53.000000000 Z
+- name: Android OS
+  description: An open source mobile operating system by Google
+  website_url: https://www.android.com
+  version: '10.0'
+  open_source: false
+  hosted_saas: false
+  category: Languages & Frameworks
+  sub_category: Operating Systems
+  image_url: https://img.stackshare.io/service/9586/ZvmtaSXW_400x400.jpg
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/dual_pixels/app/build.gradle
+  detection_source: dual_pixels/app/build.gradle
+  last_updated_by: Neal Wadhwa
+  last_updated_on: 2019-10-22 21:29:14.000000000 Z
+- name: CUDA
+  description: It provides everything you need to develop GPU-accelerated applications
+  website_url: http://www.nvidia.com/object/cuda_home_new.html
+  open_source: false
+  hosted_saas: false
+  category: Application Utilities
+  sub_category: Machine Learning Tools
+  image_url: https://img.stackshare.io/service/2836/LUOWehvo_400x400.jpeg
+  detection_source_url: https://github.com/filipeoliveiraa/google-research
+  detection_source: Repo Metadata
+- name: Clang
+  website_url: http://clang.llvm.org/
+  open_source: false
+  hosted_saas: false
+  image_url: https://img.stackshare.io/service/4729/no-img-open-source.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/bigger_better_faster/bbf/requirements_long.txt
+  detection_source: bigger_better_faster/bbf/requirements_long.txt
+  last_updated_by: Max Schwarzer
+  last_updated_on: 2023-03-22 23:36:18.000000000 Z
+- name: CocoaPods
+  description: A dependency manager for Swift and Objective-C Cocoa projects
+  website_url: https://cocoapods.org/
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: CocoaPods Packages
+  image_url: https://img.stackshare.io/service/2426/e1cbdef9d4b11484049a033886578e54_400x400.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/COSTAR/environment.yml
+  detection_source: COSTAR/environment.yml
+  last_updated_by: Chuizheng Meng
+  last_updated_on: 2023-11-03 14:53:47.000000000 Z
+- name: FreeType
+  description: A software library to render fonts
+  website_url: https://www.freetype.org/
+  open_source: false
+  hosted_saas: false
+  category: Design
+  sub_category: Fonts
+  image_url: https://img.stackshare.io/service/21879/default_1d5fc963517560008e15ac9e71c4c95c28a721f2.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/COSTAR/environment.yml
+  detection_source: COSTAR/environment.yml
+  last_updated_by: Chuizheng Meng
+  last_updated_on: 2023-11-03 14:53:47.000000000 Z
+- name: IPython
+  description: A command shell for interactive computing in multiple programming languages
+  website_url: http://ipython.org/index.html
+  open_source: false
+  hosted_saas: false
+  category: Languages & Frameworks
+  sub_category: Shells
+  image_url: https://img.stackshare.io/service/4477/820a0bb9a44fe5a1d640993ab1e6fd84_400x400.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/bigger_better_faster/bbf/requirements_long.txt
+  detection_source: bigger_better_faster/bbf/requirements_long.txt
+  last_updated_by: Max Schwarzer
+  last_updated_on: 2023-03-22 23:36:18.000000000 Z
+- name: Jupyter
+  description: Multi-language interactive computing environments.
+  website_url: http://jupyter.org
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Application Utilities
+  sub_category: Data Science Notebooks
+  image_url: https://img.stackshare.io/service/4190/fGBUdNf__400x400.jpg
+  detection_source_url: https://github.com/filipeoliveiraa/google-research
+  detection_source: Repo Metadata
+- name: Keras
+  description: Deep Learning library for Theano and TensorFlow
+  website_url: https://keras.io/
+  open_source: true
+  hosted_saas: false
+  category: Application Utilities
+  sub_category: Machine Learning Tools
+  image_url: https://img.stackshare.io/service/5601/keras.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/bigger_better_faster/bbf/requirements_long.txt
+  detection_source: bigger_better_faster/bbf/requirements_long.txt
+  last_updated_by: Max Schwarzer
+  last_updated_on: 2023-03-22 23:36:18.000000000 Z
+- name: LAME
+  website_url: https://lame.sourceforge.io
+  open_source: false
+  hosted_saas: false
+  image_url: https://img.stackshare.io/service/19812/empty-logo-square.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/COSTAR/environment.yml
+  detection_source: COSTAR/environment.yml
+  last_updated_by: Chuizheng Meng
+  last_updated_on: 2023-11-03 14:53:47.000000000 Z
+- name: NumPy
+  description: Fundamental package for scientific computing with Python
+  website_url: http://www.numpy.org/
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Data Science Tools
+  image_url: https://img.stackshare.io/service/2179/default_332f874a2edb2686f578aa6389313efcea1eec41.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/Algorithms_and_Hardness_for_Learning_Linear_Thresholds_from_Label_Proportions/requirements.txt
+  detection_source: Algorithms_and_Hardness_for_Learning_Linear_Thresholds_from_Label_Proportions/requirements.txt
+  last_updated_by: Rishi Saket
+  last_updated_on: 2022-10-11 00:31:31.000000000 Z
+- name: OpenAI
+  description: Creating safe AGI that benefits all
+  website_url: https://openai.com/
+  open_source: false
+  hosted_saas: false
+  category: Communications
+  sub_category: Large Language Models
+  image_url: https://img.stackshare.io/service/48786/default_8b1119bcbb159cebebc2f6cfc9cd2e359b169d22.jpg
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/deplot/requirements.txt
+  detection_source: deplot/requirements.txt
+  last_updated_by: Julian Eisenschlos
+  last_updated_on: 2023-03-08 14:35:32.000000000 Z
+- name: Pandas
+  description: High-performance, easy-to-use data structures and data analysis tools
+    for the Python programming language
+  website_url: http://pandas.pydata.org/
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Data Science Tools
+  image_url: https://img.stackshare.io/service/2180/1284191.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/bigger_better_faster/bbf/requirements_long.txt
+  detection_source: bigger_better_faster/bbf/requirements_long.txt
+  last_updated_by: Max Schwarzer
+  last_updated_on: 2023-03-22 23:36:18.000000000 Z
+- name: PyTorch
+  description: A deep learning framework that puts Python first
+  website_url: http://pytorch.org/
+  open_source: true
+  hosted_saas: false
+  category: Application Utilities
+  sub_category: Machine Learning Tools
+  image_url: https://img.stackshare.io/service/8171/YYpjkbVn_400x400.jpg
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/COSTAR/environment.yml
+  detection_source: COSTAR/environment.yml
+  last_updated_by: Chuizheng Meng
+  last_updated_on: 2023-11-03 14:53:47.000000000 Z
+- name: PyYAML
+  website_url: http://pyyaml.org/wiki/PyYAML
+  open_source: false
+  hosted_saas: false
+  image_url: https://img.stackshare.io/service/3730/no-img-open-source.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/activation_clustering/setup.py
+  detection_source: activation_clustering/setup.py
+  last_updated_by: Yu-Han Liu
+  last_updated_on: 2020-09-03 15:33:29.000000000 Z
+- name: Requests
+  description: Elegant and simple HTTP library for Python
+  website_url: http://docs.python-requests.org/en/latest/
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Application Utilities
+  sub_category: Data Transfer
+  image_url: https://img.stackshare.io/service/10242/default_10e3fd58c910dc0c4241bc273a7235a0aa4197dd.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/COSTAR/environment.yml
+  detection_source: COSTAR/environment.yml
+  last_updated_by: Chuizheng Meng
+  last_updated_on: 2023-11-03 14:53:47.000000000 Z
+- name: SciPy
+  description: Scientific Computing Tools for Python
+  website_url: http://www.scipy.org
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Data Science Tools
+  image_url: https://img.stackshare.io/service/3303/scipyshiny_small.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/Algorithms_and_Hardness_for_Learning_Linear_Thresholds_from_Label_Proportions/requirements.txt
+  detection_source: Algorithms_and_Hardness_for_Learning_Linear_Thresholds_from_Label_Proportions/requirements.txt
+  last_updated_by: Rishi Saket
+  last_updated_on: 2022-10-11 00:31:31.000000000 Z
+- name: Shell
+  description: A shell is a text-based terminal, used for manipulating programs and
+    files. Shell scripts typically manage program execution.
+  website_url: https://en.wikipedia.org/wiki/Shell_script
+  open_source: false
+  hosted_saas: false
+  category: Languages & Frameworks
+  sub_category: Languages
+  image_url: https://img.stackshare.io/service/4631/default_c2062d40130562bdc836c13dbca02d318205a962.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research
+  detection_source: Repo Metadata
+- name: Sip
+  description: We love to create apps that make life better and easier! Our first
+    product is @sip_app
+  website_url: http://theolabrothers.com
+  open_source: false
+  hosted_saas: false
+  image_url: https://img.stackshare.io/service/2845/-TjSkznr_normal.jpg
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/COSTAR/environment.yml
+  detection_source: COSTAR/environment.yml
+  last_updated_by: Chuizheng Meng
+  last_updated_on: 2023-11-03 14:53:47.000000000 Z
+- name: TensorFlow
+  description: Open Source Software Library for Machine Intelligence
+  website_url: https://www.tensorflow.org
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Application Utilities
+  sub_category: Machine Learning Tools
+  image_url: https://img.stackshare.io/service/4717/FtFnqC38_400x400.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/On_Combining_Bags_to_Better_Learn_from_Label_Proportions/Code/requirements.txt
+  detection_source: On_Combining_Bags_to_Better_Learn_from_Label_Proportions/Code/requirements.txt
+  last_updated_by: Rishi Saket
+  last_updated_on: 2022-02-18 03:37:05.000000000 Z
+- name: Torch
+  description: An open-source machine learning library and a script language based
+    on the Lua programming language
+  website_url: http://torch.ch/
+  open_source: true
+  hosted_saas: false
+  category: Application Utilities
+  sub_category: Machine Learning Tools
+  image_url: https://img.stackshare.io/service/4475/hpYQzO_U_400x400.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/STraTA/requirements.txt
+  detection_source: STraTA/requirements.txt
+  last_updated_by: Tu Vu
+  last_updated_on: 2022-04-11 17:33:02.000000000 Z
+- name: Transformers
+  description: State-of-the-art Natural Language Processing for Pytorch and TensorFlow
+    2.0
+  website_url: https://huggingface.co/transformers/
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Application Utilities
+  sub_category: NLP / Sentiment Analysis
+  image_url: https://img.stackshare.io/service/12240/no-img.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/dichotomy_of_control/setup.py
+  detection_source: dichotomy_of_control/setup.py
+  last_updated_by: Sherry Yang
+  last_updated_on: 2022-10-19 23:53:02.000000000 Z
+- name: Werkzeug
+  website_url: https://palletsprojects.com/p/werkzeug/
+  open_source: false
+  hosted_saas: false
+  image_url: https://img.stackshare.io/service/11076/iwoLyNPI_normal.jpg
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/bigger_better_faster/bbf/requirements_long.txt
+  detection_source: bigger_better_faster/bbf/requirements_long.txt
+  last_updated_by: Max Schwarzer
+  last_updated_on: 2023-03-22 23:36:18.000000000 Z
+- name: bzip2
+  description: A freely available, patent free, high-quality data compressor
+  website_url: https://www.sourceware.org/bzip2/
+  open_source: false
+  hosted_saas: false
+  category: Libraries
+  sub_category: Data Compression
+  image_url: https://img.stackshare.io/service/21878/default_2fbe3828d97c3a75c0332e56a34f4505c3c32418.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/COSTAR/environment.yml
+  detection_source: COSTAR/environment.yml
+  last_updated_by: Chuizheng Meng
+  last_updated_on: 2023-11-03 14:53:47.000000000 Z
+- name: gnuplot
+  website_url: http://www.gnuplot.info/
+  open_source: false
+  hosted_saas: false
+  image_url: https://img.stackshare.io/service/4138/no-img-open-source.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research
+  detection_source: Repo Metadata
+- name: hdf5
+  description: 'Technologies and supporting services that make possible the management
+    of large, complex data collections.  Support Requests: https://t.co/auKUGFBBOP'
+  website_url: https://www.hdfgroup.org/hdf5/
+  open_source: false
+  hosted_saas: false
+  image_url: https://img.stackshare.io/service/6690/hdf_logo_normal.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/COSTAR/environment.yml
+  detection_source: COSTAR/environment.yml
+  last_updated_by: Chuizheng Meng
+  last_updated_on: 2023-11-03 14:53:47.000000000 Z
+- name: pygame
+  description: Open Source python programming language library for making multimedia
+    applications
+  website_url: https://www.pygame.org/news
+  open_source: false
+  hosted_saas: false
+  category: Languages & Frameworks
+  sub_category: Cross-Platform Desktop Development
+  image_url: https://img.stackshare.io/service/6512/default_1e1ae07154b9f359c410f3f24ba3c96c1be21cdf.jpg
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/bigger_better_faster/bbf/requirements_long.txt
+  detection_source: bigger_better_faster/bbf/requirements_long.txt
+  last_updated_by: Max Schwarzer
+  last_updated_on: 2023-03-22 23:36:18.000000000 Z
+- name: setuptools
+  website_url: https://github.com/pypa/setuptools
+  open_source: false
+  hosted_saas: false
+  image_url: https://img.stackshare.io/service/10517/647025.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/COSTAR/environment.yml
+  detection_source: COSTAR/environment.yml
+  last_updated_by: Chuizheng Meng
+  last_updated_on: 2023-11-03 14:53:47.000000000 Z
+- name: Babel
+  description: Internationalization utilities
+  package_url: https://pypi.org/project/Babel
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19888/default_680f9274a97353753534797409b2c06b6bd32266.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/meta_reward_learning/semantic_parsing/requirements.txt
+  detection_source: meta_reward_learning/semantic_parsing/requirements.txt
+  last_updated_by: Rishabh Agarwal
+  last_updated_on: 2019-02-28 04:05:11.000000000 Z
+- name: Cython
+  description: The Cython compiler for writing C extensions for the Python language
+  package_url: https://pypi.org/project/Cython
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19929/default_74a0c20721d3a0a1484d69586401591fe8993db2.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/cache_replacement/requirements.txt
+  detection_source: cache_replacement/requirements.txt
+  last_updated_by: Evan Liu
+  last_updated_on: 2020-06-29 19:45:43.000000000 Z
+- name: Fabric
+  description: High level SSH command execution
+  package_url: https://pypi.org/project/Fabric
+  license: BSD-2-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20084/default_5d939a1a27846185eb6de438be4bf77b84b4ee87.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/strategic_exploration/requirements.txt
+  detection_source: strategic_exploration/requirements.txt
+  last_updated_by: Evan Liu
+  last_updated_on: 2020-06-26 20:52:53.000000000 Z
+- name: Flask
+  description: A simple framework for building complex web applications
+  package_url: https://pypi.org/project/Flask
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19834/default_58dbe7b4d7ec447b62773209af0f9a31bbabf5bd.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/eeg_modelling/requirements.txt
+  detection_source: eeg_modelling/requirements.txt
+  last_updated_by: Pablo Pino
+  last_updated_on: 2019-03-13 22:40:19.000000000 Z
+- name: GitPython
+  description: Python Git Library
+  package_url: https://pypi.org/project/GitPython
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19867/default_bd86f80ade48cfe191d5781a2efa0e66fa22163a.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/bigger_better_faster/bbf/requirements_long.txt
+  detection_source: bigger_better_faster/bbf/requirements_long.txt
+  last_updated_by: Max Schwarzer
+  last_updated_on: 2023-03-22 23:36:18.000000000 Z
+- name: Mako
+  description: A super-fast templating language that borrows the best ideas from the
+    existing templating languages
+  package_url: https://pypi.org/project/Mako
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19969/default_1c8812e05cf754e8f654b8d86b3f025827f5bfb6.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/contrastive_rl/requirements.txt
+  detection_source: contrastive_rl/requirements.txt
+  last_updated_by: Benjamin Eysenbach
+  last_updated_on: 2022-07-07 20:51:27.000000000 Z
+- name: PyJWT
+  description: JSON Web Token implementation in Python
+  package_url: https://pypi.org/project/PyJWT
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19883/default_3863c7bb51d307217c188e059f67ca417c51efe3.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/qsp_quantum_metrology/requirements.txt
+  detection_source: qsp_quantum_metrology/requirements.txt
+  last_updated_by: Raj Sinha
+  last_updated_on: 2023-06-04 17:08:48.000000000 Z
+- name: PyNaCl
+  description: Python binding to the Networking and Cryptography
+  package_url: https://pypi.org/project/PyNaCl
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20262/default_1842575018db691e6f93d8a9a1aa65cdc2a55c20.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/strategic_exploration/requirements.txt
+  detection_source: strategic_exploration/requirements.txt
+  last_updated_by: Evan Liu
+  last_updated_on: 2020-06-26 20:52:53.000000000 Z
+- name: PyOpenGL
+  description: Standard OpenGL bindings for Python
+  package_url: https://pypi.org/project/PyOpenGL
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20338/default_53bf9855f0e48ff0ff9a86525b6cf27f25cb5007.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/contrastive_rl/requirements.txt
+  detection_source: contrastive_rl/requirements.txt
+  last_updated_by: Benjamin Eysenbach
+  last_updated_on: 2022-07-07 20:51:27.000000000 Z
+- name: PyVCF
+  description: Variant Call Format
+  package_url: https://pypi.org/project/PyVCF
+  license: Other
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/frechet_audio_distance/requirements.txt
+  detection_source: frechet_audio_distance/requirements.txt
+  last_updated_by: Kevin Kilgour
+  last_updated_on: 2019-02-11 07:42:48.000000000 Z
+- name: PyYAML
+  description: YAML parser and emitter for Python
+  package_url: https://pypi.org/project/PyYAML
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19829/default_74a61b43bdb9fc0cba2978316b9976f43545029b.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/arithmetic_sampling/requirements.txt
+  detection_source: arithmetic_sampling/requirements.txt
+  last_updated_by: Luke Vilnis
+  last_updated_on: 2023-06-02 18:08:01.000000000 Z
+- name: Shapely
+  description: Geometric objects, predicates, and operations
+  package_url: https://pypi.org/project/Shapely
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/aux_tasks/requirements.txt
+  detection_source: aux_tasks/requirements.txt
+  last_updated_by: Joshua Greaves
+  last_updated_on: 2022-06-06 16:21:31.000000000 Z
+- name: Werkzeug
+  description: The comprehensive WSGI web application library
+  package_url: https://pypi.org/project/Werkzeug
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19890/default_87fc2af3f2409064833512bb6fc5b04443a2e6aa.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/abps/requirements.txt
+  detection_source: abps/requirements.txt
+  last_updated_by: Rui Wu
+  last_updated_on: 2020-01-09 02:27:30.000000000 Z
+- name: aiohttp
+  description: Async http client/server framework
+  package_url: https://pypi.org/project/aiohttp
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19852/default_d748224707283d9d8a73c2323730c87bda6b313a.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/multi_annotator/requirements.txt
+  detection_source: multi_annotator/requirements.txt
+  last_updated_by: Aida Davani
+  last_updated_on: 2022-12-23 02:06:33.000000000 Z
+- name: altair
+  description: 'Altair: A declarative statistical visualization library for Python'
+  package_url: https://pypi.org/project/altair
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/covid_vhh_design/requirements.txt
+  detection_source: covid_vhh_design/requirements.txt
+  last_updated_by: Christof Angermueller
+  last_updated_on: 2023-07-11 01:58:48.000000000 Z
+- name: anyio
+  description: High level compatibility layer for multiple asynchronous event loop
+    implementations
+  package_url: https://pypi.org/project/anyio
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20757/default_c1e4fc9b7faffe723aa1e18d3dd3049b39849e4d.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/qsp_quantum_metrology/requirements.txt
+  detection_source: qsp_quantum_metrology/requirements.txt
+  last_updated_by: Raj Sinha
+  last_updated_on: 2023-06-04 17:08:48.000000000 Z
+- name: apache-beam
+  description: Apache Beam SDK for Python
+  package_url: https://pypi.org/project/apache-beam
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/OpenMSD/requirements.txt
+  detection_source: OpenMSD/requirements.txt
+  last_updated_by: Yang Gao
+  last_updated_on: 2023-09-18 16:47:12.000000000 Z
+- name: argparse
+  description: Python command-line parsing library
+  package_url: https://pypi.org/project/argparse
+  license: Python-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19871/default_d05f6f09935776629f62e8aed365805502c14921.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/OpenMSD/requirements.txt
+  detection_source: OpenMSD/requirements.txt
+  last_updated_by: Yang Gao
+  last_updated_on: 2023-09-18 16:47:12.000000000 Z
+- name: asn1crypto
+  description: Fast ASN.1 parser and serializer with definitions for private keys
+  package_url: https://pypi.org/project/asn1crypto
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20032/default_5a21cf44b42c3ef13f57dcd42ae753240ea7e808.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/strategic_exploration/requirements.txt
+  detection_source: strategic_exploration/requirements.txt
+  last_updated_by: Evan Liu
+  last_updated_on: 2020-06-26 20:52:53.000000000 Z
+- name: astor
+  description: Read/rewrite/write Python ASTs
+  package_url: https://pypi.org/project/astor
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20227/default_ac3896467e151a154f15419dbab3ee7694c7ddf3.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/abps/requirements.txt
+  detection_source: abps/requirements.txt
+  last_updated_by: Rui Wu
+  last_updated_on: 2020-01-09 02:27:30.000000000 Z
+- name: astunparse
+  description: An AST unparser for Python
+  package_url: https://pypi.org/project/astunparse
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20438/default_0af1a91d6fdefcfffb8cd8c09bb54468583cce6e.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/arithmetic_sampling/requirements.txt
+  detection_source: arithmetic_sampling/requirements.txt
+  last_updated_by: Luke Vilnis
+  last_updated_on: 2023-06-02 18:08:01.000000000 Z
+- name: async-timeout
+  description: Timeout context manager for asyncio programs
+  package_url: https://pypi.org/project/async-timeout
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20820/default_33e8d7fbba8bfff26ed0101b65f3a3af5fd63b4e.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/multi_annotator/requirements.txt
+  detection_source: multi_annotator/requirements.txt
+  last_updated_by: Aida Davani
+  last_updated_on: 2022-12-23 02:06:33.000000000 Z
+- name: avro
+  description: Avro is a serialization and RPC framework
+  package_url: https://pypi.org/project/avro
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/frechet_audio_distance/requirements.txt
+  detection_source: frechet_audio_distance/requirements.txt
+  last_updated_by: Kevin Kilgour
+  last_updated_on: 2019-02-11 07:42:48.000000000 Z
+- name: backports.weakref
+  description: Backport of new features in Python's weakref module
+  package_url: https://pypi.org/project/backports.weakref
+  license: Python-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/eeg_modelling/requirements.txt
+  detection_source: eeg_modelling/requirements.txt
+  last_updated_by: Pablo Pino
+  last_updated_on: 2019-03-13 22:40:19.000000000 Z
+- name: bcrypt
+  description: Modern password hashing for your software and your servers
+  package_url: https://pypi.org/project/bcrypt
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20031/default_242158225818ea25f0ab9031a46e17f8ff8246cb.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/strategic_exploration/requirements.txt
+  detection_source: strategic_exploration/requirements.txt
+  last_updated_by: Evan Liu
+  last_updated_on: 2020-06-26 20:52:53.000000000 Z
+- name: biopython
+  description: Freely available tools for computational molecular biology
+  package_url: https://pypi.org/project/biopython
+  license: Other
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19925/default_7f569ba7d9a80675f83c6206f262954101a3cd16.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/protenn/requirements.txt
+  detection_source: protenn/requirements.txt
+  last_updated_by: Maxwell Bileschi
+  last_updated_on: 2023-10-06 18:33:10.000000000 Z
+- name: black
+  description: The uncompromising code formatter
+  package_url: https://pypi.org/project/black
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20099/default_029b9bbfb6be2cd34bebeda5b8e1e80a1d22441c.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/factoring_sqif/requirements.txt
+  detection_source: factoring_sqif/requirements.txt
+  last_updated_by: Tanuj Khattar
+  last_updated_on: 2023-06-14 21:47:25.000000000 Z
+- name: blinker
+  description: Fast, simple object-to-object and broadcast signaling
+  package_url: https://pypi.org/project/blinker
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20273/default_847617f8273bac4dd5921370b0684f29c3397a68.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/contrastive_rl/requirements.txt
+  detection_source: contrastive_rl/requirements.txt
+  last_updated_by: Benjamin Eysenbach
+  last_updated_on: 2022-07-07 20:51:27.000000000 Z
+- name: boltons
+  description: When they're not builtins, they're boltons
+  package_url: https://pypi.org/project/boltons
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20201/default_62eaa5ae8d67ec49176f394957f51b71ae8aa0c1.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/graph_embedding/persona/requirements.txt
+  detection_source: graph_embedding/persona/requirements.txt
+  last_updated_by: Alessandro Epasto
+  last_updated_on: 2019-05-06 14:08:43.000000000 Z
+- name: boto
+  description: Amazon Web Services Library
+  package_url: https://pypi.org/project/boto
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19907/default_2aeed05332f0410b54817405c7e8e202a7e763cf.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/graph_embedding/monet/requirements.txt
+  detection_source: graph_embedding/monet/requirements.txt
+  last_updated_by: John Palowitch
+  last_updated_on: 2020-02-19 23:45:30.000000000 Z
+- name: boto3
+  description: The AWS SDK for Python
+  package_url: https://pypi.org/project/boto3
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19840/default_1c41e593803157c668b26f27387160254f0f5371.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/graph_embedding/monet/requirements.txt
+  detection_source: graph_embedding/monet/requirements.txt
+  last_updated_by: John Palowitch
+  last_updated_on: 2020-02-19 23:45:30.000000000 Z
+- name: botocore
+  description: Low-level, data-driven core of boto 3
+  package_url: https://pypi.org/project/botocore
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19884/default_b8be3f20d4af87021ae3618d5c50b72c985ea31f.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/graph_embedding/monet/requirements.txt
+  detection_source: graph_embedding/monet/requirements.txt
+  last_updated_by: John Palowitch
+  last_updated_on: 2020-02-19 23:45:30.000000000 Z
+- name: bs4
+  description: Dummy package for Beautiful Soup
+  package_url: https://pypi.org/project/bs4
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19906/default_2aeed05332f0410b54817405c7e8e202a7e763cf.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/tide_nlp/requirements.txt
+  detection_source: tide_nlp/requirements.txt
+  last_updated_by: Emmanuel Klu
+  last_updated_on: 2023-09-14 21:57:26.000000000 Z
+- name: bz2file
+  description: Read and write bzip2-compressed files
+  package_url: https://pypi.org/project/bz2file
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20526/default_01d756fcaf12880a90d14748cc7c26fc0d526e2a.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/dense_representations_for_entity_retrieval/mel/wikinews_extractor/requirements.txt
+  detection_source: dense_representations_for_entity_retrieval/mel/wikinews_extractor/requirements.txt
+  last_updated_by: Jan Botha
+  last_updated_on: 2020-11-17 19:07:28.000000000 Z
+- name: cachetools
+  description: Extensible memoizing collections and decorators
+  package_url: https://pypi.org/project/cachetools
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19950/default_611a1328f69b729fac0a7b8bf87ff04e8ce35e17.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/abps/requirements.txt
+  detection_source: abps/requirements.txt
+  last_updated_by: Rui Wu
+  last_updated_on: 2020-01-09 02:27:30.000000000 Z
+- name: cairocffi
+  description: Cffi-based cairo bindings for Python
+  package_url: https://pypi.org/project/cairocffi
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/isl/requirements.txt
+  detection_source: isl/requirements.txt
+  last_updated_by: Sercan Arik
+  last_updated_on: 2022-05-23 22:22:02.000000000 Z
+- name: certifi
+  description: Python package for providing Mozilla's CA Bundle
+  package_url: https://pypi.org/project/certifi
+  license: MPL-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19849/default_75c38a39b9f0062814489e2ec2cbfca0ca15d9ba.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/abps/requirements.txt
+  detection_source: abps/requirements.txt
+  last_updated_by: Rui Wu
+  last_updated_on: 2020-01-09 02:27:30.000000000 Z
+- name: chardet
+  description: Universal encoding detector for Python 2 and 3
+  package_url: https://pypi.org/project/chardet
+  license: LGPL-2.1
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19856/default_4a8a8fdc10130068bf295812b98e9b72fb42fe70.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/abps/requirements.txt
+  detection_source: abps/requirements.txt
+  last_updated_by: Rui Wu
+  last_updated_on: 2020-01-09 02:27:30.000000000 Z
+- name: cloudpickle
+  description: Extended pickling support for Python objects
+  package_url: https://pypi.org/project/cloudpickle
+  license: BSD-1-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20066/default_bb49fb0188726b8922387d8bb6e9b2cd0c3c0ea9.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/abps/requirements.txt
+  detection_source: abps/requirements.txt
+  last_updated_by: Rui Wu
+  last_updated_on: 2020-01-09 02:27:30.000000000 Z
+- name: colorama
+  description: Cross-platform colored terminal text
+  package_url: https://pypi.org/project/colorama
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19845/default_accee5d2b8ed75c2245f13504daf75b1cbc8cc9f.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/eli5_retrieval_large_lm/requirements.txt
+  detection_source: eli5_retrieval_large_lm/requirements.txt
+  last_updated_by: Jules Gagnon-Marchand
+  last_updated_on: 2020-12-11 22:22:33.000000000 Z
+- name: conda
+  description: OS-agnostic, system-level binary package manager
+  package_url: https://pypi.org/project/conda
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/KNF/requirements.txt
+  detection_source: KNF/requirements.txt
+  last_updated_by: Yihe Dong
+  last_updated_on: 2023-03-10 03:37:54.000000000 Z
+- name: contextlib2
+  description: Backports and enhancements for the contextlib module
+  package_url: https://pypi.org/project/contextlib2
+  license: psfrag
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20070/default_bb49fb0188726b8922387d8bb6e9b2cd0c3c0ea9.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/arithmetic_sampling/requirements.txt
+  detection_source: arithmetic_sampling/requirements.txt
+  last_updated_by: Luke Vilnis
+  last_updated_on: 2023-06-02 18:08:01.000000000 Z
+- name: crcmod
+  description: CRC Generator
+  package_url: https://pypi.org/project/crcmod
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/frechet_audio_distance/requirements.txt
+  detection_source: frechet_audio_distance/requirements.txt
+  last_updated_by: Kevin Kilgour
+  last_updated_on: 2019-02-11 07:42:48.000000000 Z
+- name: cvxopt
+  description: Convex optimization package
+  package_url: https://pypi.org/project/cvxopt
+  license: GPL-3.0-only
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/Algorithms_and_Hardness_for_Learning_Linear_Thresholds_from_Label_Proportions/requirements.txt
+  detection_source: Algorithms_and_Hardness_for_Learning_Linear_Thresholds_from_Label_Proportions/requirements.txt
+  last_updated_by: Rishi Saket
+  last_updated_on: 2022-10-11 00:31:31.000000000 Z
+- name: cvxpy
+  description: A domain-specific language for modeling convex optimization problems
+    in Python
+  package_url: https://pypi.org/project/cvxpy
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/Algorithms_and_Hardness_for_Learning_Linear_Thresholds_from_Label_Proportions/requirements.txt
+  detection_source: Algorithms_and_Hardness_for_Learning_Linear_Thresholds_from_Label_Proportions/requirements.txt
+  last_updated_by: Rishi Saket
+  last_updated_on: 2022-10-11 00:31:31.000000000 Z
+- name: dacite
+  description: Simple creation of data classes from dictionaries
+  package_url: https://pypi.org/project/dacite
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20814/default_12fc958f2a2530eaf01762405bed2c16b93a422d.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/psyborgs/requirements.txt
+  detection_source: psyborgs/requirements.txt
+  last_updated_by: Clément CREPY
+  last_updated_on: 2023-02-27 14:41:13.000000000 Z
+- name: dill
+  description: Serialize all of python
+  package_url: https://pypi.org/project/dill
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19972/default_735d20726524f3a2b12f956af25bde52f942f85a.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/aux_tasks/requirements.txt
+  detection_source: aux_tasks/requirements.txt
+  last_updated_by: Joshua Greaves
+  last_updated_on: 2022-06-06 16:21:31.000000000 Z
+- name: docopt
+  description: Pythonic argument parser, that will make you smile
+  package_url: https://pypi.org/project/docopt
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19916/default_0bcdf4801fb769eac80e668560a1012afd8a336d.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/frechet_audio_distance/requirements.txt
+  detection_source: frechet_audio_distance/requirements.txt
+  last_updated_by: Kevin Kilgour
+  last_updated_on: 2019-02-11 07:42:48.000000000 Z
+- name: docutils
+  description: Docutils -- Python Documentation Utilities
+  package_url: https://pypi.org/project/docutils
+  license: Unlicense,Python-2.0,BSD-2-Clause,CNRI-Python-GPL-Compatible
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19874/default_7ed3c4ccf2a3218ae3655165b980bd4a90a445dc.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/graph_embedding/monet/requirements.txt
+  detection_source: graph_embedding/monet/requirements.txt
+  last_updated_by: John Palowitch
+  last_updated_on: 2020-02-19 23:45:30.000000000 Z
+- name: earthengine-api
+  description: Earth Engine Python API
+  package_url: https://pypi.org/project/earthengine-api
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20668/default_56e4919d534a15560c38f9eff11f052b565e9bb0.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/simulation_research/next_day_wildfire_spread/requirements.txt
+  detection_source: simulation_research/next_day_wildfire_spread/requirements.txt
+  last_updated_by: Tharun Sankar
+  last_updated_on: 2021-12-16 01:16:25.000000000 Z
+- name: easydict
+  description: Access dict values as attributes
+  package_url: https://pypi.org/project/easydict
+  license: LGPL-3.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/tcc/requirements.txt
+  detection_source: tcc/requirements.txt
+  last_updated_by: Debidatta Dwibedi
+  last_updated_on: 2019-07-18 01:39:54.000000000 Z
+- name: editdistance
+  description: Fast implementation of the edit distance
+  package_url: https://pypi.org/project/editdistance
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/arithmetic_sampling/requirements.txt
+  detection_source: arithmetic_sampling/requirements.txt
+  last_updated_by: Luke Vilnis
+  last_updated_on: 2023-06-02 18:08:01.000000000 Z
+- name: enum34
+  description: Python 3.4 Enum backported to 3.3
+  package_url: https://pypi.org/project/enum34
+  license: DSDP
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20115/default_cbefd90407cd90c9578011e83017a6949de2ead3.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/eeg_modelling/requirements.txt
+  detection_source: eeg_modelling/requirements.txt
+  last_updated_by: Pablo Pino
+  last_updated_on: 2019-03-13 22:40:19.000000000 Z
+- name: fastavro
+  description: Fast read/write of AVRO files
+  package_url: https://pypi.org/project/fastavro
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20472/default_9133ac72cd6446db23468e38bad37eb681762f92.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/frechet_audio_distance/requirements.txt
+  detection_source: frechet_audio_distance/requirements.txt
+  last_updated_by: Kevin Kilgour
+  last_updated_on: 2019-02-11 07:42:48.000000000 Z
+- name: fasteners
+  description: A python package that provides useful locks
+  package_url: https://pypi.org/project/fasteners
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20281/default_428303d3562c7061a87beb9db9c9023c4ec9ef79.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/contrastive_rl/requirements.txt
+  detection_source: contrastive_rl/requirements.txt
+  last_updated_by: Benjamin Eysenbach
+  last_updated_on: 2022-07-07 20:51:27.000000000 Z
+- name: filelock
+  description: A platform independent file lock
+  package_url: https://pypi.org/project/filelock
+  license: Unlicense
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20204/default_645e4030c04804ccf56eaad54caf7b7a73a44c64.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/multi_annotator/requirements.txt
+  detection_source: multi_annotator/requirements.txt
+  last_updated_by: Aida Davani
+  last_updated_on: 2022-12-23 02:06:33.000000000 Z
+- name: flatbuffers
+  description: The FlatBuffers serialization format for Python
+  package_url: https://pypi.org/project/flatbuffers
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/arithmetic_sampling/requirements.txt
+  detection_source: arithmetic_sampling/requirements.txt
+  last_updated_by: Luke Vilnis
+  last_updated_on: 2023-06-02 18:08:01.000000000 Z
+- name: fonttools
+  description: Tools to manipulate font files
+  package_url: https://pypi.org/project/fonttools
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20488/default_13373c456cf04faa5b7f33cd4c4095cbd571dfce.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/aux_tasks/requirements.txt
+  detection_source: aux_tasks/requirements.txt
+  last_updated_by: Joshua Greaves
+  last_updated_on: 2022-06-06 16:21:31.000000000 Z
+- name: frozendict
+  description: An immutable dictionary
+  package_url: https://pypi.org/project/frozendict
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/assessment_plan_modeling/requirements.txt
+  detection_source: assessment_plan_modeling/requirements.txt
+  last_updated_by: Doron Yaya-Stupp
+  last_updated_on: 2022-04-27 18:35:52.000000000 Z
+- name: fsspec
+  description: File-system specification
+  package_url: https://pypi.org/project/fsspec
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/multi_annotator/requirements.txt
+  detection_source: multi_annotator/requirements.txt
+  last_updated_by: Aida Davani
+  last_updated_on: 2022-12-23 02:06:33.000000000 Z
+- name: ftfy
+  description: Fixes some problems with Unicode text after the fact
+  package_url: https://pypi.org/project/ftfy
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20650/default_422cfa802834b2f78f74508cdc2c26b9544a79eb.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/conceptor/requirements.txt
+  detection_source: conceptor/requirements.txt
+  last_updated_by: Oran Lang
+  last_updated_on: 2023-09-14 08:00:47.000000000 Z
+- name: funcsigs
+  description: Python function signatures from PEP362 for Python 2.6
+  package_url: https://pypi.org/project/funcsigs
+  license: Other
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20177/default_b59452f5365a0e677c38da18021b9d6569ac0da7.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/eeg_modelling/requirements.txt
+  detection_source: eeg_modelling/requirements.txt
+  last_updated_by: Pablo Pino
+  last_updated_on: 2019-03-13 22:40:19.000000000 Z
+- name: future
+  description: Clean single-source support for Python 3 and 2
+  package_url: https://pypi.org/project/future
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19839/default_85689b353a3a9409328e253ea28d859d29151e0c.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/abps/requirements.txt
+  detection_source: abps/requirements.txt
+  last_updated_by: Rui Wu
+  last_updated_on: 2020-01-09 02:27:30.000000000 Z
+- name: futures
+  description: Backport of the concurrent.futures package from Python 3
+  package_url: https://pypi.org/project/futures
+  license: Python-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19885/default_b8be3f20d4af87021ae3618d5c50b72c985ea31f.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/eeg_modelling/requirements.txt
+  detection_source: eeg_modelling/requirements.txt
+  last_updated_by: Pablo Pino
+  last_updated_on: 2019-03-13 22:40:19.000000000 Z
+- name: fuzzywuzzy
+  description: Fuzzy string matching in python
+  package_url: https://pypi.org/project/fuzzywuzzy
+  license: GPL-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20071/default_bb49fb0188726b8922387d8bb6e9b2cd0c3c0ea9.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/schema_guided_dst/requirements.txt
+  detection_source: schema_guided_dst/requirements.txt
+  last_updated_by: Guan-Lin Chao
+  last_updated_on: 2019-08-07 00:06:45.000000000 Z
+- name: gast
+  description: Python AST that abstracts the underlying Python version
+  package_url: https://pypi.org/project/gast
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/abps/requirements.txt
+  detection_source: abps/requirements.txt
+  last_updated_by: Rui Wu
+  last_updated_on: 2020-01-09 02:27:30.000000000 Z
+- name: gcsfs
+  description: Convenient Filesystem interface over GCS
+  package_url: https://pypi.org/project/gcsfs
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/graph_temporal_ai/requirements.txt
+  detection_source: graph_temporal_ai/requirements.txt
+  last_updated_by: Rose Yu
+  last_updated_on: 2023-03-22 18:04:55.000000000 Z
+- name: gdown
+  description: Google Drive direct download of big files
+  package_url: https://pypi.org/project/gdown
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/differentially_private_gnns/requirements.txt
+  detection_source: differentially_private_gnns/requirements.txt
+  last_updated_by: Ameya Daigavane
+  last_updated_on: 2022-08-17 04:50:40.000000000 Z
+- name: gin-config
+  description: 'Gin-Config: A lightweight configuration library for Python'
+  package_url: https://pypi.org/project/gin-config
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/abps/requirements.txt
+  detection_source: abps/requirements.txt
+  last_updated_by: Rui Wu
+  last_updated_on: 2020-01-09 02:27:30.000000000 Z
+- name: gitdb
+  description: Git Object Database
+  package_url: https://pypi.org/project/gitdb
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/bigger_better_faster/bbf/requirements_long.txt
+  detection_source: bigger_better_faster/bbf/requirements_long.txt
+  last_updated_by: Max Schwarzer
+  last_updated_on: 2023-03-22 23:36:18.000000000 Z
+- name: gitdb2
+  description: Git Object Database
+  package_url: https://pypi.org/project/gitdb2
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20744/default_c90b3e514872112e4562f3131a3c6b68b0d05009.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/strategic_exploration/requirements.txt
+  detection_source: strategic_exploration/requirements.txt
+  last_updated_by: Evan Liu
+  last_updated_on: 2020-06-26 20:52:53.000000000 Z
+- name: glfw
+  description: A ctypes-based wrapper for GLFW3
+  package_url: https://pypi.org/project/glfw
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/cache_replacement/requirements.txt
+  detection_source: cache_replacement/requirements.txt
+  last_updated_by: Evan Liu
+  last_updated_on: 2020-06-29 19:45:43.000000000 Z
+- name: google-api-core
+  description: Google API client core library
+  package_url: https://pypi.org/project/google-api-core
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20073/default_d7fc4eabe57370d13c2a8ad2f7f6bb876c96c66d.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/felix/requirements.txt
+  detection_source: felix/requirements.txt
+  last_updated_by: Jonathan Mallinson
+  last_updated_on: 2022-07-18 13:03:16.000000000 Z
+- name: google-api-python-client
+  description: Google API Client Library for Python
+  package_url: https://pypi.org/project/google-api-python-client
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19897/default_4343f8bba4f6051641ffca8b4fbe9b099402c84d.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/caltrain/requirements.txt
+  detection_source: caltrain/requirements.txt
+  last_updated_by: Becca Roelofs
+  last_updated_on: 2021-01-15 17:12:09.000000000 Z
+- name: google-auth
+  description: Google Authentication Library
+  package_url: https://pypi.org/project/google-auth
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19955/default_1965f66bb5a4d2eb7b31193d7be6d8a9041d02b9.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/abps/requirements.txt
+  detection_source: abps/requirements.txt
+  last_updated_by: Rui Wu
+  last_updated_on: 2020-01-09 02:27:30.000000000 Z
+- name: google-auth-oauthlib
+  description: Google Authentication Library
+  package_url: https://pypi.org/project/google-auth-oauthlib
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20240/default_8a23a3884b3073b5e1695e2320e46529e60882b3.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/abps/requirements.txt
+  detection_source: abps/requirements.txt
+  last_updated_by: Rui Wu
+  last_updated_on: 2020-01-09 02:27:30.000000000 Z
+- name: google-cloud-bigquery
+  description: Google BigQuery API client library
+  package_url: https://pypi.org/project/google-cloud-bigquery
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20122/default_480d32900476f532eb2077c5e672b5cb60c86e48.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/smu/requirements.txt
+  detection_source: smu/requirements.txt
+  last_updated_by: pfrstg
+  last_updated_on: 2022-01-06 18:35:22.000000000 Z
+- name: google-cloud-core
+  description: Google Cloud API client core library
+  package_url: https://pypi.org/project/google-cloud-core
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20215/default_91afeaad6f5d17a2b513346f3f744a53cbd8a9ad.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/simulation_research/next_day_wildfire_spread/requirements.txt
+  detection_source: simulation_research/next_day_wildfire_spread/requirements.txt
+  last_updated_by: Tharun Sankar
+  last_updated_on: 2022-01-27 21:21:52.000000000 Z
+- name: google-cloud-storage
+  description: Google Cloud Storage API client library
+  package_url: https://pypi.org/project/google-cloud-storage
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19996/default_1ae269f6aa26d7008f18ed620309f6ae89bbfa12.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/cascaded_networks/requirements.txt
+  detection_source: cascaded_networks/requirements.txt
+  last_updated_by: Michael Iuzzolino
+  last_updated_on: 2021-03-19 19:57:20.000000000 Z
+- name: google-resumable-media
+  description: Utilities for Google Media Downloads and Resumable Uploads
+  package_url: https://pypi.org/project/google-resumable-media
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/simulation_research/next_day_wildfire_spread/requirements.txt
+  detection_source: simulation_research/next_day_wildfire_spread/requirements.txt
+  last_updated_by: Tharun Sankar
+  last_updated_on: 2022-01-27 21:21:52.000000000 Z
+- name: googleapis-common-protos
+  description: Common protobufs used in Google APIs
+  package_url: https://pypi.org/project/googleapis-common-protos
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20036/default_a7a70921d2d3189665c78015850dc968f41705a1.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/arithmetic_sampling/requirements.txt
+  detection_source: arithmetic_sampling/requirements.txt
+  last_updated_by: Luke Vilnis
+  last_updated_on: 2023-06-02 18:08:01.000000000 Z
+- name: graphviz
+  description: Simple Python interface for Graphviz
+  package_url: https://pypi.org/project/graphviz
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19981/default_ccb381b493daf0d966e015380e1894fdbc637ad3.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/arithmetic_sampling/requirements.txt
+  detection_source: arithmetic_sampling/requirements.txt
+  last_updated_by: Luke Vilnis
+  last_updated_on: 2023-06-02 18:08:01.000000000 Z
+- name: greenlet
+  description: Lightweight in-process concurrent programming
+  package_url: https://pypi.org/project/greenlet
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20137/default_e3ea003987b13e5c9b8c9000c748b25a9c0d9ecd.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/eeg_modelling/requirements.txt
+  detection_source: eeg_modelling/requirements.txt
+  last_updated_by: Pablo Pino
+  last_updated_on: 2019-03-13 22:40:19.000000000 Z
+- name: grpcio
+  description: HTTP/2-based RPC framework
+  package_url: https://pypi.org/project/grpcio
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19903/default_1d0eb6da6bdd342bb15f73d8f1721516ebacd1dc.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/abps/requirements.txt
+  detection_source: abps/requirements.txt
+  last_updated_by: Rui Wu
+  last_updated_on: 2020-01-09 02:27:30.000000000 Z
+- name: grpcio-tools
+  description: Protobuf code generator for gRPC
+  package_url: https://pypi.org/project/grpcio-tools
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20003/default_87268cab0d3a3b3acf3aa0576d4b114b8e4c2521.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/muzero/requirements.txt
+  detection_source: muzero/requirements.txt
+  last_updated_by: Michelle Chen Huebscher
+  last_updated_on: 2021-06-01 12:34:08.000000000 Z
+- name: gunicorn
+  description: WSGI HTTP Server for UNIX
+  package_url: https://pypi.org/project/gunicorn
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19931/default_74a0c20721d3a0a1484d69586401591fe8993db2.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/hierarchical_foresight/requirements.txt
+  detection_source: hierarchical_foresight/requirements.txt
+  last_updated_by: Suraj Nair
+  last_updated_on: 2019-07-25 20:11:05.000000000 Z
+- name: gym
+  description: 'The OpenAI Gym: A toolkit for developing and comparing your reinforcement
+    learning agents'
+  package_url: https://pypi.org/project/gym
+  license: Other
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20403/default_ce843a13e614e0f1450cbeee8c38810e4f092f1e.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/abps/requirements.txt
+  detection_source: abps/requirements.txt
+  last_updated_by: Rui Wu
+  last_updated_on: 2020-01-09 02:27:30.000000000 Z
+- name: h11
+  description: A pure-Python
+  package_url: https://pypi.org/project/h11
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/qsp_quantum_metrology/requirements.txt
+  detection_source: qsp_quantum_metrology/requirements.txt
+  last_updated_by: Raj Sinha
+  last_updated_on: 2023-06-04 17:08:48.000000000 Z
+- name: h5py
+  description: Read and write HDF5 files from Python
+  package_url: https://pypi.org/project/h5py
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20166/default_7c58f8c011d1676d1d010f43fec5e502e542d0a5.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/abps/requirements.txt
+  detection_source: abps/requirements.txt
+  last_updated_by: Rui Wu
+  last_updated_on: 2020-01-09 02:27:30.000000000 Z
+- name: httplib2
+  description: A comprehensive HTTP client library
+  package_url: https://pypi.org/project/httplib2
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19914/default_37434feaacace26053e41d6e4802560af16ebe44.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/felix/requirements.txt
+  detection_source: felix/requirements.txt
+  last_updated_by: Jonathan Mallinson
+  last_updated_on: 2022-07-18 13:03:16.000000000 Z
+- name: httpx
+  description: The next generation HTTP client
+  package_url: https://pypi.org/project/httpx
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20315/default_5f4e928dbcb1c4db4050881fc2e0229785fc931c.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/qsp_quantum_metrology/requirements.txt
+  detection_source: qsp_quantum_metrology/requirements.txt
+  last_updated_by: Raj Sinha
+  last_updated_on: 2023-06-04 17:08:48.000000000 Z
+- name: huggingface-hub
+  description: Client library to download and publish models
+  package_url: https://pypi.org/project/huggingface-hub
+  open_source: false
+  hosted_saas: false
+  category: Build, Test, Deploy
+  sub_category: Package Managers
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/multi_annotator/requirements.txt
+  detection_source: multi_annotator/requirements.txt
+  last_updated_by: Aida Davani
+  last_updated_on: 2022-12-23 02:06:33.000000000 Z
+- name: hyperopt
+  description: Distributed Asynchronous Hyperparameter Optimization
+  package_url: https://pypi.org/project/hyperopt
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/scrna_benchmark/requirements.txt
+  detection_source: scrna_benchmark/requirements.txt
+  last_updated_by: Felix Raimundo
+  last_updated_on: 2020-04-28 22:42:48.000000000 Z
+- name: ijson
+  description: Iterative JSON parser with a standard Python iterator interface
+  package_url: https://pypi.org/project/ijson
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20439/default_8d15fb11475db82fd198b3d18403fe09070088be.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/compositional_classification/requirements.txt
+  detection_source: compositional_classification/requirements.txt
+  last_updated_by: Santiago Ontanon
+  last_updated_on: 2023-09-19 19:19:56.000000000 Z
+- name: imageio
+  description: Library for reading and writing a wide range of image
+  package_url: https://pypi.org/project/imageio
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20258/default_c011fd31f7e9af58e2e3e8a82a6acdf8662ecdb6.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/cache_replacement/requirements.txt
+  detection_source: cache_replacement/requirements.txt
+  last_updated_by: Evan Liu
+  last_updated_on: 2020-06-29 19:45:43.000000000 Z
+- name: intervaltree
+  description: Editable interval tree data structure for Python 2 and 3
+  package_url: https://pypi.org/project/intervaltree
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20298/default_00525766b5d1b7a358cc1912c2d8907cee4c2347.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/readtwice/requirements.txt
+  detection_source: readtwice/requirements.txt
+  last_updated_by: Yury Zemlyanskiy
+  last_updated_on: 2021-05-12 23:44:33.000000000 Z
+- name: ipaddress
+  description: IPv4/IPv6 manipulation library
+  package_url: https://pypi.org/project/ipaddress
+  license: Python-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19942/default_aacb529ceff756b62765790d8d6787a041d514ff.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/strategic_exploration/requirements.txt
+  detection_source: strategic_exploration/requirements.txt
+  last_updated_by: Evan Liu
+  last_updated_on: 2020-06-26 20:52:53.000000000 Z
+- name: iso8601
+  description: Simple module to parse ISO 8601 dates
+  package_url: https://pypi.org/project/iso8601
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20179/default_b59452f5365a0e677c38da18021b9d6569ac0da7.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/qsp_quantum_metrology/requirements.txt
+  detection_source: qsp_quantum_metrology/requirements.txt
+  last_updated_by: Raj Sinha
+  last_updated_on: 2023-06-04 17:08:48.000000000 Z
+- name: isort
+  description: A Python utility / library to sort Python imports
+  package_url: https://pypi.org/project/isort
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20117/default_9cf91bfbbfb266fc12a914cdc09d9e4b55c773bb.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/factoring_sqif/requirements.txt
+  detection_source: factoring_sqif/requirements.txt
+  last_updated_by: Tanuj Khattar
+  last_updated_on: 2023-06-14 21:47:25.000000000 Z
+- name: itsdangerous
+  description: Various helpers to pass data to untrusted environments and back
+  package_url: https://pypi.org/project/itsdangerous
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19989/default_b1f1fc9c4c59a78443018e01395203ba8c61dcde.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/eeg_modelling/requirements.txt
+  detection_source: eeg_modelling/requirements.txt
+  last_updated_by: Pablo Pino
+  last_updated_on: 2019-03-13 22:40:19.000000000 Z
+- name: jmespath
+  description: JSON Matching Expressions
+  package_url: https://pypi.org/project/jmespath
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19993/default_1ae269f6aa26d7008f18ed620309f6ae89bbfa12.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/graph_embedding/monet/requirements.txt
+  detection_source: graph_embedding/monet/requirements.txt
+  last_updated_by: John Palowitch
+  last_updated_on: 2020-02-19 23:45:30.000000000 Z
+- name: joblib
+  description: 'Lightweight pipelining: using Python functions as pipeline jobs'
+  package_url: https://pypi.org/project/joblib
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20033/default_5a21cf44b42c3ef13f57dcd42ae753240ea7e808.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/cache_replacement/requirements.txt
+  detection_source: cache_replacement/requirements.txt
+  last_updated_by: Evan Liu
+  last_updated_on: 2020-06-29 19:45:43.000000000 Z
+- name: jsonpickle
+  description: Python library for serializing any arbitrary object graph into JSON
+  package_url: https://pypi.org/project/jsonpickle
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19994/default_aa5b3e77340c2bb80cd8e6a59cd82909abcdcd63.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/strategic_exploration/requirements.txt
+  detection_source: strategic_exploration/requirements.txt
+  last_updated_by: Evan Liu
+  last_updated_on: 2020-06-26 20:52:53.000000000 Z
+- name: jsonschema
+  description: An implementation of JSON Schema validation for Python
+  package_url: https://pypi.org/project/jsonschema
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19854/default_3fbfa1d88b4408e903227ac391490e8efb8dea58.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/goemotions/requirements.txt
+  detection_source: goemotions/requirements.txt
+  last_updated_by: Google Research Team
+  last_updated_on: 2019-10-23 22:33:03.000000000 Z
+- name: jupyter-client
+  description: Jupyter protocol implementation and client libraries
+  package_url: https://pypi.org/project/jupyter-client
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20352/default_f465c24287ef1189cebf97fef20e50d0bbc5623d.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/irregular_timeseries_pretraining/requirements.txt
+  detection_source: irregular_timeseries_pretraining/requirements.txt
+  last_updated_by: Nicasia Beebe-Wang
+  last_updated_on: 2023-06-03 01:04:12.000000000 Z
+- name: jupyter-core
+  description: Jupyter core package
+  package_url: https://pypi.org/project/jupyter-core
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20703/default_49f208ff144f55afc8c1c08f01bcb1eef2f5bb23.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/irregular_timeseries_pretraining/requirements.txt
+  detection_source: irregular_timeseries_pretraining/requirements.txt
+  last_updated_by: Nicasia Beebe-Wang
+  last_updated_on: 2023-06-03 01:04:12.000000000 Z
+- name: langdetect
+  description: Language detection library ported from Google's language-detection
+  package_url: https://pypi.org/project/langdetect
+  license: Other
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/instruction_following_eval/requirements.txt
+  detection_source: instruction_following_eval/requirements.txt
+  last_updated_by: Yi Luan
+  last_updated_on: 2023-11-07 18:33:55.000000000 Z
+- name: libcst
+  description: A concrete syntax tree with AST-like properties for Python 3.5
+  package_url: https://pypi.org/project/libcst
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/arithmetic_sampling/requirements.txt
+  detection_source: arithmetic_sampling/requirements.txt
+  last_updated_by: Luke Vilnis
+  last_updated_on: 2023-06-02 18:08:01.000000000 Z
+- name: librosa
+  description: Python module for audio and music processing
+  package_url: https://pypi.org/project/librosa
+  license: ISC
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/non_semantic_speech_benchmark/requirements.txt
+  detection_source: non_semantic_speech_benchmark/requirements.txt
+  last_updated_by: Joel Shor
+  last_updated_on: 2020-04-20 15:39:37.000000000 Z
+- name: lightgbm
+  description: LightGBM Python Package
+  package_url: https://pypi.org/project/lightgbm
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/covid_vhh_design/requirements.txt
+  detection_source: covid_vhh_design/requirements.txt
+  last_updated_by: Christof Angermueller
+  last_updated_on: 2023-07-11 01:58:48.000000000 Z
+- name: lingpy
+  description: Python library for quantitative tasks in historical linguistics
+  package_url: https://pypi.org/project/lingpy
+  license: GPL-3.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/cognate_inpaint_neighbors/requirements.txt
+  detection_source: cognate_inpaint_neighbors/requirements.txt
+  last_updated_by: Alexander Gutkin
+  last_updated_on: 2022-04-23 10:51:08.000000000 Z
+- name: llvmlite
+  description: Lightweight wrapper around basic LLVM functionality
+  package_url: https://pypi.org/project/llvmlite
+  license: BSD-2-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/scrna_benchmark/requirements.txt
+  detection_source: scrna_benchmark/requirements.txt
+  last_updated_by: Felix Raimundo
+  last_updated_on: 2020-04-28 22:42:48.000000000 Z
+- name: lockfile
+  description: Platform-independent file locking module
+  package_url: https://pypi.org/project/lockfile
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20055/default_c6b771728648e397c4dc44c31f72db9a0f6ca233.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/cache_replacement/requirements.txt
+  detection_source: cache_replacement/requirements.txt
+  last_updated_by: Evan Liu
+  last_updated_on: 2020-06-29 19:45:43.000000000 Z
+- name: loguru
+  description: Python logging made
+  package_url: https://pypi.org/project/loguru
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20043/default_15ea2ed8281eccea374610791971ca44800f16ec.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/human_object_interaction/requirements.txt
+  detection_source: human_object_interaction/requirements.txt
+  last_updated_by: Nilesh Kulkarni
+  last_updated_on: 2022-08-20 00:01:01.000000000 Z
+- name: lxml
+  description: Powerful and Pythonic XML processing library combining libxml2/libxslt
+    with the ElementTree API
+  package_url: https://pypi.org/project/lxml
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19835/default_85689b353a3a9409328e253ea28d859d29151e0c.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/contrastive_rl/requirements.txt
+  detection_source: contrastive_rl/requirements.txt
+  last_updated_by: Benjamin Eysenbach
+  last_updated_on: 2022-07-07 20:51:27.000000000 Z
+- name: mock
+  description: Rolling backport of unittest.mock for all Pythons
+  package_url: https://pypi.org/project/mock
+  license: BSD-2-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19876/default_8902c10687fbcd6273bdbe119fff40fa1180763f.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/bangbang_qaoa/requirements.txt
+  detection_source: bangbang_qaoa/requirements.txt
+  last_updated_by: Li Li
+  last_updated_on: 2020-08-26 03:36:59.000000000 Z
+- name: monty
+  description: Monty is the missing complement to Python
+  package_url: https://pypi.org/project/monty
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/proxy_rewards/requirements.txt
+  detection_source: proxy_rewards/requirements.txt
+  last_updated_by: Yuyan Wang
+  last_updated_on: 2021-09-07 20:27:55.000000000 Z
+- name: more-itertools
+  description: More routines for operating on iterables, beyond itertools
+  package_url: https://pypi.org/project/more-itertools
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19947/default_0b0a94e1bdf3e64deeccb23892ca2335bdc30e4f.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/goemotions/requirements.txt
+  detection_source: goemotions/requirements.txt
+  last_updated_by: Google Research Team
+  last_updated_on: 2019-10-23 22:33:03.000000000 Z
+- name: mpi4py
+  description: Python bindings for MPI
+  package_url: https://pypi.org/project/mpi4py
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20336/default_53bf9855f0e48ff0ff9a86525b6cf27f25cb5007.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/cache_replacement/requirements.txt
+  detection_source: cache_replacement/requirements.txt
+  last_updated_by: Evan Liu
+  last_updated_on: 2020-06-29 19:45:43.000000000 Z
+- name: mpmath
+  description: Python library for arbitrary-precision floating-point arithmetic
+  package_url: https://pypi.org/project/mpmath
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/caltrain/requirements.txt
+  detection_source: caltrain/requirements.txt
+  last_updated_by: Becca Roelofs
+  last_updated_on: 2021-01-15 17:12:09.000000000 Z
+- name: msgpack
+  description: MessagePack
+  package_url: https://pypi.org/project/msgpack
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19934/default_63c8e7696ded615c51302c06e54b0d0c8ae9af3f.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/arithmetic_sampling/requirements.txt
+  detection_source: arithmetic_sampling/requirements.txt
+  last_updated_by: Luke Vilnis
+  last_updated_on: 2023-06-02 18:08:01.000000000 Z
+- name: multidict
+  description: Multidict implementation
+  package_url: https://pypi.org/project/multidict
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20160/default_8822b1755ae0c97a622ebcb1aa9cafa328004f81.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/multi_annotator/requirements.txt
+  detection_source: multi_annotator/requirements.txt
+  last_updated_by: Aida Davani
+  last_updated_on: 2022-12-23 02:06:33.000000000 Z
+- name: multiprocess
+  description: Better multiprocessing and multithreading in python
+  package_url: https://pypi.org/project/multiprocess
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20654/default_4658783a4f70e14bc0c2a151840ea9736539842c.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/multi_annotator/requirements.txt
+  detection_source: multi_annotator/requirements.txt
+  last_updated_by: Aida Davani
+  last_updated_on: 2022-12-23 02:06:33.000000000 Z
+- name: mwparserfromhell
+  description: MWParserFromHell is a parser for MediaWiki wikicode
+  package_url: https://pypi.org/project/mwparserfromhell
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/dense_representations_for_entity_retrieval/requirements.txt
+  detection_source: dense_representations_for_entity_retrieval/requirements.txt
+  last_updated_by: Larry Lansing
+  last_updated_on: 2019-10-29 00:03:02.000000000 Z
+- name: natsort
+  description: Simple yet flexible natural sorting in Python
+  package_url: https://pypi.org/project/natsort
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20143/default_1c2436d58f201b4fcdd3a2802eae3e5ee67142b3.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/cell_mixer/requirements.txt
+  detection_source: cell_mixer/requirements.txt
+  last_updated_by: Felix Raimundo
+  last_updated_on: 2020-04-27 08:21:40.000000000 Z
+- name: netCDF4
+  description: Provides an object-oriented python interface to the netCDF version
+    4 library
+  package_url: https://pypi.org/project/netCDF4
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/sd_gym/requirements.txt
+  detection_source: sd_gym/requirements.txt
+  last_updated_by: Emmanuel Klu
+  last_updated_on: 2023-09-14 22:00:10.000000000 Z
+- name: networkx
+  description: Python package for creating and manipulating graphs and networks
+  package_url: https://pypi.org/project/networkx
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19877/default_8902c10687fbcd6273bdbe119fff40fa1180763f.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/bigg/requirements.txt
+  detection_source: bigg/requirements.txt
+  last_updated_by: Hanjun Dai
+  last_updated_on: 2020-07-03 18:40:48.000000000 Z
+- name: nltk
+  description: Natural Language Toolkit
+  package_url: https://pypi.org/project/nltk
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20023/default_b0d1a54f127d7017fce41c15f5e85568fb7019ed.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/dissecting_factual_predictions/requirements.txt
+  detection_source: dissecting_factual_predictions/requirements.txt
+  last_updated_by: Mor Geva Pipek
+  last_updated_on: 2023-05-22 10:02:16.000000000 Z
+- name: nose
+  description: Nose extends unittest to make testing easier
+  package_url: https://pypi.org/project/nose
+  license: LGPL-2.1+
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19887/default_680f9274a97353753534797409b2c06b6bd32266.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/linear_dynamical_systems/requirements.txt
+  detection_source: linear_dynamical_systems/requirements.txt
+  last_updated_by: Mila Hardt
+  last_updated_on: 2019-07-12 23:24:45.000000000 Z
+- name: numba
+  description: Compiling Python code using LLVM
+  package_url: https://pypi.org/project/numba
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20053/default_9f5ca9b3fcd68c068d4026e56ab738e8e865691f.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/scrna_benchmark/requirements.txt
+  detection_source: scrna_benchmark/requirements.txt
+  last_updated_by: Felix Raimundo
+  last_updated_on: 2020-04-28 22:42:48.000000000 Z
+- name: numpydoc
+  description: Sphinx extension to support docstrings in Numpy format
+  package_url: https://pypi.org/project/numpydoc
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20527/default_01d756fcaf12880a90d14748cc7c26fc0d526e2a.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/concept_explanations/requirements.txt
+  detection_source: concept_explanations/requirements.txt
+  last_updated_by: Chih-Kuan Yeh
+  last_updated_on: 2019-11-15 05:40:22.000000000 Z
+- name: oauth2client
+  description: OAuth 2.0 client library
+  package_url: https://pypi.org/project/oauth2client
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19956/default_1965f66bb5a4d2eb7b31193d7be6d8a9041d02b9.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/caltrain/requirements.txt
+  detection_source: caltrain/requirements.txt
+  last_updated_by: Becca Roelofs
+  last_updated_on: 2021-01-15 17:12:09.000000000 Z
+- name: oauthlib
+  description: A generic
+  package_url: https://pypi.org/project/oauthlib
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20048/default_d9e0956c82c17d568b62f3b0d5e2080c1e501e59.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/abps/requirements.txt
+  detection_source: abps/requirements.txt
+  last_updated_by: Rui Wu
+  last_updated_on: 2020-01-09 02:27:30.000000000 Z
+- name: openai
+  description: The official Python library for the openai API
+  package_url: https://pypi.org/project/openai
+  open_source: false
+  hosted_saas: false
+  category: Build, Test, Deploy
+  sub_category: Package Managers
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/deplot/requirements.txt
+  detection_source: deplot/requirements.txt
+  last_updated_by: Julian Eisenschlos
+  last_updated_on: 2023-03-08 14:35:32.000000000 Z
+- name: opencv-python
+  description: Wrapper package for OpenCV python bindings
+  package_url: https://pypi.org/project/opencv-python
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/abps/requirements.txt
+  detection_source: abps/requirements.txt
+  last_updated_by: Rui Wu
+  last_updated_on: 2020-01-09 02:27:30.000000000 Z
+- name: parameterized
+  description: Parameterized testing with any Python test framework
+  package_url: https://pypi.org/project/parameterized
+  license: BSD-2-Clause-FreeBSD
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/smu/requirements.txt
+  detection_source: smu/requirements.txt
+  last_updated_by: pfrstg
+  last_updated_on: 2021-09-13 17:48:50.000000000 Z
+- name: paramiko
+  description: SSH2 protocol library
+  package_url: https://pypi.org/project/paramiko
+  license: LGPL-2.1
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19896/default_4343f8bba4f6051641ffca8b4fbe9b099402c84d.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/strategic_exploration/requirements.txt
+  detection_source: strategic_exploration/requirements.txt
+  last_updated_by: Evan Liu
+  last_updated_on: 2020-06-26 20:52:53.000000000 Z
+- name: pathlib2
+  description: Object-oriented filesystem paths
+  package_url: https://pypi.org/project/pathlib2
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19954/default_1965f66bb5a4d2eb7b31193d7be6d8a9041d02b9.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/strategic_exploration/requirements.txt
+  detection_source: strategic_exploration/requirements.txt
+  last_updated_by: Evan Liu
+  last_updated_on: 2020-06-26 20:52:53.000000000 Z
+- name: pathtools
+  description: File system general utilities
+  package_url: https://pypi.org/project/pathtools
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20711/default_3275977d966f697dfd31303c8596879bc8abff5d.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/bigger_better_faster/bbf/requirements_long.txt
+  detection_source: bigger_better_faster/bbf/requirements_long.txt
+  last_updated_by: Max Schwarzer
+  last_updated_on: 2023-03-22 23:36:18.000000000 Z
+- name: patool
+  description: Portable archive file manager
+  package_url: https://pypi.org/project/patool
+  license: GPL-3.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/tft/requirements.txt
+  detection_source: tft/requirements.txt
+  last_updated_by: Bryan Lim
+  last_updated_on: 2019-12-19 18:04:12.000000000 Z
+- name: patsy
+  description: A Python package for describing statistical models and for building
+    design matrices
+  package_url: https://pypi.org/project/patsy
+  license: BSD-2-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/goemotions/requirements.txt
+  detection_source: goemotions/requirements.txt
+  last_updated_by: Google Research Team
+  last_updated_on: 2019-10-23 22:33:03.000000000 Z
+- name: pbr
+  description: Python Build Reasonableness
+  package_url: https://pypi.org/project/pbr
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19861/default_4a8a8fdc10130068bf295812b98e9b72fb42fe70.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/eeg_modelling/requirements.txt
+  detection_source: eeg_modelling/requirements.txt
+  last_updated_by: Pablo Pino
+  last_updated_on: 2019-03-13 22:40:19.000000000 Z
+- name: plotly
+  description: An open-source, interactive graphing library for Python
+  package_url: https://pypi.org/project/plotly
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20062/default_7d86b2789b7e98a881e37db483c09c6a1aa3e995.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/psyborgs/requirements.txt
+  detection_source: psyborgs/requirements.txt
+  last_updated_by: Clément CREPY
+  last_updated_on: 2023-02-27 14:41:13.000000000 Z
+- name: portalocker
+  description: Wraps the portalocker recipe for easy usage
+  package_url: https://pypi.org/project/portalocker
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20277/default_267c21fe20acb6a3a56ea60f8b271e1ab445049d.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/felix/requirements.txt
+  detection_source: felix/requirements.txt
+  last_updated_by: Jonathan Mallinson
+  last_updated_on: 2022-07-18 13:03:16.000000000 Z
+- name: portpicker
+  description: A library to choose unique available network ports
+  package_url: https://pypi.org/project/portpicker
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/aux_tasks/requirements.txt
+  detection_source: aux_tasks/requirements.txt
+  last_updated_by: Joshua Greaves
+  last_updated_on: 2022-06-06 16:21:31.000000000 Z
+- name: praw
+  description: PRAW
+  package_url: https://pypi.org/project/praw
+  license: BSD-2-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20605/default_3aa7d93e5dadf8a0123c65abeccd198669792007.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/goemotions/requirements.txt
+  detection_source: goemotions/requirements.txt
+  last_updated_by: Google Research Team
+  last_updated_on: 2019-10-23 22:33:03.000000000 Z
+- name: progressbar2
+  description: A Python Progressbar library to provide visual
+  package_url: https://pypi.org/project/progressbar2
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19984/default_ccb381b493daf0d966e015380e1894fdbc637ad3.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/cache_replacement/requirements.txt
+  detection_source: cache_replacement/requirements.txt
+  last_updated_by: Evan Liu
+  last_updated_on: 2020-06-29 19:45:43.000000000 Z
+- name: promise
+  description: Promises/A+ implementation for Python
+  package_url: https://pypi.org/project/promise
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20474/default_4678b3a0f8bef4a4806a0b8511b2c80a0421ef77.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/arithmetic_sampling/requirements.txt
+  detection_source: arithmetic_sampling/requirements.txt
+  last_updated_by: Luke Vilnis
+  last_updated_on: 2023-06-02 18:08:01.000000000 Z
+- name: py
+  description: Library with cross-python path
+  package_url: https://pypi.org/project/py
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19962/default_61e35171bd9c0e5c5b88b2e4221ca242576ad8c0.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/concept_explanations/requirements.txt
+  detection_source: concept_explanations/requirements.txt
+  last_updated_by: Chih-Kuan Yeh
+  last_updated_on: 2019-11-15 05:40:22.000000000 Z
+- name: py-cpuinfo
+  description: Get CPU info with pure Python 2 &amp; 3
+  package_url: https://pypi.org/project/py-cpuinfo
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20537/default_52d2f08f040a1790bf5567e89e8ae1d74d6ff118.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/felix/requirements.txt
+  detection_source: felix/requirements.txt
+  last_updated_by: Jonathan Mallinson
+  last_updated_on: 2022-07-18 13:03:16.000000000 Z
+- name: pyarrow
+  description: Python library for Apache Arrow
+  package_url: https://pypi.org/project/pyarrow
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20366/default_20f72d65682b6cad9939bcf162d0ef14fced900c.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/On_Combining_Bags_to_Better_Learn_from_Label_Proportions/Large_dataset/requirements.txt
+  detection_source: On_Combining_Bags_to_Better_Learn_from_Label_Proportions/Large_dataset/requirements.txt
+  last_updated_by: Rishi Saket
+  last_updated_on: 2022-02-18 03:37:05.000000000 Z
+- name: pyasn1
+  description: ASN.1 types and codecs
+  package_url: https://pypi.org/project/pyasn1
+  license: BSD-2-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19915/default_37434feaacace26053e41d6e4802560af16ebe44.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/abps/requirements.txt
+  detection_source: abps/requirements.txt
+  last_updated_by: Rui Wu
+  last_updated_on: 2020-01-09 02:27:30.000000000 Z
+- name: pyasn1-modules
+  description: A collection of ASN.1-based protocols modules
+  package_url: https://pypi.org/project/pyasn1-modules
+  license: BSD-2-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20090/default_36085c16346155862c5c1303e8a0a70416453533.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/abps/requirements.txt
+  detection_source: abps/requirements.txt
+  last_updated_by: Rui Wu
+  last_updated_on: 2020-01-09 02:27:30.000000000 Z
+- name: pycollada
+  description: Python library for reading and writing collada documents
+  package_url: https://pypi.org/project/pycollada
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/nerflets/requirements.txt
+  detection_source: nerflets/requirements.txt
+  last_updated_by: Xiaoshuai Zhang
+  last_updated_on: 2022-12-02 18:53:58.000000000 Z
+- name: pycountry
+  description: ISO country
+  package_url: https://pypi.org/project/pycountry
+  license: LGPL-2.1
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20278/default_652c0d6bf7921ddf8ce908ae573d5eb3b8bff19f.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/homophonous_logography/requirements.txt
+  detection_source: homophonous_logography/requirements.txt
+  last_updated_by: Alexander Gutkin
+  last_updated_on: 2021-06-18 01:33:30.000000000 Z
+- name: pydantic
+  description: Data validation and settings management using python 3.6 type hinting
+  package_url: https://pypi.org/project/pydantic
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20022/default_b0d1a54f127d7017fce41c15f5e85568fb7019ed.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/qsp_quantum_metrology/requirements.txt
+  detection_source: qsp_quantum_metrology/requirements.txt
+  last_updated_by: Raj Sinha
+  last_updated_on: 2023-06-04 17:08:48.000000000 Z
+- name: pydot
+  description: Python interface to Graphviz's Dot
+  package_url: https://pypi.org/project/pydot
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20337/default_1a060bd30ca72545354e1c3d92e9b224f6c0e5e2.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/frechet_audio_distance/requirements.txt
+  detection_source: frechet_audio_distance/requirements.txt
+  last_updated_by: Kevin Kilgour
+  last_updated_on: 2019-02-11 07:42:48.000000000 Z
+- name: pydub
+  description: Manipulate audio with an simple and easy high level interface
+  package_url: https://pypi.org/project/pydub
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/cola/requirements.txt
+  detection_source: cola/requirements.txt
+  last_updated_by: Neil Zeghidour
+  last_updated_on: 2020-10-21 08:47:56.000000000 Z
+- name: pyglet
+  description: Cross-platform windowing and multimedia library
+  package_url: https://pypi.org/project/pyglet
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20301/default_1801c4854c9a56a25ccd7b33a13647a1e901ed84.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/abps/requirements.txt
+  detection_source: abps/requirements.txt
+  last_updated_by: Rui Wu
+  last_updated_on: 2020-01-09 02:27:30.000000000 Z
+- name: pyhocon
+  description: HOCON parser for Python
+  package_url: https://pypi.org/project/pyhocon
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20607/default_93d98333cbac8605aadd4d1a8ec739457f82f515.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/strategic_exploration/requirements.txt
+  detection_source: strategic_exploration/requirements.txt
+  last_updated_by: Evan Liu
+  last_updated_on: 2020-06-26 20:52:53.000000000 Z
+- name: pymongo
+  description: Python driver for MongoDB &lt;http://www.mongodb.org&gt;
+  package_url: https://pypi.org/project/pymongo
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19865/default_7975a21f3bf03129dc3bc4168cf7cb7ee2cc14cc.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/scrna_benchmark/requirements.txt
+  detection_source: scrna_benchmark/requirements.txt
+  last_updated_by: Felix Raimundo
+  last_updated_on: 2020-04-28 22:42:48.000000000 Z
+- name: pypng
+  description: Pure Python PNG image encoder/decoder
+  package_url: https://pypi.org/project/pypng
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/hierarchical_foresight/requirements.txt
+  detection_source: hierarchical_foresight/requirements.txt
+  last_updated_by: Suraj Nair
+  last_updated_on: 2019-07-25 20:11:05.000000000 Z
+- name: pystan
+  description: Python interface to Stan, a package for Bayesian inference
+  package_url: https://pypi.org/project/pystan
+  license: ISC
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/neutra/requirements.txt
+  detection_source: neutra/requirements.txt
+  last_updated_by: Pavel Sountsov
+  last_updated_on: 2019-03-01 19:14:12.000000000 Z
+- name: python-rapidjson
+  description: Python wrapper around rapidjson
+  package_url: https://pypi.org/project/python-rapidjson
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20630/default_78ec26600ac4986ddf0c6f11d3354b2096358a48.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/qsp_quantum_metrology/requirements.txt
+  detection_source: qsp_quantum_metrology/requirements.txt
+  last_updated_by: Raj Sinha
+  last_updated_on: 2023-06-04 17:08:48.000000000 Z
+- name: python-slugify
+  description: A Python Slugify application that handles Unicode
+  package_url: https://pypi.org/project/python-slugify
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19986/default_aa331bbc48e2faa54aa26e08880b772595f833b8.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/felix/requirements.txt
+  detection_source: felix/requirements.txt
+  last_updated_by: Jonathan Mallinson
+  last_updated_on: 2022-07-18 13:03:16.000000000 Z
+- name: python-snappy
+  description: Python library for the snappy compression library from Google
+  package_url: https://pypi.org/project/python-snappy
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/smu/requirements.txt
+  detection_source: smu/requirements.txt
+  last_updated_by: pfrstg
+  last_updated_on: 2021-12-16 17:07:17.000000000 Z
+- name: python-utils
+  description: Python Utils is a module with some convenient utilities not included
+    with the standard Python install
+  package_url: https://pypi.org/project/python-utils
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/cache_replacement/requirements.txt
+  detection_source: cache_replacement/requirements.txt
+  last_updated_by: Evan Liu
+  last_updated_on: 2020-06-29 19:45:43.000000000 Z
+- name: pytz
+  description: World timezone definitions, modern and historical
+  package_url: https://pypi.org/project/pytz
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19841/default_bb711fa267b2329ed689711a5adb7d9e74610b20.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/active_selective_prediction/requirements.txt
+  detection_source: active_selective_prediction/requirements.txt
+  last_updated_by: Jiefeng Chen
+  last_updated_on: 2023-04-11 02:28:13.000000000 Z
+- name: readline
+  description: The standard Python readline extension statically linked against the
+    GNU readline library
+  package_url: https://pypi.org/project/readline
+  license: GPL-3.0-only
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/bnn_hmc/requirements.txt
+  detection_source: bnn_hmc/requirements.txt
+  last_updated_by: Pavel Izmailov
+  last_updated_on: 2021-05-06 19:12:46.000000000 Z
+- name: regex
+  description: Alternative regular expression module, to replace re
+  package_url: https://pypi.org/project/regex
+  license: Python-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19923/default_c8be5290cb8d8a8b578535a2c6475d1057ff4ea4.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/compositional_rl/gwob/setup.py
+  detection_source: compositional_rl/gwob/setup.py
+  last_updated_by: Izzeddin Gur
+  last_updated_on: 2023-01-04 20:43:17.000000000 Z
+- name: requests-oauthlib
+  description: OAuthlib authentication support for Requests
+  package_url: https://pypi.org/project/requests-oauthlib
+  license: ISC
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19926/default_bb29140b72c0fb9789e567bba0ef0ffadeaef5d4.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/abps/requirements.txt
+  detection_source: abps/requirements.txt
+  last_updated_by: Rui Wu
+  last_updated_on: 2020-01-09 02:27:30.000000000 Z
+- name: responses
+  description: A utility library for mocking out the `requests` Python library
+  package_url: https://pypi.org/project/responses
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20167/default_7c58f8c011d1676d1d010f43fec5e502e542d0a5.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/multi_annotator/requirements.txt
+  detection_source: multi_annotator/requirements.txt
+  last_updated_by: Aida Davani
+  last_updated_on: 2022-12-23 02:06:33.000000000 Z
+- name: retrying
+  description: Retrying
+  package_url: https://pypi.org/project/retrying
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20013/default_70556f9333e0a39c148cac0c36ca24235943f270.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/qsp_quantum_metrology/requirements.txt
+  detection_source: qsp_quantum_metrology/requirements.txt
+  last_updated_by: Raj Sinha
+  last_updated_on: 2023-06-04 17:08:48.000000000 Z
+- name: rfc3339
+  description: Format dates according to the RFC 3339
+  package_url: https://pypi.org/project/rfc3339
+  license: ISC
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/qsp_quantum_metrology/requirements.txt
+  detection_source: qsp_quantum_metrology/requirements.txt
+  last_updated_by: Raj Sinha
+  last_updated_on: 2023-06-04 17:08:48.000000000 Z
+- name: rfc3986
+  description: Validating URI References per RFC 3986
+  package_url: https://pypi.org/project/rfc3986
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20777/default_74411707371071ab6c9ae681affcb4bcdaf29029.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/qsp_quantum_metrology/requirements.txt
+  detection_source: qsp_quantum_metrology/requirements.txt
+  last_updated_by: Raj Sinha
+  last_updated_on: 2023-06-04 17:08:48.000000000 Z
+- name: rpy2
+  description: Python interface to the R language
+  package_url: https://pypi.org/project/rpy2
+  license: GPL-2.0+
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/hmc_swindles/requirements.txt
+  detection_source: hmc_swindles/requirements.txt
+  last_updated_by: Pavel Sountsov
+  last_updated_on: 2020-02-25 22:44:32.000000000 Z
+- name: rsa
+  description: Pure-Python RSA implementation
+  package_url: https://pypi.org/project/rsa
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20021/default_faea030602e3d71554c57e6fc53190ac830da00d.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/abps/requirements.txt
+  detection_source: abps/requirements.txt
+  last_updated_by: Rui Wu
+  last_updated_on: 2020-01-09 02:27:30.000000000 Z
+- name: ruamel.yaml
+  description: Ruamel.yaml is a YAML parser/emitter that supports roundtrip preservation
+    of comments
+  package_url: https://pypi.org/project/ruamel.yaml
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19918/default_c8be5290cb8d8a8b578535a2c6475d1057ff4ea4.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/qsp_quantum_metrology/requirements.txt
+  detection_source: qsp_quantum_metrology/requirements.txt
+  last_updated_by: Raj Sinha
+  last_updated_on: 2023-06-04 17:08:48.000000000 Z
+- name: s3transfer
+  description: An Amazon S3 Transfer Manager
+  package_url: https://pypi.org/project/s3transfer
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20042/default_15ea2ed8281eccea374610791971ca44800f16ec.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/graph_embedding/monet/requirements.txt
+  detection_source: graph_embedding/monet/requirements.txt
+  last_updated_by: John Palowitch
+  last_updated_on: 2020-02-19 23:45:30.000000000 Z
+- name: sacrebleu
+  description: Hassle-free computation of shareable
+  package_url: https://pypi.org/project/sacrebleu
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/felix/requirements.txt
+  detection_source: felix/requirements.txt
+  last_updated_by: Jonathan Mallinson
+  last_updated_on: 2022-07-18 13:03:16.000000000 Z
+- name: scandir
+  description: Scandir, a better directory iterator and faster os.walk
+  package_url: https://pypi.org/project/scandir
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20172/default_61c5587692a15177a925ec9469e353b56dcc7b6a.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/strategic_exploration/requirements.txt
+  detection_source: strategic_exploration/requirements.txt
+  last_updated_by: Evan Liu
+  last_updated_on: 2020-06-26 20:52:53.000000000 Z
+- name: scikit-learn
+  description: A set of python modules for machine learning and data mining
+  package_url: https://pypi.org/project/scikit-learn
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19898/default_4343f8bba4f6051641ffca8b4fbe9b099402c84d.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/On_Combining_Bags_to_Better_Learn_from_Label_Proportions/Code/requirements.txt
+  detection_source: On_Combining_Bags_to_Better_Learn_from_Label_Proportions/Code/requirements.txt
+  last_updated_by: Rishi Saket
+  last_updated_on: 2022-02-18 03:37:05.000000000 Z
+- name: seaborn
+  description: 'Seaborn: statistical data visualization'
+  package_url: https://pypi.org/project/seaborn
+  license: BSD-1-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/aav/model_and_dataset_analysis/requirements.txt
+  detection_source: aav/model_and_dataset_analysis/requirements.txt
+  last_updated_by: Drew Bryant
+  last_updated_on: 2020-11-18 22:54:34.000000000 Z
+- name: semantic-version
+  description: A library implementing the 'SemVer' scheme
+  package_url: https://pypi.org/project/semantic-version
+  license: BSD-2-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20254/default_49d350d2ae446ec5a00ebd45eeeaa0c300409a71.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/hierarchical_foresight/requirements.txt
+  detection_source: hierarchical_foresight/requirements.txt
+  last_updated_by: Suraj Nair
+  last_updated_on: 2019-07-25 20:11:05.000000000 Z
+- name: sentry-sdk
+  description: Python client for Sentry
+  package_url: https://pypi.org/project/sentry-sdk
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19998/default_b31141ac99e60278dc869f5a0490a63444b590d7.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/bigger_better_faster/bbf/requirements_long.txt
+  detection_source: bigger_better_faster/bbf/requirements_long.txt
+  last_updated_by: Max Schwarzer
+  last_updated_on: 2023-03-22 23:36:18.000000000 Z
+- name: setproctitle
+  description: A Python module to customize the process title
+  package_url: https://pypi.org/project/setproctitle
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/bigger_better_faster/bbf/requirements_long.txt
+  detection_source: bigger_better_faster/bbf/requirements_long.txt
+  last_updated_by: Max Schwarzer
+  last_updated_on: 2023-03-22 23:36:18.000000000 Z
+- name: setuptools
+  description: Easily download
+  package_url: https://pypi.org/project/setuptools
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19831/default_65d1c12a133e1aa67ae96a1221c9c122ddf86c5f.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/bnn_hmc/requirements.txt
+  detection_source: bnn_hmc/requirements.txt
+  last_updated_by: Pavel Izmailov
+  last_updated_on: 2021-05-06 19:12:46.000000000 Z
+- name: setuptools-scm
+  description: The blessed package to manage your versions by scm tags
+  package_url: https://pypi.org/project/setuptools-scm
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20434/default_ddb692c01567b84e62be2bdf1939b66f9ea202da.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/scrna_benchmark/requirements.txt
+  detection_source: scrna_benchmark/requirements.txt
+  last_updated_by: Felix Raimundo
+  last_updated_on: 2020-04-28 22:42:48.000000000 Z
+- name: shortuuid
+  description: A generator library for concise
+  package_url: https://pypi.org/project/shortuuid
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/bigger_better_faster/bbf/requirements_long.txt
+  detection_source: bigger_better_faster/bbf/requirements_long.txt
+  last_updated_by: Max Schwarzer
+  last_updated_on: 2023-03-22 23:36:18.000000000 Z
+- name: simplegeneric
+  description: Simple generic functions
+  package_url: https://pypi.org/project/simplegeneric
+  license: ZPL-2.1
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/strategic_exploration/requirements.txt
+  detection_source: strategic_exploration/requirements.txt
+  last_updated_by: Evan Liu
+  last_updated_on: 2020-06-26 20:52:53.000000000 Z
+- name: simplejson
+  description: Simple, fast, extensible JSON encoder/decoder for Python
+  package_url: https://pypi.org/project/simplejson
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19859/default_4a8a8fdc10130068bf295812b98e9b72fb42fe70.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/hmc_swindles/requirements.txt
+  detection_source: hmc_swindles/requirements.txt
+  last_updated_by: Pavel Sountsov
+  last_updated_on: 2020-02-25 22:44:32.000000000 Z
+- name: sklearn
+  description: A set of python modules for machine learning and data mining
+  package_url: https://pypi.org/project/sklearn
+  license: Other
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/after_kernel/requirements.txt
+  detection_source: after_kernel/requirements.txt
+  last_updated_by: Phil Long
+  last_updated_on: 2021-05-17 23:54:45.000000000 Z
+- name: smart-open
+  description: Utils for streaming large files
+  package_url: https://pypi.org/project/smart-open
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/graph_embedding/monet/requirements.txt
+  detection_source: graph_embedding/monet/requirements.txt
+  last_updated_by: John Palowitch
+  last_updated_on: 2020-02-19 23:45:30.000000000 Z
+- name: smmap2
+  description: A pure Python implementation of a sliding window memory map manager
+  package_url: https://pypi.org/project/smmap2
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/strategic_exploration/requirements.txt
+  detection_source: strategic_exploration/requirements.txt
+  last_updated_by: Evan Liu
+  last_updated_on: 2020-06-26 20:52:53.000000000 Z
+- name: sortedcontainers
+  description: Sorted Containers -- Sorted List, Sorted Dict, Sorted Set
+  package_url: https://pypi.org/project/sortedcontainers
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/qsp_quantum_metrology/requirements.txt
+  detection_source: qsp_quantum_metrology/requirements.txt
+  last_updated_by: Raj Sinha
+  last_updated_on: 2023-06-04 17:08:48.000000000 Z
+- name: spacy
+  description: Industrial-strength Natural Language Processing
+  package_url: https://pypi.org/project/spacy
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20263/default_1842575018db691e6f93d8a9a1aa65cdc2a55c20.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/tide_nlp/requirements.txt
+  detection_source: tide_nlp/requirements.txt
+  last_updated_by: Emmanuel Klu
+  last_updated_on: 2023-09-14 21:57:26.000000000 Z
+- name: statsmodels
+  description: Statistical computations and models for Python
+  package_url: https://pypi.org/project/statsmodels
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/caltrain/requirements.txt
+  detection_source: caltrain/requirements.txt
+  last_updated_by: Becca Roelofs
+  last_updated_on: 2021-01-15 17:12:09.000000000 Z
+- name: subprocess32
+  description: A backport of the subprocess module from Python 3 for use on 2.x
+  package_url: https://pypi.org/project/subprocess32
+  license: psfrag
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20120/default_480d32900476f532eb2077c5e672b5cb60c86e48.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/frechet_audio_distance/requirements.txt
+  detection_source: frechet_audio_distance/requirements.txt
+  last_updated_by: Kevin Kilgour
+  last_updated_on: 2019-02-11 07:42:48.000000000 Z
+- name: sympy
+  description: Computer algebra system
+  package_url: https://pypi.org/project/sympy
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19976/default_29192d68c64b1a3be468b1b73c2a129fc390c4f4.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/aloe/requirements.txt
+  detection_source: aloe/requirements.txt
+  last_updated_by: Hanjun Dai
+  last_updated_on: 2020-11-10 17:46:55.000000000 Z
+- name: tables
+  description: Hierarchical datasets for Python
+  package_url: https://pypi.org/project/tables
+  license: BSD-2-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/scrna_benchmark/requirements.txt
+  detection_source: scrna_benchmark/requirements.txt
+  last_updated_by: Felix Raimundo
+  last_updated_on: 2020-04-28 22:42:48.000000000 Z
+- name: tabulate
+  description: Pretty-print tabular data
+  package_url: https://pypi.org/project/tabulate
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19864/default_7975a21f3bf03129dc3bc4168cf7cb7ee2cc14cc.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/bigger_better_faster/bbf/requirements_long.txt
+  detection_source: bigger_better_faster/bbf/requirements_long.txt
+  last_updated_by: Max Schwarzer
+  last_updated_on: 2023-03-22 23:36:18.000000000 Z
+- name: tenacity
+  description: Retry code until it succeeds
+  package_url: https://pypi.org/project/tenacity
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20027/default_fd02050783f95269bfcc5c4d11f1c75dd423cd1d.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/ieg/requirements.txt
+  detection_source: ieg/requirements.txt
+  last_updated_by: Zizhao Zhang
+  last_updated_on: 2021-09-08 03:52:49.000000000 Z
+- name: tensorboard
+  description: TensorBoard lets you watch Tensors Flow
+  package_url: https://pypi.org/project/tensorboard
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/abps/requirements.txt
+  detection_source: abps/requirements.txt
+  last_updated_by: Rui Wu
+  last_updated_on: 2020-01-09 02:27:30.000000000 Z
+- name: tensorboardX
+  description: TensorBoardX lets you watch Tensors Flow without Tensorflow
+  package_url: https://pypi.org/project/tensorboardX
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20698/default_4378cb8505402011f45fcf251eb0ebcc26c98194.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/lego/setup.py
+  detection_source: lego/setup.py
+  last_updated_by: Hanjun Dai
+  last_updated_on: 2022-02-23 22:30:59.000000000 Z
+- name: tensorflow-metadata
+  description: Library and standards for schema and statistics
+  package_url: https://pypi.org/project/tensorflow-metadata
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/active_selective_prediction/requirements.txt
+  detection_source: active_selective_prediction/requirements.txt
+  last_updated_by: Jiefeng Chen
+  last_updated_on: 2023-04-11 02:28:13.000000000 Z
+- name: tensorflow-probability
+  description: Probabilistic modeling and statistical inference in TensorFlow
+  package_url: https://pypi.org/project/tensorflow-probability
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/algae_dice/requirements.txt
+  detection_source: algae_dice/requirements.txt
+  last_updated_by: Ofir Nachum
+  last_updated_on: 2020-01-16 20:51:26.000000000 Z
+- name: termcolor
+  description: ANSII Color formatting for output in terminal
+  package_url: https://pypi.org/project/termcolor
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20014/default_9e735547ab71630330a9e635a78e5cedca9ba560.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/abps/requirements.txt
+  detection_source: abps/requirements.txt
+  last_updated_by: Rui Wu
+  last_updated_on: 2020-01-09 02:27:30.000000000 Z
+- name: text-unidecode
+  description: The most basic Text::Unidecode port
+  package_url: https://pypi.org/project/text-unidecode
+  license: Artistic-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/felix/requirements.txt
+  detection_source: felix/requirements.txt
+  last_updated_by: Jonathan Mallinson
+  last_updated_on: 2022-07-18 13:03:16.000000000 Z
+- name: toml
+  description: Python Library for Tom's Obvious, Minimal Language
+  package_url: https://pypi.org/project/toml
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19912/default_bc82f0b22ca8fd942e21c317967f4ab61f43eb2c.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/arithmetic_sampling/requirements.txt
+  detection_source: arithmetic_sampling/requirements.txt
+  last_updated_by: Luke Vilnis
+  last_updated_on: 2023-06-02 18:08:01.000000000 Z
+- name: toolz
+  description: List processing tools and functional utilities
+  package_url: https://pypi.org/project/toolz
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20079/default_7ab6b1c940c208874d4a483f0d832c7b45b3d24e.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/arithmetic_sampling/requirements.txt
+  detection_source: arithmetic_sampling/requirements.txt
+  last_updated_by: Luke Vilnis
+  last_updated_on: 2023-06-02 18:08:01.000000000 Z
+- name: trimesh
+  description: Import, export, process, analyze and view triangular meshes
+  package_url: https://pypi.org/project/trimesh
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/human_object_interaction/requirements.txt
+  detection_source: human_object_interaction/requirements.txt
+  last_updated_by: Nilesh Kulkarni
+  last_updated_on: 2022-08-20 00:01:01.000000000 Z
+- name: typeguard
+  description: Run-time type checker for Python
+  package_url: https://pypi.org/project/typeguard
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20631/default_d09e302052af111fe85036106be862ae3cddee11.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/abps/requirements.txt
+  detection_source: abps/requirements.txt
+  last_updated_by: Rui Wu
+  last_updated_on: 2020-01-09 02:27:30.000000000 Z
+- name: typing
+  description: Type Hints for Python
+  package_url: https://pypi.org/project/typing
+  license: Python-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19868/default_bd86f80ade48cfe191d5781a2efa0e66fa22163a.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/f_net/requirements.txt
+  detection_source: f_net/requirements.txt
+  last_updated_by: James Lee-Thorp
+  last_updated_on: 2021-06-18 01:05:33.000000000 Z
+- name: typing-inspect
+  description: Runtime inspection utilities for typing module
+  package_url: https://pypi.org/project/typing-inspect
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/arithmetic_sampling/requirements.txt
+  detection_source: arithmetic_sampling/requirements.txt
+  last_updated_by: Luke Vilnis
+  last_updated_on: 2023-06-02 18:08:01.000000000 Z
+- name: uritemplate
+  description: URI templates
+  package_url: https://pypi.org/project/uritemplate
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20156/default_0a9d6219a6023591895a9db3a2e96da524d7a0a8.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/felix/requirements.txt
+  detection_source: felix/requirements.txt
+  last_updated_by: Jonathan Mallinson
+  last_updated_on: 2022-07-18 13:03:16.000000000 Z
+- name: urwid
+  description: A full-featured console
+  package_url: https://pypi.org/project/urwid
+  license: Other
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20046/default_b0b684477aefb2da4c92a4bafd91d26e16511cd1.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/q_match/requirements.txt
+  detection_source: q_match/requirements.txt
+  last_updated_by: Tommy Mulc
+  last_updated_on: 2023-02-22 19:08:26.000000000 Z
+- name: virtualenv
+  description: Virtual Python Environment builder
+  package_url: https://pypi.org/project/virtualenv
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19970/default_1c8812e05cf754e8f654b8d86b3f025827f5bfb6.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/strategic_exploration/requirements.txt
+  detection_source: strategic_exploration/requirements.txt
+  last_updated_by: Evan Liu
+  last_updated_on: 2020-06-26 20:52:53.000000000 Z
+- name: wget
+  description: Pure python download utility
+  package_url: https://pypi.org/project/wget
+  license: Unlicense
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/pypi/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/business_metric_aware_forecasting/requirements.txt
+  detection_source: business_metric_aware_forecasting/requirements.txt
+  last_updated_by: Helen Zhou
+  last_updated_on: 2023-03-10 16:12:24.000000000 Z
+- name: wrapt
+  description: Module for decorators, wrappers and monkey patching
+  package_url: https://pypi.org/project/wrapt
+  license: BSD-2-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19946/default_0b0a94e1bdf3e64deeccb23892ca2335bdc30e4f.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/abps/requirements.txt
+  detection_source: abps/requirements.txt
+  last_updated_by: Rui Wu
+  last_updated_on: 2020-01-09 02:27:30.000000000 Z
+- name: xarray
+  description: N-D labeled arrays and datasets in Python
+  package_url: https://pypi.org/project/xarray
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20331/default_cf6b540611cb9b9b5d016a661f54f50ad3400f1a.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/seeds/pyproject.toml
+  detection_source: seeds/pyproject.toml
+  last_updated_by: Lizao (Larry) Li
+  last_updated_on: 2023-12-14 02:24:57.000000000 Z
+- name: xlrd
+  description: Library for developers to extract data from Microsoft Excel
+  package_url: https://pypi.org/project/xlrd
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20182/default_3d320a0aa731f16ceb0e7b6999ca7f7cd784aee2.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/isl/requirements.txt
+  detection_source: isl/requirements.txt
+  last_updated_by: Sercan Arik
+  last_updated_on: 2022-05-23 22:22:02.000000000 Z
+- name: xxhash
+  description: Python binding for xxHash
+  package_url: https://pypi.org/project/xxhash
+  license: BSD-2-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20358/default_a54cbb457d7aac7ab53484c3473848dbdd84d806.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/multi_annotator/requirements.txt
+  detection_source: multi_annotator/requirements.txt
+  last_updated_by: Aida Davani
+  last_updated_on: 2022-12-23 02:06:33.000000000 Z
+- name: yarl
+  description: Yet another URL library
+  package_url: https://pypi.org/project/yarl
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20083/default_d8789f2f1b5b4e9994bef68371453a20460b4d6e.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/multi_annotator/requirements.txt
+  detection_source: multi_annotator/requirements.txt
+  last_updated_by: Aida Davani
+  last_updated_on: 2022-12-23 02:06:33.000000000 Z
+- name: z3-solver
+  description: An efficient SMT solver library
+  package_url: https://pypi.org/project/z3-solver
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20804/default_d09da191e9459b4eb59673cb60c54a61ef4b6803.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/smug_saliency/requirements.txt
+  detection_source: smug_saliency/requirements.txt
+  last_updated_by: Subham Sekhar Sahoo
+  last_updated_on: 2021-03-23 04:11:59.000000000 Z
+- name: zmq
+  description: You are probably looking for pyzmq
+  package_url: https://pypi.org/project/zmq
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20502/default_c208341ee4655965db6cf28c0d1b24d79c6c86c4.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/cache_replacement/requirements.txt
+  detection_source: cache_replacement/requirements.txt
+  last_updated_by: Evan Liu
+  last_updated_on: 2020-06-29 19:45:43.000000000 Z
+- name: junit:junit
+  description: JUnit is a unit testing framework for Java
+  license: EPL-1.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/filipeoliveiraa/google-research/blob/master/dual_pixels/app/build.gradle
+  detection_source: dual_pixels/app/build.gradle
+  last_updated_by: Neal Wadhwa
+  last_updated_on: 2019-10-22 21:29:14.000000000 Z
