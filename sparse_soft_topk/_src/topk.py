@@ -19,6 +19,7 @@ import functools
 
 import jax
 import jax.numpy as jnp
+
 from sparse_soft_topk._src import isotonic_dykstra
 from sparse_soft_topk._src import isotonic_pav
 
