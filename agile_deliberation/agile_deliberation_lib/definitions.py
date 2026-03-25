@@ -18,6 +18,7 @@
 import logging
 from typing import Optional, Union, Any
 import xml.etree.ElementTree as ET
+
 from agile_deliberation.agile_deliberation_lib import image as image_py
 from agile_deliberation.agile_deliberation_lib import utils
 
@@ -158,7 +159,6 @@ class Definition:
     """
     new_definition_xml = new_definition.print_definition()
     self.parse_xml_string(new_definition_xml)
-
 
   def copy(self):
     """Copy a definition.
