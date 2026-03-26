@@ -102,6 +102,12 @@ def get_base_config():
   config.dataset.image_size = 840
   config.dataset.exclude_classes = []
 
+  config.eval = ml_collections.ConfigDict()
+  config.eval.run_eval = False
+  config.eval.eval_batch_size = 4
+  config.eval.confidence_threshold = 0.3
+  config.eval.eval_json = ""
+
   # Platform and Hardware settings
   config.platform = ml_collections.ConfigDict()
   # Specific requirements (e.g., "a100=1", "h100=4", "viperlite=2x2")

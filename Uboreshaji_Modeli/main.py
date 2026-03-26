@@ -19,6 +19,7 @@ import datetime
 import json
 import sys
 import tempfile
+import time
 
 from absl import app
 from absl import flags
@@ -79,6 +80,7 @@ def main(argv):
   else:
     raise app.UsageError("Either --config or --config_json must be provided.")
 
+  # --- Allow flags to override config values ---
   if _MODEL_ID.value:
     cfg.model_id = _MODEL_ID.value
   if _DATASET_PATH.value:
@@ -107,6 +109,8 @@ def main(argv):
   train_split = dataset_root[cfg.dataset.train_split]
   eval_split = dataset_root[cfg.dataset.eval_split]
   if isinstance(train_split, data.datasets.Dataset):
+    # --- START: Mapping Logic ---
+
     # 1. Get the dataset's own CANONICAL mapping.
     #    Stable map from integer to name for this version of the dataset.
     dataset_id2label = train_split.features["objects"]["category"].feature.names
@@ -126,6 +130,8 @@ def main(argv):
     model_label2id = {name: i for i, name in enumerate(valid_categories)}
     num_classes = len(valid_categories)
     text_inputs = valid_categories  # The model gets the filtered list of names.
+
+    # --- END: New Robust Mapping Logic ---
 
     # Prepare Split and Transforms, PASSING the stable map to the transform.
     transform_fn = engine.get_transform_fn(
@@ -204,9 +210,41 @@ def main(argv):
       ],
   )
 
+  start_time = time.monotonic()
   logging.info("Starting training...")
   custom_trainer.train(resume_from_checkpoint=False)
 
+
+  logging.info("Running final evaluation...")
+  eval_results = custom_trainer.evaluate()
+  logging.info("Final eval results: %s", eval_results)
+
+  train_loss = None
+  for entry in reversed(custom_trainer.state.log_history):
+    if "loss" in entry:
+      train_loss = entry["loss"]
+      break
+
+  train_metrics = {
+      "status": "COMPLETED",
+      "total_steps": custom_trainer.state.global_step,
+      "wall_clock_seconds": round(time.monotonic() - start_time),
+  }
+  if train_loss is not None:
+    train_metrics["train_loss"] = train_loss
+
+  publisher_eval = metrics.format_for_publisher(
+      eval_results=eval_results,
+      label_names=valid_categories,
+      model_label2id=model_label2id,
+      train_metrics=train_metrics,
+  )
+  eval_json_path = output_path / "evaluation.json"
+  eval_json_path.write_text(json.dumps(publisher_eval, indent=2, default=str))
+  logging.info("Saved evaluation.json to %s", eval_json_path)
+
+  cfg.eval.eval_json = str(eval_json_path)
+  config_save_path.write_text(json.dumps(cfg.to_dict(), indent=2, default=str))
 
 if __name__ == "__main__":
   flags.mark_flags_as_mutual_exclusive(["config", "config_json"], required=True)

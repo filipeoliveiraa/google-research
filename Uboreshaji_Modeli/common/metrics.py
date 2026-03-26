@@ -15,12 +15,26 @@
 
 """Metrics for object detection."""
 
-from typing import Callable
+from typing import Any, Callable, Mapping, MutableMapping, Sequence
 
+import immutabledict
 import torch
 from torchmetrics.detection import mean_ap
 
 from Uboreshaji_Modeli.common import box_utils
+
+_TORCHMETRICS_TO_PUBLISHER = immutabledict.immutabledict({
+    "map": "ap_overall",
+    "map_50": "ap_50",
+    "map_75": "ap_75",
+    "map_small": "ap_s",
+    "map_medium": "ap_m",
+    "map_large": "ap_l",
+    "mar_100": "ar_100",
+    "mar_small": "ar_s",
+    "mar_medium": "ar_m",
+    "mar_large": "ar_l",
+})
 
 
 def create_compute_metrics_fn(
@@ -28,7 +42,9 @@ def create_compute_metrics_fn(
 ):
   """Creates compute_metrics function for HF Trainer."""
   map_metric = mean_ap.MeanAveragePrecision(
-      box_format="xyxy", max_detection_thresholds=[10, 100, 1000]
+      box_format="xyxy",
+      max_detection_thresholds=[10, 100, 1000],
+      class_metrics=True,
   )
 
   def compute_metrics(eval_pred):
@@ -70,7 +86,7 @@ def create_compute_metrics_fn(
     map_metric.update(preds, targets)
     results = map_metric.compute()
 
-    return {
+    computed_metrics = {
         "map": results["map"].item(),
         "map_50": results["map_50"].item(),
         "map_75": results["map_75"].item(),
@@ -80,4 +96,51 @@ def create_compute_metrics_fn(
         "mar_medium": results["mar_medium"].item(),
         "mar_large": results["mar_large"].item(),
     }
+
+    return computed_metrics
   return compute_metrics
+
+
+def format_for_publisher(
+    *,
+    eval_results,
+    label_names,
+    model_label2id,
+    train_metrics = None,
+):
+  """Builds a unified evaluation dict for both publisher and result collection.
+
+  Args:
+    eval_results: Flat dict from compute_metrics (keys prefixed with "eval_").
+    label_names: Ordered list of class names used during training.
+    model_label2id: Mapping from label name to integer class id.
+    train_metrics: Optional dict with training metadata (e.g. train_loss,
+      total_steps, wall_clock_seconds, status).
+
+  Returns:
+    Dict containing flat metrics at the top level (for collect_results.py)
+    and the nested evaluation_metrics block (for parse_evaluation).
+  """
+  overall = {
+      pub_key: eval_results[f"eval_{tm_key}"]
+      for tm_key, pub_key in _TORCHMETRICS_TO_PUBLISHER.items()
+      if f"eval_{tm_key}" in eval_results
+  }
+
+  per_label = {
+      name: {"ap_50": eval_results[f"eval_map_50_class_{class_idx}"]}
+      for name, class_idx in model_label2id.items()
+      if f"eval_map_50_class_{class_idx}" in eval_results
+  }
+
+  return {
+      **(train_metrics if train_metrics else {}),
+      **{k: v for k, v in eval_results.items() if isinstance(v, (int, float))},
+      "label_names": label_names,
+      "evaluation_metrics": {
+          "detection_metrics": {
+              "overall_metrics": overall,
+              "per_label_metrics": per_label,
+          },
+      },
+  }
