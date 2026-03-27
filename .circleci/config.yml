@@ -111,6 +111,7 @@ workflows:
                 - "towards_gan_benchmarks"
                 - "truss_decomposition"
                 - "towards_gan_benchmarks"
+                - "Uboreshaji_Modeli"
                 - "uflow"
                 - "wiki_split_bleu_eval"
                 - "wt5"
