@@ -134,7 +134,7 @@ def visualize_coord_fix(coords, acc, percentile=99.):
   """Visualize the "cell" each coordinate lives in, and highlight its edges."""
 
   # Round towards zero.
-  coords_fix = jnp.int32(jnp.fix(coords))
+  coords_fix = jnp.int32(jnp.trunc(coords))
 
   # A very hacky plus-shaped edge detector.
   coords_fix_pad = jnp.pad(coords_fix, [(1, 1), (1, 1), (0, 0)], 'edge')
