@@ -96,14 +96,6 @@ class SetCriterion(nn.Module):
         device=src_logits.device,
     )
 
-    # The last class is the "no-object" class. This logic is made robust to
-    # a potential off-by-one error in `self.num_classes`.
-    num_fg_classes = src_logits.shape[-1] - 1
-
-    # Initialize all queries to predict "no-object".
-    target_classes[:, :, num_fg_classes] = 1.0
-    # Matched queries should not predict "no-object".
-    target_classes[idx[0], idx[1], num_fg_classes] = 0.0
     # Matched queries should predict their assigned class.
     target_classes[idx[0], idx[1], target_classes_o] = 1.0
 
@@ -115,8 +107,12 @@ class SetCriterion(nn.Module):
         reduction="none",
     )
 
-    # Apply eos_coef to the "no-object" class loss to down-weight negatives.
-    loss_sigmoid_focal[:, :, num_fg_classes] *= self.eos_coef
+    is_negative = target_classes == 0.0
+    loss_sigmoid_focal = torch.where(
+        is_negative,
+        loss_sigmoid_focal * self.eos_coef,
+        loss_sigmoid_focal,
+    )
 
     return {"loss_sigmoid_focal": loss_sigmoid_focal.sum() / num_boxes}
 
@@ -157,10 +153,7 @@ class SetCriterion(nn.Module):
 
     # This logic is made robust to a potential off-by-one error in
     # `self.num_classes`.
-    num_fg_classes = pred_logits.shape[-1] - 1
-    card_pred = (
-        (pred_probs[:, :, :num_fg_classes].max(-1).values > 0.5).sum(1)
-    )
+    card_pred = (pred_probs.max(-1).values > 0.5).sum(1)
     return {
         "cardinality_error": F.l1_loss(card_pred.float(), tgt_lengths.float())
     }

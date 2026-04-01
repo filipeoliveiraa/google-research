@@ -93,9 +93,9 @@ class LossesTest(absltest.TestCase):
     )
     # Logits: Query 0 has high foreground (prob ~1),
     #         Query 1 has high background (prob ~1)
-    # Shape: (1, 2, 2) -> (batch, queries, classes)
-    # Classes: Index 0 is foreground, Index 1 is background (extra dimension)
-    logits = torch.tensor([[[10.0, -10.0], [-10.0, 10.0]]])
+    # Shape: (1, 2, 1) -> (batch, queries, classes)
+    # 1 queries, 1 class (all foreground, no background sink)
+    logits = torch.tensor([[[10.0], [-10.0]]])
     outputs = {"logits": logits}
     targets = [{"class_labels": torch.tensor([0])}]
 
@@ -237,12 +237,12 @@ class LossesTest(absltest.TestCase):
         focal_alpha=0.3,
         focal_gamma=2.0,
     )
-    # 2 queries, 4 classes (3 foreground, 1 background sink)
+    # 2 queries, 3 classes (all foreground, no background sink)
     # Query 0 has high foreground class 2 (prob ~1)
-    # Query 1 has high background (prob ~1)
+    # Query 1 has low probability everywhere (background)
     logits = torch.tensor([[
-        [-10.0, -10.0, 10.0, -10.0],
-        [-10.0, -10.0, -10.0, 10.0],
+        [-10.0, -10.0, 10.0],
+        [-10.0, -10.0, -10.0],
     ]])
     outputs = {"logits": logits}
     targets = [{"class_labels": torch.tensor([2])}]

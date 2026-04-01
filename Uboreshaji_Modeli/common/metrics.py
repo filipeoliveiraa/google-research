@@ -64,10 +64,8 @@ def create_compute_metrics_fn(
       # Find the max over all classes (including the last one).
       scores, pred_labels = probs.max(-1)
 
-      # Filter out predictions that are below threshold OR matched the last
-      # class (the background/"object" class).
-      num_fg_classes = probs.shape[-1] - 1
-      keep = (scores > score_threshold) & (pred_labels != num_fg_classes)
+      # Filter out predictions that are below threshold.
+      keep = scores > score_threshold
 
       pred_boxes = box_utils.box_cxcywh_to_xyxy(all_boxes[i][keep]) * resize_to
 
