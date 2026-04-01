@@ -80,7 +80,6 @@ def main(argv):
   else:
     raise app.UsageError("Either --config or --config_json must be provided.")
 
-  # --- Allow flags to override config values ---
   if _MODEL_ID.value:
     cfg.model_id = _MODEL_ID.value
   if _DATASET_PATH.value:
@@ -109,8 +108,6 @@ def main(argv):
   train_split = dataset_root[cfg.dataset.train_split]
   eval_split = dataset_root[cfg.dataset.eval_split]
   if isinstance(train_split, data.datasets.Dataset):
-    # --- START: Mapping Logic ---
-
     # 1. Get the dataset's own CANONICAL mapping.
     #    Stable map from integer to name for this version of the dataset.
     dataset_id2label = train_split.features["objects"]["category"].feature.names
@@ -131,14 +128,25 @@ def main(argv):
     num_classes = len(valid_categories)
     text_inputs = valid_categories  # The model gets the filtered list of names.
 
-    # --- END: New Robust Mapping Logic ---
-
     # Prepare Split and Transforms, PASSING the stable map to the transform.
     transform_fn = engine.get_transform_fn(
-        processor, text_inputs, dataset_id2label, model_label2id
+        processor,
+        text_inputs,
+        dataset_id2label,
+        model_label2id,
+        cfg=cfg,
+        is_train=True,
+    )
+    eval_transform_fn = engine.get_transform_fn(
+        processor,
+        text_inputs,
+        dataset_id2label,
+        model_label2id,
+        cfg=cfg,
+        is_train=False,
     )
     train_dataset = train_split.with_transform(transform_fn)
-    eval_dataset = eval_split.with_transform(transform_fn)
+    eval_dataset = eval_split.with_transform(eval_transform_fn)
 
   else:
     raise ValueError(

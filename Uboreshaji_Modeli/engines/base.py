@@ -40,6 +40,8 @@ class ModelEngine(abc.ABC):
       text_inputs,
       dataset_id2label,
       model_label2id,
+      cfg = None,
+      is_train = False,
   ):
     """Returns the transformation function for the dataset."""
 

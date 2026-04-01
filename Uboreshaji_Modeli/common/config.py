@@ -102,6 +102,21 @@ def get_base_config():
   config.dataset.image_size = 840
   config.dataset.exclude_classes = []
 
+  config.augmentation = ml_collections.ConfigDict()
+  config.augmentation.enabled = True
+  config.augmentation.horizontal_flip_p = 0.5
+  config.augmentation.vertical_flip_p = 0.5
+  config.augmentation.rotate90_p = 0.5
+  config.augmentation.color_jitter_p = 0.8
+  config.augmentation.color_jitter_brightness = 0.4
+  config.augmentation.color_jitter_contrast = 0.4
+  config.augmentation.color_jitter_saturation = 0.3
+  config.augmentation.color_jitter_hue = 0.1
+  config.augmentation.gaussian_blur_p = 0.3
+  config.augmentation.random_crop_enabled = True
+  config.augmentation.random_crop_p = 0.5
+  config.augmentation.random_crop_scale = (0.6, 1.0)
+
   config.eval = ml_collections.ConfigDict()
   config.eval.run_eval = False
   config.eval.eval_batch_size = 4

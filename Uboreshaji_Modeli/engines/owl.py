@@ -25,6 +25,7 @@ import torch
 from torch import nn
 import transformers
 
+from Uboreshaji_Modeli.common import augmentations
 from Uboreshaji_Modeli.common import config as base_config
 from Uboreshaji_Modeli.common import losses
 from Uboreshaji_Modeli.common import matcher
@@ -100,7 +101,15 @@ class Owlv2Engine(base.ModelEngine):
       text_inputs,
       dataset_id2label,
       model_label2id,
+      cfg = None,
+      is_train = False,
   ):
+    """Returns the transformation function for the dataset."""
+
+    aug = None
+    if is_train and cfg:
+      aug = augmentations.get_train_augmentation(cfg)
+      logging.info("Using data augmentation: %s", aug is not None)
 
     def transform_fn(
         examples,
@@ -113,13 +122,6 @@ class Owlv2Engine(base.ModelEngine):
           examples["image_id"], examples["image"], examples["objects"]
       ):
         image = np.array(image.convert("RGB"))[:, :, ::-1]
-        h, w = image.shape[:2]
-        labels_dict = {}
-        owl_dict = processor(
-            text=text_inputs,
-            images=image,
-            return_tensors="pt"
-        )
 
         new_labels = []
         new_bboxes = []
@@ -128,6 +130,23 @@ class Owlv2Engine(base.ModelEngine):
           if category_name in model_label2id:
             new_labels.append(model_label2id[category_name])
             new_bboxes.append(bbox)
+
+        if aug:
+          image, new_bboxes, new_labels_aug = augmentations.apply_augmentation(
+              aug, image, new_bboxes, new_labels
+          )
+          # filter out cases where all bboxes were dropped
+          if not new_bboxes:
+            continue
+          new_labels = new_labels_aug
+
+        h, w = image.shape[:2]  # height/width might change with crop
+        labels_dict = {}
+        owl_dict = processor(
+            text=text_inputs,
+            images=image,
+            return_tensors="pt"
+        )
 
         if not new_labels:
           # If no foreground objects are matched, create empty tensors.
