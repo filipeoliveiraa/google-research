@@ -68,10 +68,10 @@ def load_config(path):
 
 
 def derive_paths(cfg):
-  """Re-derives dataset_path and model_id from their component fields."""
+  """Derives dataset_path and model_id from their component fields."""
   if cfg.dataset.get("dataset_base"):
     cfg.dataset.dataset_path = (
-        f"{cfg.dataset.dataset_base}/{cfg.dataset.dataset_path}"
+        f"{cfg.dataset.dataset_base}/{cfg.dataset.dataset_uri}"
         f"/huggingface_dataset/{cfg.dataset.dataset_version}/"
     )
   if cfg.get("model_base"):

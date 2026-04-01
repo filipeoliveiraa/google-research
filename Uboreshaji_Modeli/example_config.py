@@ -17,6 +17,7 @@
 
 import ml_collections
 from Uboreshaji_Modeli.common import config
+from Uboreshaji_Modeli.common import config_utils
 
 
 def get_config():
@@ -31,7 +32,7 @@ def get_config():
   cfg.model_id = "/path/to/models/owlv2"
 
   # Data overrides
-  cfg.dataset.dataset_uri = "/path/to/huggingface_datasets/maize_1/1.0.5/"
+  cfg.dataset.dataset_uri = "maize_1"
   cfg.dataset.image_size = 960
 
   cfg.output_dir = "/path/to/maize_owlv2_finetune_output"
