@@ -125,9 +125,6 @@ def get_base_config():
 
   # Platform and Hardware settings
   config.platform = ml_collections.ConfigDict()
-  # Specific requirements (e.g., "a100=1", "h100=4", "viperlite=2x2")
-  config.platform.hardware = "a100=1"
-  config.platform.cell = "viglobal"
 
   config.sweeps = ml_collections.ConfigDict()
   return config
