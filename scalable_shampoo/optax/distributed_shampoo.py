@@ -1904,7 +1904,7 @@ def distributed_shampoo(
 
 
       def compute_updated_statistics():
-        return preconditioner.updated_statistics_from_grad(
+        return preconditioner.updated_statistics_from_grad(  # pytype: disable=wrong-arg-types
             state.statistics,
             grad,
             w1=w1,
