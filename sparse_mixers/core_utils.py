@@ -143,8 +143,13 @@ def tree_replicate_by_name(
     satisfy `filter_fn` are replicated across devices.
   """
   devices = devices or jax.local_devices()
-  return tree_map_with_names(lambda x: jax.device_put_replicated(x, devices),
-                             param_tree, filter_fn)
+  mesh = jax.sharding.Mesh(np.array(devices), ("_device_put_replicated",))
+  sharding = jax.NamedSharding(mesh, jax.P("_device_put_replicated"))
+  return tree_map_with_names(
+      lambda x: jax.device_put(np.stack(len(devices) * [x]), sharding),
+      param_tree,
+      filter_fn,
+  )
 
 
 def tree_shard_by_name(
@@ -204,4 +209,6 @@ def _array_shard(
   devices = devices or jax.local_devices()
   x = jnp.asarray(x)
   assert x.shape[0] == len(devices)
-  return jax.device_put_sharded(list(x), devices)
+  mesh = jax.sharding.Mesh(np.array(devices), ("_device_put_sharded",))
+  sharding = jax.NamedSharding(mesh, jax.P("_device_put_sharded"))
+  return jax.device_put(np.stack(list(x)), sharding)

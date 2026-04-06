@@ -65,7 +65,12 @@ def restore_checkpoint(work_dir):
     x_list = jax.tree.map(lambda y: np.squeeze(y, axis=0), x_list)
 
     # Send the sharded array in devices.
-    return jax.device_put_sharded(x_list, jax.local_devices())
+    devices = jax.local_devices()
+    mesh = jax.sharding.Mesh(np.array(devices), ("_device_put_sharded",))
+    sharding_obj = jax.sharding.NamedSharding(
+        mesh, jax.sharding.P("_device_put_sharded")
+    )
+    return jax.device_put(np.stack(x_list), sharding_obj)
 
   state = jax.tree.map(device_put_sharded, state)
   return state
