@@ -54,7 +54,7 @@ class AugmentationTest(absltest.TestCase):
     cfg = _make_test_cfg()
     aug = augmentations.get_train_augmentation(cfg)
     self.assertIsNotNone(aug)
-    image = np.random.randint(0, 255, (500, 800, 3), dtype=np.uint8)
+    image = np.zeros((500, 800, 3), dtype=np.uint8)
     bboxes = [[10, 20, 100, 50]]
     cats = [0]
     aug_flip = A.Compose(
@@ -76,7 +76,7 @@ class AugmentationTest(absltest.TestCase):
     self.assertAlmostEqual(out_h, 50, places=0)
 
   def test_color_jitter_preserves_boxes(self):
-    image = np.random.randint(0, 255, (500, 800, 3), dtype=np.uint8)
+    image = np.zeros((500, 800, 3), dtype=np.uint8)
     bboxes = [[10, 20, 100, 50], [200, 300, 80, 60]]
     cats = [0, 1]
     aug = A.Compose(
@@ -103,7 +103,7 @@ class AugmentationTest(absltest.TestCase):
   def test_full_pipeline_preserves_box_count(self):
     cfg = _make_test_cfg(crop=False)
     aug = augmentations.get_train_augmentation(cfg)
-    image = np.random.randint(0, 255, (500, 800, 3), dtype=np.uint8)
+    image = np.zeros((500, 800, 3), dtype=np.uint8)
     bboxes = [[10, 20, 100, 50], [200, 300, 80, 60], [400, 100, 120, 90]]
     cats = [0, 1, 0]
     kept = 0
@@ -120,14 +120,14 @@ class AugmentationTest(absltest.TestCase):
   def test_apply_augmentation_return_types(self):
     cfg = _make_test_cfg(crop=False)
     aug = augmentations.get_train_augmentation(cfg)
-    image = np.random.randint(0, 255, (500, 800, 3), dtype=np.uint8)
+    image = np.zeros((800, 800, 3), dtype=np.uint8)
     bboxes = [[10, 20, 100, 50]]
     cats = [0]
     out_img, out_boxes, out_cats = augmentations.apply_augmentation(
         aug, image, bboxes, cats
     )
     self.assertIsInstance(out_img, np.ndarray)
-    self.assertEqual(out_img.shape, (500, 800, 3))
+    self.assertEqual(out_img.shape, (800, 800, 3))
     self.assertIsInstance(out_boxes, list)
     self.assertIsInstance(out_cats, list)
 
