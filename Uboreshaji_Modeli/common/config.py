@@ -118,7 +118,7 @@ def get_base_config():
   config.augmentation.random_crop_scale = (0.6, 1.0)
 
   config.eval = ml_collections.ConfigDict()
-  config.eval.run_eval = False
+  config.eval.run_eval_only = False
   config.eval.eval_batch_size = 4
   config.eval.confidence_threshold = 0.3
   config.eval.eval_json = ""

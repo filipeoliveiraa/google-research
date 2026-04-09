@@ -220,9 +220,12 @@ def main(argv):
   )
 
   start_time = time.monotonic()
-  logging.info("Starting training...")
-  custom_trainer.train(resume_from_checkpoint=False)
+  if not cfg.eval.get("run_eval_only", False):
+    logging.info("Starting training...")
+    custom_trainer.train(resume_from_checkpoint=False)
 
+  else:
+    logging.info("Skipping training as run_eval_only is set to True.")
 
   logging.info("Running final evaluation...")
   eval_results = custom_trainer.evaluate()
