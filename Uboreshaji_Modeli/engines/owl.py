@@ -129,8 +129,9 @@ class Owlv2Engine(base.ModelEngine):
         for category_id, bbox in zip(objects["category"], objects["bbox"]):
           category_name = dataset_id2label[category_id]
           if category_name in model_label2id:
-            new_labels.append(model_label2id[category_name])
-            new_bboxes.append(bbox)
+            if box_utils.is_valid_box(bbox, box_format="xywh"):
+              new_labels.append(model_label2id[category_name])
+              new_bboxes.append(bbox)
 
         if aug:
           image, new_bboxes, new_labels_aug = augmentations.apply_augmentation(

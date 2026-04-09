@@ -43,6 +43,18 @@ class BoxUtilsTest(absltest.TestCase):
     giou = box_utils.generalized_box_iou(boxes1=boxes1, boxes2=boxes2)
     self.assertAlmostEqual(giou[0, 0].item(), 1.0)
 
+  def test_is_valid_box(self):
+    self.assertTrue(box_utils.is_valid_box([10, 20, 30, 40]))
+    self.assertFalse(box_utils.is_valid_box([10, 20, 0, 40]))
+    self.assertFalse(box_utils.is_valid_box([10, 20, 30, 0]))
+    self.assertFalse(box_utils.is_valid_box([10, 20, -1, 40]))
+    self.assertFalse(box_utils.is_valid_box([10, 20, 30]))
+
+    self.assertTrue(box_utils.is_valid_box([10, 20, 30, 40], "xyxy"))
+    self.assertFalse(box_utils.is_valid_box([10, 20, 10, 40], "xyxy"))
+    self.assertFalse(box_utils.is_valid_box([10, 20, 30, 20], "xyxy"))
+    self.assertFalse(box_utils.is_valid_box([10, 20, 5, 40], "xyxy"))
+
 
 if __name__ == "__main__":
   absltest.main()

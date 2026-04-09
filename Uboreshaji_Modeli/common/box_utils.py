@@ -100,3 +100,21 @@ def generalized_box_iou(
   area = wh[:, :, 0] * wh[:, :, 1]
 
   return iou - (area - union) / area
+
+
+def is_valid_box(
+    box, box_format = "xywh"
+):
+  """Checks if a bounding box is valid."""
+  if len(box) != 4:
+    return False
+
+  if box_format == "xywh":
+    _, _, w, h = box
+    return w > 0 and h > 0
+  elif box_format == "xyxy":
+    x0, y0, x1, y1 = box
+    return x1 > x0 and y1 > y0
+  else:
+    raise ValueError(f"Unsupported box format: {box_format}")
+
