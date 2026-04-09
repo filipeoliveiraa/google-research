@@ -27,6 +27,11 @@ from torch import nn
 class ModelEngine(abc.ABC):
   """Abstract base class for model-specific logic."""
 
+  @property
+  @abc.abstractmethod
+  def inference_kwargs(self):
+    """Returns model-specific inference keyword arguments."""
+
   @abc.abstractmethod
   def load_model_and_processor(
       self, model_id, device
@@ -60,3 +65,13 @@ class ModelEngine(abc.ABC):
       device,
   ):
     """Returns the loss criterion and weight dictionary."""
+
+  @abc.abstractmethod
+  def post_process(
+      self,
+      processor,
+      outputs,
+      target_sizes,
+      score_threshold,
+  ):
+    """Post-processes model outputs into detections."""

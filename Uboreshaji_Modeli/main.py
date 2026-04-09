@@ -27,6 +27,7 @@ from absl import logging
 from etils import epath
 import ml_collections
 import torch
+from torch.utils import tensorboard
 import transformers
 
 from Uboreshaji_Modeli.common import config

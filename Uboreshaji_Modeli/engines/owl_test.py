@@ -79,8 +79,8 @@ class Owlv2EngineTest(parameterized.TestCase):
     self.assertLen(collated["labels"], 2)
 
   def test_transform_fn_mapping_and_filtering(self):
-    def mock_processor(text, images, return_tensors):
-      del text, images, return_tensors
+    def mock_processor(text, images, return_tensors, *args, **kwargs):
+      del text, images, return_tensors, args, kwargs
       return {
           "input_ids": torch.tensor([[1, 2, 3]]),
           "attention_mask": torch.tensor([[1, 1, 1]]),
