@@ -119,6 +119,7 @@ def get_base_config():
 
   config.eval = ml_collections.ConfigDict()
   config.eval.run_eval_only = False
+  config.eval.split = "test"
   config.eval.eval_batch_size = 4
   config.eval.confidence_threshold = 0.3
   config.eval.eval_json = ""

@@ -104,6 +104,9 @@ python3 -m Uboreshaji_Modeli.main \
     --output_dir="/tmp/evaluation_outputs"
 ```
 
+*Note: Evaluation defaults to the `"test"` split if it exists, falling back to
+validation if unavailable.*
+
 ## 💻 For New Users: Engagement Path
 
 ### **Step 1: Understand the Project** (15 min)
