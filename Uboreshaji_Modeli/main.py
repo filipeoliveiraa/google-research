@@ -149,7 +149,8 @@ def main(argv):
     train_dataset = train_split.with_transform(transform_fn)
     eval_dataset = eval_split.with_transform(eval_transform_fn)
 
-    test_split_name = cfg.eval.get("split", "test")
+    test_split = None
+    test_split_name = cfg.dataset.get("test_split", "test")
     if test_split_name in dataset_root:
       logging.info("Preparing test split: %s", test_split_name)
       test_split = dataset_root[test_split_name]
@@ -269,6 +270,7 @@ def main(argv):
 
   cfg.eval.eval_json = str(eval_json_path)
   config_save_path.write_text(json.dumps(cfg.to_dict(), indent=2, default=str))
+
 
 if __name__ == "__main__":
   flags.mark_flags_as_mutual_exclusive(["config", "config_json"], required=True)
