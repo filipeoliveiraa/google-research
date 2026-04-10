@@ -42,6 +42,10 @@
   direction: rtl;
   unicode-bidi: embed;
 }
+body, p, div, span, table, tr, td, th, ul, ol, li {
+  font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+}
+
 .anthea-bold {
   font-weight: bold;
 }
@@ -49,12 +53,17 @@
 .anthea-docnav-eval-button,
 .anthea-error-button,
 .anthea-stretchy-button {
-  border: 0;
+  border-radius: 4px;
   box-sizing: border-box;
+  font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
   font-weight: bold;
   margin: 0;
-  outline: 1px solid gray;
-  padding: 4px;
+  padding: 6px 12px;
+  transition: all 0.2s ease;
+}
+.anthea-context-eval-small-button,
+.anthea-docnav-eval-button {
+  border: 1px solid #ccc;
 }
 .anthea-context-eval-small-button,
 .anthea-docnav-eval-button,
@@ -75,7 +84,8 @@
 .anthea-stretchy-button:enabled:hover {
   cursor: pointer;
   filter: brightness(105%);
-  outline: 1px solid blue;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 .anthea-context-image-cell {
   position: relative;
@@ -139,13 +149,17 @@
   padding: 12px;
 }
 .anthea-document-eval-cell {
+  background-color: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   box-sizing: border-box;
-  padding: 0;
+  padding: 16px;
   vertical-align: top;
 }
 .anthea-document-eval-div {
   box-sizing: border-box;
-  font-family: monospace;
+  font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
   margin-left: auto;
   margin-right: auto;
   position: relative;
@@ -156,14 +170,18 @@
   display: none;
 }
 .anthea-document-text-cell {
-  font-family: monospace;
-  font-size: 150%;
-  padding: 14px;
+  background-color: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+  font-size: 120%;
+  padding: 16px;
   vertical-align: top;
 }
 .anthea-document-text-table {
-  border: 1px solid black;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 16px;
   max-width: 300ch;
   table-layout: fixed;
 }
@@ -174,7 +192,6 @@
 }
 .anthea-document-text-table > tr,
 .anthea-document-text-table > tr > td {
-  border: 1px solid black;
   box-sizing: border-box;
 }
 .anthea-document-text-table > tr > td:nth-of-type(1):nth-last-of-type(3),
@@ -208,7 +225,7 @@
   text-decoration: red wavy underline;
 }
 .anthea-error-button {
-  background-color: lightblue;
+  background-color: #e0f2fe;
   text-align: left;
 }
 .anthea-error-button,
@@ -223,7 +240,7 @@
   font-weight: bold;
 }
 .anthea-errors-table {
-  border: 1px solid black;
+  border: 1px solid #e2e8f0;
   border-collapse: collapse;
   border-spacing: 0;
   box-sizing: border-box;
@@ -231,8 +248,7 @@
   width: 100%;
 }
 .anthea-errors-table > tr > td {
-  border: 1px solid black;
-  border-collapse: collapse;
+  border: 1px solid #e2e8f0;
   padding: 8px 4px;
   vertical-align: top;
 }
@@ -273,7 +289,11 @@
   vertical-align: top;
 }
 .anthea-eval-panel-mod {
+  align-items: center;
+  display: inline-flex;
+  justify-content: center;
   min-height: 6ex;
+  padding: 0;
   width: 24px;
 }
 .anthea-eval-panel-nav {
@@ -284,18 +304,17 @@
 }
 .anthea-eval-panel-subtypes {
   background-clip: border-box;
-  background-color: aliceblue;
+  background-color: #f8fafc;
 }
 .anthea-eval-panel-table {
-  border: 1px solid black;
+  border: 1px solid #e2e8f0;
   border-collapse: collapse;
   border-spacing: 0;
   box-sizing: border-box;
   width: 100%;
 }
 .anthea-eval-panel-table > tr {
-  border: 1px solid black;
-  border-collapse: collapse;
+  border: 1px solid #e2e8f0;
 }
 .anthea-eval-panel-tall {
   min-height: 10ex;
@@ -374,7 +393,7 @@
   animation-name: anthea-fading-text-anim;
 }
 .anthea-guidance-panel {
-  border: 1px solid black;
+  border: 1px solid #e2e8f0;
 }
 .anthea-hotw-def {
   cursor: help;
@@ -439,11 +458,11 @@
   font-style: italic;
 }
 .anthea-text-heading {
-  background: whitesmoke;
-  font-family: monospace;
-  font-size: 130%;
+  background: #f5f5f5;
+  font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+  font-size: 120%;
   font-weight: bold;
-  padding: 10px;
+  padding: 12px;
   text-align: center;
   vertical-align: top;
 }
@@ -486,4 +505,66 @@
   height: 15px;
   background: var(--slider-thumb-color);
   cursor: pointer;
+}
+.anthea-play-button {
+  align-items: center;
+  background-color: #e53935; /* Red for unplayed */
+  border: none;
+  border-radius: 50%;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
+  color: white;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 16px;
+  font-variant-emoji: text;
+  height: 36px;
+  justify-content: center;
+  line-height: 1;
+  margin-right: 10px;
+  padding: 0;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+  vertical-align: middle;
+  width: 36px;
+}
+.anthea-play-button:hover {
+  background-color: #c62828;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+}
+.anthea-play-button-played {
+  background-color: #43a047; /* Green for played completely */
+  color: white;
+}
+.anthea-play-button-played:hover {
+  background-color: #2e7d32;
+}
+.anthea-play-button-loading {
+  background-color: #b0bec5; /* Muted blue-gray while loading */
+  cursor: wait;
+  opacity: 0.8;
+}
+.anthea-audio-container {
+  display: inline-block;
+  vertical-align: middle;
+}
+.anthea-audio-highlight {
+  background-color: #e8f5e9;
+  border-bottom: 2px solid #43a047;
+  border-radius: 2px;
+}
+.anthea-full-segment-major {
+  display: block;
+  outline: 5px solid #fca5a5;
+  outline-offset: 2px;
+}
+.anthea-full-segment-minor {
+  display: block;
+  outline: 5px solid #fef08a;
+  outline-offset: 2px;
+}
+.anthea-error-span-preview {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

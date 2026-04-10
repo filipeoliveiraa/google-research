@@ -1807,7 +1807,8 @@ class AntheaEval {
                        'transparent' : this.afterColor_;
     subpara.subparaSpan.style.color = isCurr ? this.currColor_ :
         (hasBeenRead ? this.beforeColor_ : afterColor);
-    subpara.subparaSpan.style.fontWeight = isCurr ? 'bold' : 'normal';
+    subpara.subparaSpan.style.webkitTextStroke =
+        isCurr ? '0.3px currentColor' : '';
   }
 
   /**
