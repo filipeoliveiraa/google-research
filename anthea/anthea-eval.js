@@ -850,6 +850,13 @@ class AntheaEval {
     this.buttonColor_ = 'azure';
     /** @private @const {string} */
     this.highlightColor_ = 'gainsboro';
+    /** @private @const {string} SVG for the audio pause icon.*/
+    this.PAUSE_ICON_SVG_ =
+        '<svg width="12" height="14" viewBox="0 0 12 14" fill="white"' +
+        ' xmlns="http://www.w3.org/2000/svg">' +
+        '<rect x="0" y="0" width="4" height="14" rx="1"/>' +
+        '<rect x="8" y="0" width="4" height="14" rx="1"/>' +
+        '</svg>';
 
     /** @private {?AntheaError} Current error getting added or edited. */
     this.error_ = null;
@@ -1477,7 +1484,7 @@ class AntheaEval {
   }
 
   /**
-   * Returns the SPAN elements for the current subpara.
+   * Returns the span elements for the current subpara.
    * @return {!HTMLCollection}
    */
   getCurrTokenSpans() {
@@ -1729,11 +1736,19 @@ class AntheaEval {
     googdom.setInnerHtml(subpara.subparaSpan, spanHTML);
     subpara.subparaSpan.classList.remove('anthea-subpara-nav');
 
-    const isCurr = this.cursor.equals(seg, side, para);
+    // Cache token spans for use here and in syncHighlighting.
+    const rawSpans = subpara.subparaSpan.getElementsByTagName('span');
+    subpara.tokenSpans = Array.from(rawSpans);
+    console.assert(subpara.tokenSpans.length == subpara.num_tokens);
 
-    /* Highlight errors in subpara */
-    const tokenSpans = subpara.subparaSpan.getElementsByTagName('span');
-    console.assert(tokenSpans.length == subpara.num_tokens);
+    if (subpara.audioPlayer) {
+      subpara.subparaSpan.insertBefore(
+          subpara.audioPlayer, subpara.subparaSpan.firstChild);
+    }
+    subpara.subparaSpan.classList.remove('anthea-full-segment-major', 'anthea-full-segment-minor');
+
+    const isCurr = this.cursor.equals(seg, side, para);
+    const tokenSpans = subpara.tokenSpans;
     const subparaErrorIndices = this.getSubparaErrorIndices(evalResult.errors,
                                                             seg, side, para);
     const tokenRangeInSeg = [subpara.token_offset,
@@ -1744,15 +1759,29 @@ class AntheaEval {
       if (error.marked_deleted) {
         continue;
       }
+      const errorInfo = this.config.errors[error.type];
+      const subtypeInfo = (error.subtype && errorInfo && errorInfo.subtypes) ? errorInfo.subtypes[error.subtype] : null;
+      const isFullSegment = (errorInfo && errorInfo.auto_expand_span) || (subtypeInfo && subtypeInfo.auto_expand_span);
+      const severity = this.config.severities[error.severity];
+      const color = severity.color;
+
+      if (isFullSegment) {
+        if (error.severity === 'major') {
+          subpara.subparaSpan.classList.add('anthea-full-segment-major');
+        } else if (error.severity === 'minor') {
+          subpara.subparaSpan.classList.add('anthea-full-segment-minor');
+        }
+      }
+
       /** Code to highlight the span in the subpara: */
       const range = this.intersectRanges(
         [error.start, error.end], tokenRangeInSeg);
       const isBeingEdited = isCurr && this.error_ && (this.errorIndex_ == e);
-      const severity = this.config.severities[error.severity];
-      const color = severity.color;
       for (let x = range[0]; x <= range[1]; x++) {
         const tokenSpan = tokenSpans[x - subpara.token_offset];
-        tokenSpan.style.backgroundColor = color;
+        if (!isFullSegment) {
+          tokenSpan.style.backgroundColor = color;
+        }
         if (isBeingEdited) {
           tokenSpan.classList.add('anthea-being-edited');
         }
@@ -1830,7 +1859,38 @@ class AntheaEval {
       }
     }
     this.setEvalButtonsAvailability();
+    this.restorePausedHighlighting();
     this.lastTimestampMS_ = Date.now();
+  }
+
+  /**
+   * Re-applies audio highlighting for any paused (or playing) players after
+   * the DOM has been rebuilt by redrawAllSegments. This is needed because
+   * redrawSubpara replaces innerHTML, destroying anthea-audio-highlight
+   * classes.
+   */
+  restorePausedHighlighting() {
+    const system = this.getAudioSystem();
+    for (const sideStr in system.activePlayers) {
+      const player = system.activePlayers[sideStr];
+      if (!player) continue;
+      const pausedTime = player.getPausedTime();
+      if (pausedTime === null) continue;
+      const side = Number(sideStr);
+      const seg = player.segIdx;
+      if (seg < 0 || seg >= this.segments_.length) continue;
+      const segment = this.segments_[seg];
+      if (!segment || !segment.audio) continue;
+      const subparas = [
+        segment.srcSubparas, segment.tgtSubparas, segment.tgtSubparas2
+      ][side];
+      const tokenAudioRanges = [
+        segment.srcTokenAudioRanges, segment.tgtTokenAudioRanges,
+        segment.tgtTokenAudioRanges2
+      ][side];
+      if (!subparas || !tokenAudioRanges) continue;
+      AntheaEval.syncHighlighting(pausedTime, subparas, tokenAudioRanges);
+    }
   }
 
   /**
@@ -1908,15 +1968,59 @@ class AntheaEval {
     /**
      * Use 0-width spaces to ensure leading/trailing spaces get shown.
      */
-    tr.appendChild(googdom.createDom(
+    const textCell = googdom.createDom(
         'td', {class: textCls}, desc,
         googdom.createDom(
             'span', {
+              class: 'anthea-error-span-preview',
               dir: 'auto',
               lang: lang,
               style: 'background-color:' + color,
             },
-            '\u200b' + error.selected + '\u200b')));
+            '\u200b' + error.selected + '\u200b'));
+
+    const segment = this.segments_[this.cursor.seg];
+    let audioRanges = null;
+    let audioUrl = null;
+    let subparas = null;
+    if (error.location === 'source' && segment.audio && segment.audio.source) {
+       audioRanges = segment.srcTokenAudioRanges;
+       audioUrl = segment.audio.source.url;
+       subparas = segment.srcSubparas;
+    } else if (error.location === 'translation' && segment.audio && segment.audio.target) {
+       audioRanges = segment.tgtTokenAudioRanges;
+       audioUrl = segment.audio.target.url;
+       subparas = segment.tgtSubparas;
+    } else if (error.location === 'translation2' && segment.audio && segment.audio.target2) {
+       audioRanges = segment.tgtTokenAudioRanges2;
+       audioUrl = segment.audio.target2.url;
+       subparas = segment.tgtSubparas2;
+    }
+
+    // Create a mini play button for the audio corresponding to the entire
+    // error span, allowing raters to replay just the marked portion.
+    let playBtnContainer = null;
+    if (audioRanges && audioUrl && error.start >= 0 && error.end >= 0) {
+       let minStart = Infinity;
+       let maxEnd = -Infinity;
+       for (let i = error.start; i <= error.end; i++) {
+           if (audioRanges[i]) {
+               minStart = Math.min(minStart, audioRanges[i].start_time);
+               maxEnd = Math.max(maxEnd, audioRanges[i].end_time);
+           }
+       }
+       if (minStart !== Infinity && maxEnd !== -Infinity) {
+         playBtnContainer = this.createAudioPlayer(
+             {url: audioUrl, start_time: minStart, end_time: maxEnd}, null,
+             true, (time) => {
+               AntheaEval.syncHighlighting(time, subparas, audioRanges);
+             });
+         playBtnContainer.style.marginLeft = '8px';
+         textCell.appendChild(playBtnContainer);
+       }
+    }
+
+    tr.appendChild(textCell);
 
     const modButton = googdom.createDom(
         'button',
@@ -2140,9 +2244,16 @@ class AntheaEval {
         this.evalResults_[seg].quality_scores.some(value => value === -1)) {
       return;
     }
+    const segmentObj = this.segments_[seg];
+    if (segmentObj && segmentObj.audio) {
+       const audio = segmentObj.audio;
+       if (!audio.played_source || !audio.played_target || !audio.played_target2) {
+         return;
+       }
+    }
     this.evalResults_[seg].visited = true;
     this.saveResults();
-    this.numWordsEvaluated_ += this.segments_[seg].numTgtWords;
+    this.numWordsEvaluated_ += segmentObj.numTgtWords;
     if (this.displayedProgress_) {
       this.displayedProgress_.innerHTML = this.getPercentEvaluated();
     }
@@ -2259,6 +2370,7 @@ class AntheaEval {
       return false;
     }
     const errorInfo = this.config.errors[this.error_.type];
+    const subtypeInfo = (this.error_.subtype && errorInfo && errorInfo.subtypes) ? errorInfo.subtypes[this.error_.subtype] : null;
     if (errorInfo.override_all_errors) {
       if (!confirm(
               'This error category will remove all other marked errors ' +
@@ -2280,6 +2392,16 @@ class AntheaEval {
       }
       this.error_.start = range[0];
       this.error_.end = range[1];
+    } else if (errorInfo.auto_expand_span || (subtypeInfo && subtypeInfo.auto_expand_span)) {
+      this.error_.prefix = '';
+      const subpara = this.getCurrSubpara();
+      const spanArray = this.getCurrTokenSpans();
+      this.error_.selected = '';
+      for (let x = 0; x < subpara.num_tokens; x++) {
+        this.error_.selected += spanArray[x].innerText;
+      }
+      this.error_.start = subpara.token_offset;
+      this.error_.end = subpara.token_offset + subpara.num_tokens - 1;
     }
 
     this.error_.metadata.para = this.cursor.para;
@@ -2425,9 +2547,13 @@ class AntheaEval {
 
     for (let type in this.config.errors) {
       const errorInfo = this.config.errors[type];
+      // Add '(Full-Segment)' to the button display if the error auto-expands.
+      const autoExpand = errorInfo.auto_expand_span ?
+          ' (Full-Segment)' : '';
       const errorButton = googdom.createDom(
           'button', 'anthea-error-button',
-          errorInfo.display + (errorInfo.subtypes ? ' ▶' : ''));
+          errorInfo.display + autoExpand +
+          (errorInfo.subtypes ? ' ▶' : ''));
       if (errorInfo.description) {
         errorButton.title = errorInfo.description;
       }
@@ -2447,9 +2573,12 @@ class AntheaEval {
         subtypesDiv.appendChild(subtypes);
         for (let subtype in errorInfo.subtypes) {
           let subtypeInfo = errorInfo.subtypes[subtype];
+          const subtypeAutoExpand = subtypeInfo.auto_expand_span ?
+              ' (Full-Segment)' : '';
           const display = this.config.FLATTEN_SUBTYPES ?
-              errorInfo.display + ' / ' + subtypeInfo.display :
-              subtypeInfo.display;
+              errorInfo.display + ' / ' + subtypeInfo.display +
+              subtypeAutoExpand :
+              subtypeInfo.display + subtypeAutoExpand;
           const subtypeButton =
               googdom.createDom('button', 'anthea-error-button', display);
           if (subtypeInfo.description) {
@@ -2570,6 +2699,49 @@ class AntheaEval {
       return;
     }
     this.concludeError(true);
+  }
+
+  /**
+   * Starts audio playback from the timestamp aligned to the given token index
+   * in the current segment/side. Handles stopping other audio on the same side.
+   * @param {number} tokenIndex The token index within the segment.
+   */
+  playAudioFromToken(tokenIndex) {
+    const seg = this.cursor.seg;
+    const side = this.cursor.side;
+    const segment = this.segments_[seg];
+    if (!segment || !segment.audio) return;
+
+    const tokenRanges = [
+      segment.srcTokenAudioRanges, segment.tgtTokenAudioRanges,
+      segment.tgtTokenAudioRanges2
+    ][side];
+    const subparas = [
+      segment.srcSubparas, segment.tgtSubparas, segment.tgtSubparas2
+    ][side];
+    if (!tokenRanges || !tokenRanges[tokenIndex]) return;
+    if (!subparas || !subparas[0] || !subparas[0].audioPlayer) return;
+
+    const range = tokenRanges[tokenIndex];
+    if (range.start_time === undefined) return;
+
+    const system = this.getAudioSystem();
+    const activePlayer = system.activePlayers[side];
+
+    if (activePlayer && activePlayer.segIdx === seg) {
+      // Same segment — seek directly via playFrom
+      activePlayer.playFrom(range.start_time);
+    } else {
+      // Different segment or no player — stop old, then use the player
+      // handle stored on the audio container to play from the desired time.
+      if (activePlayer) {
+        activePlayer.stop();
+      }
+      const handle = subparas[0].audioPlayer.antheaPlayerHandle;
+      if (handle) {
+        handle.playFrom(range.start_time);
+      }
+    }
   }
 
   /**
@@ -2809,6 +2981,116 @@ class AntheaEval {
       }
     }
     return tokens;
+  }
+
+  /**
+   * Unicode whitespace regex used for stripping spaces when matching
+   * alignment substrings against text. Includes standard \s whitespace plus
+   * zero-width spaces and other Unicode space characters.
+   * @const {!RegExp}
+   */
+  static UNICODE_WHITESPACE_RE = /[\s\u200b\ufeff]/g;
+
+  /**
+   * Converts a substring-based alignment array into one with char_start and
+   * char_end fields. Each alignment entry should have a "substring" field
+   * containing the word (or phrase) that the audio span maps to. This method
+   * finds the substring in the text, tolerating arbitrary Unicode whitespace
+   * differences, and populates char_start/char_end on each entry.
+   *
+   * @param {string} text The full text of the segment side.
+   * @param {!Array<!Object>} alignment Array of alignment entries, each with
+   *     substring, time_start, and time_end. Modified in place to add
+   *     char_start and char_end.
+   */
+  static resolveSubstringAlignment(text, alignment) {
+    if (!alignment || alignment.length === 0) return;
+
+    // Build a stripped version of the text and a mapping from stripped-text
+    // character indices back to original-text character indices.
+    const charMap = [];  // charMap[i] = index in original text
+    let strippedText = '';
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (!ch.match(AntheaEval.UNICODE_WHITESPACE_RE)) {
+        charMap.push(i);
+        strippedText += ch;
+      }
+    }
+
+    let pos = 0;  // cursor into strippedText
+    for (const al of alignment) {
+      if (al.substring === undefined) continue;
+      const strippedSub = al.substring.replace(
+          AntheaEval.UNICODE_WHITESPACE_RE, '');
+      if (strippedSub.length === 0) continue;
+
+      const matchPos = strippedText.indexOf(strippedSub, pos);
+      if (matchPos === -1) {
+        console.log(
+            'resolveSubstringAlignment: could not find substring "' +
+            al.substring + '" (stripped: "' + strippedSub +
+            '") in text starting from position ' + pos);
+        continue;
+      }
+      al.char_start = charMap[matchPos];
+      al.char_end = charMap[matchPos + strippedSub.length - 1] + 1;
+      pos = matchPos + strippedSub.length;
+    }
+  }
+
+  /**
+   * Maps each token to its audio time range by locating the token's character
+   * span in the full text and finding overlapping entries in the
+   * character-level alignment data. Returns an array with one entry per token:
+   * either {start_time, end_time} if an alignment overlap was found, or null
+   * if not.
+   * @param {string} text The full text string for the segment side.
+   * @param {!Array<!Object>} subparas The subparagraph structures containing
+   *     sentence/token info.
+   * @param {!Array<!Object>} alignment Character-to-audio alignment entries,
+   *     each with char_start, char_end, time_start, and time_end.
+   * @return {?Array<?Object>} An array of {start_time, end_time} objects (or
+   *     nulls), one per token, or null if no alignment data exists.
+   */
+  static computeTokenAudioRanges(text, subparas, alignment) {
+    if (!alignment || alignment.length === 0) return null;
+    let charOffset = 0;
+    let tokenRanges = [];
+    for (const subpara of subparas) {
+      for (const sentInfo of subpara.sentInfos) {
+        for (const token of sentInfo.tokens) {
+          // find token in text starting from charOffset
+          const idx = text.indexOf(token, charOffset);
+          let tokenStartChar = charOffset;
+          let tokenEndChar = charOffset + token.length;
+          if (idx !== -1) {
+             tokenStartChar = idx;
+             tokenEndChar = idx + token.length;
+             charOffset = tokenEndChar;
+          } else {
+             // fallback, just advance by token length
+             charOffset += token.length;
+          }
+
+          let start_time = Infinity;
+          let end_time = -Infinity;
+          for (const al of alignment) {
+             // check for overlap
+             if (Math.max(tokenStartChar, al.char_start) < Math.min(tokenEndChar, al.char_end)) {
+                 start_time = Math.min(start_time, al.time_start);
+                 end_time = Math.max(end_time, al.time_end);
+             }
+          }
+          if (start_time === Infinity) {
+             tokenRanges.push(null);
+          } else {
+             tokenRanges.push({start_time, end_time});
+          }
+        }
+      }
+    }
+    return tokenRanges;
   }
 
   /**
@@ -3543,6 +3825,46 @@ class AntheaEval {
       this.createDocFeedbackUI(docIdx);
     }
 
+    /* Create listener for spacebar to play/pause audio.*/
+    const playListener = (e) => {
+      if (e.key && e.key === ' ') {
+        if (this.nonInterfaceEvent(e)) {
+          return;
+        }
+        e.preventDefault();
+
+        const system = this.getAudioSystem();
+        const side = this.cursor.side;
+        const activePlayer = system.activePlayers[side];
+
+        // If the current side has an active (playing) player, pause it
+        if (activePlayer && activePlayer.isPlaying()) {
+          activePlayer.pause();
+          return;
+        }
+
+        // If the current side has a paused player for THIS segment, resume it
+        if (activePlayer && activePlayer.isPaused() &&
+            activePlayer.segIdx === this.cursor.seg) {
+          activePlayer.resume();
+          return;
+        }
+
+        // Otherwise, start playing the current side's audio
+        const segment = this.segments_[this.cursor.seg];
+        if (!segment || !segment.audio) return;
+
+        const segmentAudioHasSide = [segment.audio.has_source, segment.audio.has_target, segment.audio.has_target2][side];
+        const segmentAudioSubparas = [segment.srcSubparas, segment.tgtSubparas, segment.tgtSubparas2][side];
+
+        if (segmentAudioHasSide && segmentAudioSubparas && segmentAudioSubparas[0].audioPlayer) {
+          segmentAudioSubparas[0].audioPlayer.querySelector('.anthea-play-button').click();
+        }
+      }
+    };
+    this.keydownListeners.push(playListener);
+    document.addEventListener('keydown', playListener);
+
     const switchListener = (e) => {
       if (e.key && e.key === "Tab") {
         if (this.nonInterfaceEvent(e)) {
@@ -3835,6 +4157,419 @@ class AntheaEval {
         continue;
       }
     }
+  }
+  /**
+   * Initialize or retrieve the shared AudioContext and Buffer Cache.
+   * @return {{context: !AudioContext, cache: !Map<string, !Promise<!AudioBuffer>>, activePlayers: !Object}}
+   */
+  getAudioSystem() {
+    if (!AntheaEval.audioSystem) {
+      AntheaEval.audioSystem = {
+        context: new (window.AudioContext || window.webkitAudioContext)(),
+        cache: new Map(),
+        // Per-side active player handles: source=0, target=1, target2=2
+        activePlayers: {0: null, 1: null, 2: null},
+        // Currently playing error span player (untracked)
+        activeErrorPlayer: null,
+      };
+    }
+    return AntheaEval.audioSystem;
+  }
+
+  /**
+   * Fetches and decodes audio data, caching the promise.
+   * @param {string} url
+   * @return {!Promise<!AudioBuffer>}
+   */
+  getAudioBuffer(url) {
+    const system = this.getAudioSystem();
+    if (system.cache.has(url)) {
+      return system.cache.get(url);
+    }
+
+    const promise = fetch(url, {mode: 'cors', credentials: 'include'})
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.arrayBuffer();
+      })
+      .then(arrayBuffer => system.context.decodeAudioData(arrayBuffer));
+
+    system.cache.set(url, promise);
+
+    promise.catch(err => {
+      system.cache.delete(url); // Don't cache failures permanently
+      this.manager_.log(this.manager_.ERROR, `Failed to load audio from ${url}: ${err.message}`);
+    });
+
+    return promise;
+  }
+
+  /**
+   * Creates an audio player UI (play button) and manages Web Audio playback
+   * with pause/resume support. Each side independently remembers its playback
+   * position.
+   *
+   * @param {!Object} audioData Audio data with url, start_time, end_time.
+   * @param {?Function=} onPlayed Optional callback when playback reaches end.
+   * @param {boolean=} isPlayed Initial "played completely" state.
+   * @param {?Function=} onTimeUpdate Callback with current time or null.
+   * @param {number=} side The side index for this player. If -1 or omitted, the
+   *   player is untracked (e.g. error span players).
+   * @param {number=} segIdx The segment index for this player.
+   * @return {!Element}
+   */
+  createAudioPlayer(audioData, onPlayed = null, isPlayed = false,
+                    onTimeUpdate = null, side = -1, segIdx = -1) {
+    const playBtn = googdom.createDom('button', 'anthea-play-button', '▶');
+
+    if (isPlayed) {
+        playBtn.classList.add('anthea-play-button-played');
+        playBtn.title = 'Audio played completely';
+    } else {
+        playBtn.title = 'Audio not yet played completely';
+    }
+
+    let isPlaying = false;
+    let paused = false;
+    let sourceNode = null;
+    let timeoutId = null;
+    let animFrameId = null;
+    let endedNaturally = true;
+
+    // Pause/resume tracking
+    const audioStartTime = audioData.start_time || 0;
+    const audioEndTime = audioData.end_time;
+    let pausedOffset = audioStartTime;  // Where to resume from
+    let playStartContextTime = 0;  // context.currentTime when playback started
+    let playStartOffset = audioStartTime;  // Audio offset in the last start()
+
+    /** True if a tracked side player. */
+    const isTracked = (side >= 0 && segIdx >= 0);
+
+    /**
+     * Fully stops playback and resets position. Clears highlighting.
+     */
+    const stopAudio = () => {
+      endedNaturally = false;
+      if (sourceNode) {
+        try { sourceNode.stop(); } catch(e) {}
+        sourceNode.disconnect();
+        sourceNode = null;
+      }
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+      if (animFrameId) {
+        cancelAnimationFrame(animFrameId);
+        animFrameId = null;
+      }
+      if (onTimeUpdate) {
+        onTimeUpdate(null);
+      }
+
+      // Unregister from the system
+      const system = this.getAudioSystem();
+      if (isTracked) {
+        if (system.activePlayers[side] &&
+            system.activePlayers[side].segIdx === segIdx) {
+          system.activePlayers[side] = null;
+        }
+      } else if (system.activeErrorPlayer === playerHandle) {
+        system.activeErrorPlayer = null;
+      }
+
+      playBtn.innerHTML = '▶';
+      playBtn.classList.remove('anthea-play-button-loading');
+      isPlaying = false;
+      paused = false;
+      pausedOffset = audioStartTime;
+    };
+
+    /**
+     * Pauses playback, saving the current position and preserving highlighting.
+     */
+    const pauseAudio = () => {
+      if (!isPlaying) return;
+      const system = this.getAudioSystem();
+      // Calculate how far we got
+      const elapsed = system.context.currentTime - playStartContextTime;
+      pausedOffset = playStartOffset + elapsed;
+
+      // Clamp to end time if defined
+      if (audioEndTime !== undefined && pausedOffset >= audioEndTime) {
+        // We've reached/passed the end; treat as natural end
+        return;
+      }
+
+      if (sourceNode) {
+        endedNaturally = false;  // Prevent onended from firing completion
+        try { sourceNode.stop(); } catch(e) {}
+        sourceNode.disconnect();
+        sourceNode = null;
+      }
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+      if (animFrameId) {
+        cancelAnimationFrame(animFrameId);
+        animFrameId = null;
+      }
+      // We do not call onTimeUpdate(null) here — highlighting stays frozen
+
+      playBtn.innerHTML = '▶';
+      playBtn.classList.remove('anthea-play-button-loading');
+      isPlaying = false;
+      paused = true;
+    };
+
+    /**
+     * Starts or resumes playback from the given offset.
+     * @param {number} offset The audio time to start from.
+     */
+    const startPlaybackFrom = (offset) => {
+      const system = this.getAudioSystem();
+
+      // Browsers require audio context to be resumed after user interaction
+      if (system.context.state === 'suspended') {
+        system.context.resume();
+      }
+
+      // Always stop any playing error span audio first
+      if (system.activeErrorPlayer) {
+        system.activeErrorPlayer.stop();
+      }
+
+      if (isTracked) {
+        // Only one audio at a time: pause or stop other active players.
+        for (const s in system.activePlayers) {
+          const existing = system.activePlayers[s];
+          if (!existing) continue;
+          if (Number(s) === side) {
+            // Same side, different segment: fully stop (clear position).
+            if (existing.segIdx !== segIdx) {
+              existing.stop();
+            }
+          } else {
+            // Different side: pause (preserve position for later resume).
+            existing.pause();
+          }
+        }
+        // Register this player
+        system.activePlayers[side] = playerHandle;
+      } else {
+        // Untracked players (error spans): pause all tracked players
+        // and register as the active error player
+        for (const s in system.activePlayers) {
+          if (system.activePlayers[s]) {
+            system.activePlayers[s].pause();
+          }
+        }
+        system.activeErrorPlayer = playerHandle;
+      }
+
+      playBtn.classList.add('anthea-play-button-loading');
+      endedNaturally = true;
+      paused = false;
+
+      this.getAudioBuffer(audioData.url).then(buffer => {
+        // Verify user hasn't clicked Stop while we were fetching
+        if (!playBtn.classList.contains('anthea-play-button-loading')) return;
+
+        playBtn.classList.remove('anthea-play-button-loading');
+        playBtn.innerHTML = this.PAUSE_ICON_SVG_;
+        isPlaying = true;
+
+        sourceNode = system.context.createBufferSource();
+        sourceNode.buffer = buffer;
+        sourceNode.connect(system.context.destination);
+
+        playStartOffset = offset;
+        let duration = undefined;
+        if (audioEndTime !== undefined) {
+          duration = audioEndTime - offset;
+        }
+
+        playStartContextTime = system.context.currentTime;
+
+        const tick = () => {
+          if (!isPlaying) return;
+          const activeTime =
+              playStartOffset +
+              (system.context.currentTime - playStartContextTime);
+          if (onTimeUpdate) {
+            onTimeUpdate(activeTime);
+          }
+          animFrameId = requestAnimationFrame(tick);
+        };
+
+        sourceNode.onended = () => {
+          if (endedNaturally) {
+            playBtn.classList.add('anthea-play-button-played');
+            playBtn.title = 'Audio played completely';
+            if (onPlayed) onPlayed();
+            endedNaturally = false;
+          }
+          // Natural end → full stop and reset position
+          if (isPlaying) {
+            stopAudio();
+          }
+        };
+
+        if (duration !== undefined) {
+          sourceNode.start(0, offset, duration);
+          if (onTimeUpdate) animFrameId = requestAnimationFrame(tick);
+          // Failsafe in case onended doesn't fire precisely
+          timeoutId = setTimeout(() => {
+            if (endedNaturally) {
+              playBtn.classList.add('anthea-play-button-played');
+              playBtn.title = 'Audio played completely';
+              if (onPlayed) onPlayed();
+              endedNaturally = false;
+            }
+            if (isPlaying) {
+              stopAudio();
+            }
+          }, duration * 1000 + 100);
+        } else {
+          sourceNode.start(0, offset);
+          if (onTimeUpdate) animFrameId = requestAnimationFrame(tick);
+        }
+      }).catch(err => {
+        playBtn.classList.remove('anthea-play-button-loading');
+        console.error('Audio playback failed', err);
+      });
+    };
+
+
+
+    playBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      // If currently playing or loading, pause (tracked) or stop (untracked)
+      if (isPlaying ||
+          playBtn.classList.contains('anthea-play-button-loading')) {
+        if (isTracked) {
+          pauseAudio();
+        } else {
+          stopAudio();
+        }
+        return;
+      }
+
+      // If paused, resume from saved position
+      if (paused) {
+        startPlaybackFrom(pausedOffset);
+        return;
+      }
+
+      // Start fresh playback
+      startPlaybackFrom(audioStartTime);
+    });
+
+    /**
+     * Player handle exposed to the audio system for external control.
+     */
+    const playerHandle = {
+      segIdx: segIdx,
+      isPlaying: () => isPlaying,
+      isPaused: () => paused,
+      getPausedTime: () => paused ? pausedOffset : null,
+      pause: () => pauseAudio(),
+      resume: () => startPlaybackFrom(pausedOffset),
+      stop: () => stopAudio(),
+      playFrom: (time) => startPlaybackFrom(time),
+    };
+    const container = googdom.createDom(
+        'div', 'anthea-audio-container', playBtn);
+    container.antheaPlayerHandle = playerHandle;
+    return container;
+  }
+
+
+
+  /**
+   * Return a unified timestamp range object for a given token spanning index.
+   * If start_time or end_time don't exist because of missing alignments, they will be left out.
+   * @param {number} startToken
+   * @param {number} endToken
+   * @param {!Object} tokenRanges
+   * @return {!Object}
+   */
+  static getTokenAudioRange(startToken, endToken, tokenRanges) {
+      let minStart = Infinity;
+      let maxEnd = -Infinity;
+      for (let i = startToken; i <= endToken; i++) {
+          if (tokenRanges[i]) {
+              if (tokenRanges[i].start_time !== undefined) {
+                  minStart = Math.min(minStart, tokenRanges[i].start_time);
+              }
+              if (tokenRanges[i].end_time !== undefined) {
+                  maxEnd = Math.max(maxEnd, tokenRanges[i].end_time);
+              }
+          }
+      }
+      const range = {};
+      if (minStart !== Infinity) range.start_time = minStart;
+      if (maxEnd !== -Infinity) range.end_time = maxEnd;
+      return range;
+  }
+
+  /**
+   * Synchonize highlighting of token spans based on the current audio playback time.
+   * @param {?number} currentTime Time in seconds, or null if audio stopped.
+   * @param {!Array<!Element>} subparas Array of subpara objects containing subparaSpans
+   * @param {!Object} tokenRanges Output from computeTokenAudioRanges
+   */
+  static syncHighlighting(currentTime, subparas, tokenRanges) {
+      if (!tokenRanges) {
+          return;
+      }
+      for (let s = 0; s < subparas.length; s++) {
+          const subpara = subparas[s];
+          if (!subpara.tokenSpans ||
+              subpara.tokenSpans.length !== subpara.num_tokens) {
+              continue;
+          }
+
+          for (let i = 0; i < subpara.num_tokens; i++) {
+              const tokenIdx = subpara.token_offset + i;
+              const range = tokenRanges[tokenIdx];
+              const domToken = subpara.tokenSpans[i];
+
+              if (currentTime === null || !range || range.start_time === undefined || range.end_time === undefined) {
+                  domToken.classList.remove('anthea-audio-highlight');
+                  continue;
+              }
+
+              if (currentTime >= range.start_time && currentTime <= range.end_time) {
+                  // Currently within this token's time range
+                  domToken.classList.add('anthea-audio-highlight');
+              } else if (currentTime > range.end_time) {
+                  // Past this token — keep it highlighted if we haven't
+                  // reached the next token's start_time yet (gap/pause)
+                  let nextStart = null;
+                  for (let j = i + 1; j < subpara.num_tokens; j++) {
+                      const nextRange = tokenRanges[subpara.token_offset + j];
+                      if (nextRange && nextRange.start_time !== undefined) {
+                          nextStart = nextRange.start_time;
+                          break;
+                      }
+                  }
+                  if (nextStart !== null && currentTime < nextStart) {
+                      domToken.classList.add('anthea-audio-highlight');
+                  } else {
+                      domToken.classList.remove('anthea-audio-highlight');
+                  }
+              } else {
+                  domToken.classList.remove('anthea-audio-highlight');
+              }
+          }
+      }
   }
 
   /**
@@ -4463,6 +5198,7 @@ class AntheaEval {
       // Create the second target column for sideBySide templates.
       const tgtSegments2 = config.SIDE_BY_SIDE ? docsys2.tgtSegments : null;
       const annotations = docsys.annotations;
+      const annotations2 = config.SIDE_BY_SIDE ? docsys2.annotations : null;
       let srcSpannified =
           `<p class="anthea-source-para" dir="auto" lang="${this.srcLang}">`;
       let tgtSpannified =
@@ -4494,12 +5230,16 @@ class AntheaEval {
               Array.from({'length': config.SIDE_BY_SIDE ? 2 : 1}).fill(-1);
         }
         this.evalResults_.push(evalResult);
+        let audioAnnotation = null;
         if (j < annotations.length) {
           let parsed_anno = {};
           try {
             parsed_anno = JSON.parse(annotations[j]);
           } catch (err) {
             parsed_anno = {};
+          }
+          if (parsed_anno.audio) {
+            audioAnnotation = parsed_anno.audio;
           }
           if (parsed_anno.hasOwnProperty('prior_result')) {
             priorResults.push(parsed_anno.prior_result);
@@ -4524,9 +5264,25 @@ class AntheaEval {
             }
           }
         }
+        // Parse docsys2's annotations to get audio for target2.
+        if (config.SIDE_BY_SIDE && annotations2 && j < annotations2.length) {
+          let parsed_anno2 = {};
+          try {
+            parsed_anno2 = JSON.parse(annotations2[j]);
+          } catch (err) {
+            parsed_anno2 = {};
+          }
+          if (parsed_anno2.audio && parsed_anno2.audio.target) {
+            if (!audioAnnotation) {
+              audioAnnotation = {};
+            }
+            audioAnnotation.target2 = parsed_anno2.audio.target;
+          }
+        }
 
         const segment = {
           doc: this.docs_.length - 1,
+          audio: audioAnnotation,
           srcText: srcSegments[j],
           tgtText: tgtSegments[j],
           tgtText2: config.SIDE_BY_SIDE ? tgtSegments2[j] : '',
@@ -4545,6 +5301,35 @@ class AntheaEval {
               subparaSentences, subparaTokens,
               this.READ_ONLY ? 0 : hotwPercent, hotwPretend, this.tgtLang) : [],
         };
+
+        if (segment.audio && segment.audio.source && segment.audio.source.alignment) {
+           const srcAl = segment.audio.source.alignment;
+           if (srcAl.length > 0 && srcAl[0].substring !== undefined &&
+               srcAl[0].char_start === undefined) {
+             AntheaEval.resolveSubstringAlignment(
+                 segment.srcText, srcAl);
+           }
+           segment.srcTokenAudioRanges = AntheaEval.computeTokenAudioRanges(segment.srcText, segment.srcSubparas, srcAl);
+        }
+        if (segment.audio && segment.audio.target && segment.audio.target.alignment) {
+           const tgtAl = segment.audio.target.alignment;
+           if (tgtAl.length > 0 && tgtAl[0].substring !== undefined &&
+               tgtAl[0].char_start === undefined) {
+             AntheaEval.resolveSubstringAlignment(
+                 segment.tgtText, tgtAl);
+           }
+           segment.tgtTokenAudioRanges = AntheaEval.computeTokenAudioRanges(segment.tgtText, segment.tgtSubparas, tgtAl);
+        }
+        if (config.SIDE_BY_SIDE && segment.audio && segment.audio.target2 && segment.audio.target2.alignment) {
+           const tgt2Al = segment.audio.target2.alignment;
+           if (tgt2Al.length > 0 && tgt2Al[0].substring !== undefined &&
+               tgt2Al[0].char_start === undefined) {
+             AntheaEval.resolveSubstringAlignment(
+                 segment.tgtText2, tgt2Al);
+           }
+           segment.tgtTokenAudioRanges2 = AntheaEval.computeTokenAudioRanges(segment.tgtText2, segment.tgtSubparas2, tgt2Al);
+        }
+
         const segIndex = this.segments_.length;
         this.segments_.push(segment);
 
@@ -4636,6 +5421,59 @@ class AntheaEval {
         console.assert(tgtSubparaSpans2.length === segment.tgtSubparas2.length);
         for (let t = 0; t < segment.tgtSubparas2.length; t++) {
           segment.tgtSubparas2[t].subparaSpan = tgtSubparaSpans2[t];
+        }
+      }
+
+      if (segment.audio) {
+        segment.audio.has_source =
+            !!(segment.audio.source && segment.srcSubparas.length > 0);
+        segment.audio.has_target =
+            !!(segment.audio.target && segment.tgtSubparas.length > 0);
+        segment.audio.has_target2 =
+            !!(config.SIDE_BY_SIDE && segment.audio.target2 &&
+               segment.tgtSubparas2.length > 0);
+
+        const alreadyVisited =
+            this.evalResults_[i] && this.evalResults_[i].visited;
+        segment.audio.played_source =
+            alreadyVisited || !segment.audio.has_source;
+        segment.audio.played_target =
+            alreadyVisited || !segment.audio.has_target;
+        segment.audio.played_target2 =
+            alreadyVisited || !segment.audio.has_target2;
+
+        if (segment.audio.has_source) {
+            segment.srcSubparas[0].audioPlayer = this.createAudioPlayer(
+                segment.audio.source, () => {
+                  segment.audio.played_source = true;
+                  this.updateProgressForSegment(i);
+                }, segment.audio.played_source,
+                (time) => AntheaEval.syncHighlighting(
+                    time, segment.srcSubparas, segment.srcTokenAudioRanges),
+                0, i);
+            this.getAudioBuffer(segment.audio.source.url); // Preload
+        }
+        if (segment.audio.has_target) {
+            segment.tgtSubparas[0].audioPlayer = this.createAudioPlayer(
+                segment.audio.target, () => {
+                  segment.audio.played_target = true;
+                  this.updateProgressForSegment(i);
+                }, segment.audio.played_target,
+                (time) => AntheaEval.syncHighlighting(
+                    time, segment.tgtSubparas, segment.tgtTokenAudioRanges),
+                1, i);
+            this.getAudioBuffer(segment.audio.target.url); // Preload
+        }
+        if (segment.audio.has_target2) {
+            segment.tgtSubparas2[0].audioPlayer = this.createAudioPlayer(
+                segment.audio.target2, () => {
+                  segment.audio.played_target2 = true;
+                  this.updateProgressForSegment(i);
+                }, segment.audio.played_target2,
+                (time) => AntheaEval.syncHighlighting(
+                    time, segment.tgtSubparas2, segment.tgtTokenAudioRanges2),
+                2, i);
+            this.getAudioBuffer(segment.audio.target2.url); // Preload
         }
       }
     }
@@ -4828,6 +5666,7 @@ class AntheaPhraseMarker {
    * @param {number} spanIndex
    */
   pickEnd(spanIndex) {
+    this.removePlayFromHereButton_();
     const ce = this.contextedEval_;
     ce.noteTiming('marked-error-span-end');
     if (spanIndex < this.startSpanIndex_) {
@@ -4860,6 +5699,15 @@ class AntheaPhraseMarker {
   prepareToPickEnd(spanIndex) {
     this.startSpanIndex_ = spanIndex;
     const ce = this.contextedEval_;
+
+    // Pause all currently playing audio (all sides)
+    const system = ce.getAudioSystem();
+    for (const s in system.activePlayers) {
+      if (system.activePlayers[s] && system.activePlayers[s].isPlaying()) {
+        system.activePlayers[s].pause();
+      }
+    }
+
     this.markables_ = ce.getMarkableSpanIndices(spanIndex);
     /* Remove anthea-word listeners: we'll add new ones. */
     this.resetWordSpans();
@@ -4870,6 +5718,50 @@ class AntheaPhraseMarker {
 
     const span = this.tokenSpans_[spanIndex];
     span.style.backgroundColor = this.color_;
+
+    // Show a "Play from here" button above the clicked token if audio exists
+    this.removePlayFromHereButton_();
+    const subpara = ce.getCurrSubpara();
+    const tokenIdx = subpara.token_offset + spanIndex;
+    const segment = ce.segments_[ce.cursor.seg];
+    if (segment && segment.audio) {
+      let tokenRanges = null;
+      if (ce.cursor.side === 0) {
+        tokenRanges = segment.srcTokenAudioRanges;
+      } else if (ce.cursor.side === 1) {
+        tokenRanges = segment.tgtTokenAudioRanges;
+      } else if (ce.cursor.side === 2) {
+        tokenRanges = segment.tgtTokenAudioRanges2;
+      }
+      if (tokenRanges && tokenRanges[tokenIdx] &&
+          tokenRanges[tokenIdx].start_time !== undefined) {
+        const playFromBtn = document.createElement('button');
+        playFromBtn.className = 'anthea-play-from-here-button';
+        playFromBtn.textContent = '▶';
+        playFromBtn.title = 'Play from here';
+        playFromBtn.style.cssText =
+            'position:absolute; transform:translateX(-50%);' +
+            'font-size:14px; padding:4px 10px; cursor:pointer;' +
+            'z-index:10; background:#e53935; color:white; border:none;' +
+            'border-radius:12px; line-height:1.4; white-space:nowrap;' +
+            'box-shadow:0 2px 6px rgba(0,0,0,0.3); font-family:sans-serif;';
+        // Position above the token
+        span.style.position = 'relative';
+        playFromBtn.style.bottom = '100%';
+        playFromBtn.style.left = '50%';
+        span.appendChild(playFromBtn);
+        this.playFromHereBtn_ = playFromBtn;
+        this.playFromHereSpan_ = span;
+
+        playFromBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          this.removePlayFromHereButton_();
+          ce.handleCancel();
+          ce.playAudioFromToken(tokenIdx);
+        });
+      }
+    }
 
     for (let x = 0; x < this.tokenSpans_.length; x++) {
       if (!this.markables_.has(x)) {
@@ -4887,6 +5779,7 @@ class AntheaPhraseMarker {
    * is done, the contextedEval_ object's setMQMSpan() function will get called.
    */
   getMarkedPhrase() {
+    this.removePlayFromHereButton_();
     this.startSpanIndex_ = -1;
     this.endSpanIndex_ = -1;
     const ce = this.contextedEval_;
@@ -4902,5 +5795,20 @@ class AntheaPhraseMarker {
           () => { this.prepareToPickEnd(x); });
       }
     }
+  }
+
+  /**
+   * Removes the 'Play from here' button if it exists.
+   * @private
+   */
+  removePlayFromHereButton_() {
+    if (this.playFromHereBtn_ && this.playFromHereBtn_.parentNode) {
+      this.playFromHereBtn_.parentNode.removeChild(this.playFromHereBtn_);
+    }
+    if (this.playFromHereSpan_) {
+      this.playFromHereSpan_.style.position = '';
+    }
+    this.playFromHereBtn_ = null;
+    this.playFromHereSpan_ = null;
   }
 }
