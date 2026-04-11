@@ -28,18 +28,19 @@ absl::Status ValidateConvInputs(bool is_grad_op, int dims,
   // Sparse coordinates.
   const Tensor& coordinates = ctx->input(0);
   if (coordinates.dtype() != DT_INT32) {
-    return errors::InvalidArgument(
+    return absl::InvalidArgumentError(
         "Datatype of input coordinates must be DT_INT32.");
   }
   if (coordinates.dims() != 3) {
-    return errors::InvalidArgument("The coordinates tensor must be of rank 3.");
+    return absl::InvalidArgumentError(
+        "The coordinates tensor must be of rank 3.");
   }
 
   const int batch_size = coordinates.dim_size(0);
   const int max_num_coords_per_batch = coordinates.dim_size(1);
   if (coordinates.dim_size(2) != dims) {
-    return errors::InvalidArgument(
-        "The last dimension of the coordinates tensor must be ", dims);
+    return absl::InvalidArgumentError(absl::StrCat(
+        "The last dimension of the coordinates tensor must be ", dims));
   }
 
   // Valid coordinate counters.
@@ -56,20 +57,20 @@ absl::Status ValidateConvInputs(bool is_grad_op, int dims,
   // Sparse features.
   const Tensor& input_features = ctx->input(2);
   if (input_features.dtype() != DT_FLOAT) {
-    return errors::InvalidArgument(
+    return absl::InvalidArgumentError(
         "Currently only float32 input features are supported.");
   }
   if (input_features.dims() != 3) {
-    return errors::InvalidArgument(
+    return absl::InvalidArgumentError(
         "The input feature tensor must be of rank 3.");
   }
   if (input_features.dim_size(0) != batch_size) {
-    return errors::InvalidArgument(
+    return absl::InvalidArgumentError(
         "The input feature batch size doesn't "
         "match the coordinates batch size.");
   }
   if (input_features.dim_size(1) != max_num_coords_per_batch) {
-    return errors::InvalidArgument(
+    return absl::InvalidArgumentError(
         "The number of input features doesn't "
         "match the number of coordinates.");
   }
@@ -77,51 +78,53 @@ absl::Status ValidateConvInputs(bool is_grad_op, int dims,
   // Filter.
   const Tensor& filter = ctx->input(3);
   if (filter.dtype() != input_features.dtype()) {
-    return errors::InvalidArgument("Filter dtype doesn't match feature dtype.");
+    return absl::InvalidArgumentError(
+        "Filter dtype doesn't match feature dtype.");
   }
   if (filter.dims() != dims + 2) {
-    return errors::InvalidArgument("Filter must be of rank ", dims + 2, ".");
+    return absl::InvalidArgumentError(
+        absl::StrCat("Filter must be of rank ", dims + 2, "."));
   }
 
   const int in_channels = filter.dim_size(dims);
   const int out_channels = filter.dim_size(dims + 1);
   if (in_channels != input_features.dim_size(2)) {
-    return errors::InvalidArgument("Number of input feature channels (",
-                                   input_features.dim_size(2),
-                                   ") must be the same as the "
-                                   "input channel size of the filter (",
-                                   in_channels, ").");
+    return absl::InvalidArgumentError(absl::StrCat(
+        "Number of input feature channels (", input_features.dim_size(2),
+        ") must be the same as the "
+        "input channel size of the filter (",
+        in_channels, ")."));
   }
   if ((filter.dim_size(0) & filter.dim_size(1) &
        (dims == 2 ? 1 : filter.dim_size(2)) & 1) == 0) {
-    return errors::InvalidArgument(
-        "The ", (dims == 2 ? "" : "depth, "),
-        "height and width of the filter must be odd "
-        "numbers for submanifold sparse convolutions.");
+    return absl::InvalidArgumentError(
+        absl::StrCat("The ", dims == 2 ? "" : "depth, ",
+                     "height and width of the filter must be odd "
+                     "numbers for submanifold sparse convolutions."));
   }
 
   if (is_grad_op) {
     const Tensor& d_output_features = ctx->input(4);
     if (d_output_features.dtype() != DT_FLOAT) {
-      return errors::InvalidArgument(
+      return absl::InvalidArgumentError(
           "Currently only float32 output features are supported.");
     }
     if (d_output_features.dims() != 3) {
-      return errors::InvalidArgument(
+      return absl::InvalidArgumentError(
           "The output feature tensor must be of rank 3.");
     }
     if (d_output_features.dim_size(0) != batch_size) {
-      return errors::InvalidArgument(
+      return absl::InvalidArgumentError(
           "The output feature batch size doesn't "
           "match the coordinates batch size.");
     }
     if (d_output_features.dim_size(1) != max_num_coords_per_batch) {
-      return errors::InvalidArgument(
+      return absl::InvalidArgumentError(
           "The number of output features doesn't "
           "match the number of coordinates.");
     }
     if (d_output_features.dim_size(2) != out_channels) {
-      return errors::InvalidArgument(
+      return absl::InvalidArgumentError(
           "The output feature channels doesn't match the number of output "
           "channels of the filter.");
     }

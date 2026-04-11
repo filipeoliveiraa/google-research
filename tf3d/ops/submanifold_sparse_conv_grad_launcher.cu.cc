@@ -314,7 +314,8 @@ absl::Status LaunchSubmanifoldSparseConvBackpropFilter<Eigen::GpuDevice>(
   if (dims == 3) {
     return cuda::LaunchSubmanifoldSparseConvBackpropFilterImpl<3>(opts);
   }
-  return errors::InvalidArgument("Only 2D and 3D convolutions are supported.");
+  return absl::InvalidArgumentError(
+      "Only 2D and 3D convolutions are supported.");
 }
 
 }  // namespace tf3d

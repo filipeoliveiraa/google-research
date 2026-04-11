@@ -93,7 +93,8 @@ absl::Status LaunchSubmanifoldSparseConvolution<Eigen::ThreadPoolDevice>(
   const int dims = opts.coordinates.dim_size(2);
   if (dims == 2) return RunSubmanifoldSparseConvolution<2>(opts);
   if (dims == 3) return RunSubmanifoldSparseConvolution<3>(opts);
-  return errors::InvalidArgument("Only 2D and 3D convolutions are supported.");
+  return absl::InvalidArgumentError(
+      "Only 2D and 3D convolutions are supported.");
 }
 
 }  // namespace tf3d
