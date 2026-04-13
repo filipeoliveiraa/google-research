@@ -124,11 +124,11 @@ class SlowPuddle(Puddle):
     # Turn the intersections into a series of points.
     intersection_points = list()
     if isinstance(intersections, geometry.MultiLineString):
-      for segment in intersections:
+      for segment in intersections.geoms:
         intersection_points.extend(
             [geometry.Point(c) for c in segment.coords])
     elif isinstance(intersections, geometry.MultiPoint):
-      for point in intersections:
+      for point in intersections.geoms:
         intersection_points.append(point)
     else:
       # It's just one segment.
