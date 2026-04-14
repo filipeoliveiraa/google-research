@@ -1,0 +1,25 @@
+torch
+torchvision
+roma
+gradio
+matplotlib
+tqdm
+opencv-python
+scipy
+einops
+trimesh
+tensorboard
+jupyterlab
+pyglet<2
+ipympl
+albumentations
+timm
+hydra-core
+transformers==4.33.2
+einx
+torchopt
+torchcodec==0.0.3
+av
+ftfy
+regex
+clip @ git+https://github.com/openai/CLIP.git

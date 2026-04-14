@@ -1,0 +1,64 @@
+runtime:
+  version: "test"
+  name: "" # will be overrriden
+  PJRT_DEVICE: CUDA
+
+opt:
+  _target_: torch.optim.AdamW
+  lr: 0.0001
+  weight_decay: 0.0001
+
+model:
+  encoder: 'vitl14'
+  ridge: 0.1
+  conf_temp: 0.05
+  w_edge: 1.0
+  sigma_edge: 0.1
+  conf_cutoff: 0.0
+  lstsq_cutoff: 0.5
+  num_fts: 32
+  pamr:
+      sigma: 0.05
+  depthcore:
+      _target_: lila.dpt_lila.DepthCore
+      scale: 1.0
+      scale_disp: 0.01
+      depth_tol: 0.9
+      eps: 0.1
+  rff:
+      _target_: lila.dpt_lila.RFFEncoder
+      scale_flow: 1.0
+      scale_depth: 1.0
+
+train_loader:
+    batch_size: 32
+    shuffle: True
+    num_workers: 4
+    pin_memory: True
+    drop_last: True
+
+train_dataset:
+    _target_: dataload.YTVOS
+    root_dir: "/workdir/data/RefYTVOS"
+    split: "splits/train_all_ytvos.txt"
+    crop_range: [0.3, 1.0]
+    aspect_range: [1.0, 1.0]
+    T: 5
+    mask_ratio: 0.8
+
+val_loader:
+    batch_size: 16
+    drop_last: False
+    shuffle: False
+    num_workers: 4
+    pin_memory: True
+
+val_dataset:
+    _target_: dataload.VideoDataset
+    root_dir: "/workdir/data/DAVIS2017"
+    split: "splits/val_davis.txt"
+    crop_range: [0.3, 1.0]
+    aspect_range: [0.75, 1.33]
+
+showroom: [254, 112, 34, 35]
+eval_vos: ["bike-packing", "india", "dog", "motocross-jump", "shooting", "horsejump-high"]

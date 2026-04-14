@@ -1,0 +1,54 @@
+runtime:
+  name: "" # will be overridden
+  root: "" # will be overridden
+
+model:
+  name: "" # will be overridden
+  checkpoint: "best_checkpoint.pt"
+  encoder: "vitl14"
+  depthcore:
+      _target_: lila.dpt_lila.DepthCore
+      scale: 1.0
+      scale_disp: 0.01
+      depth_tol: 0.9
+      eps: 0.1
+  rff:
+      _target_: lila.dpt_lila.RFFEncoder
+      scale_feat: 1.0
+  pamr:
+      sigma: 0.05
+
+probe:
+  enc_fdim: 1024
+  dec_fdim: 128
+  alpha_dec: 1.0
+  alpha_enc: 1.0
+
+eval:
+  lr: 0.001
+  lr_sched_gamma: 0.9
+  weight_decay: 0.00001
+  batch_size: 96
+  finetune: False
+  finetune_lr_mult: 0.1
+  finetune_wd_mult: 1.0
+  random_dpt: False
+  num_epochs: 10
+  dec_norm: True
+  enc_norm: True
+  resize_input: False
+  resize_input_size: 224
+  enc_layer_idx: -1
+  vos:
+      name: "probe"
+      lr: 0.0005
+      weight_decay: 0.0001
+      num_epochs: 2000
+  vos_knn:
+      name: "knn"
+      attn_window: 25
+      feat_grid_size: 60
+      context_size: 7
+      num_nn: 5
+      temp: 0.1
+  
