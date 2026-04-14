@@ -107,6 +107,27 @@ python3 -m Uboreshaji_Modeli.main \
 *Note: Evaluation defaults to the `"test"` split if it exists, falling back to
 validation if unavailable.*
 
+## Dataset Conversion Usage
+
+The main entry point for converting COCO datasets to Hugging Face format is
+`convert_coco_json_to_hf_dataset.py`. You can configure specific settings via
+command-line flags.
+
+**Flags:**
+
+*   `--coco_root_dir`: Path to the root directory containing COCO annotations
+    and images. (Required)
+*   `--output_hf_path`: Path where the Hugging Face DatasetDict will be saved.
+    (Required)
+
+**Example:**
+
+```bash
+python3 -m Uboreshaji_Modeli.convert_coco_json_to_hf_dataset \
+    --coco_root_dir=/path/to/coco/root \
+    --output_hf_path=/path/to/output/hf/path
+```
+
 ## 💻 For New Users: Engagement Path
 
 ### **Step 1: Understand the Project** (15 min)
