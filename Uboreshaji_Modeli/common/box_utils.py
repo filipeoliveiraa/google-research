@@ -16,6 +16,7 @@
 """Utilities for bounding box manipulations."""
 # TODO: b/483281963 - Utilise standard implementations for these functions.
 
+from collections.abc import MutableSequence, Sequence
 import torch
 
 
@@ -36,6 +37,12 @@ def box_xyxy_to_cxcywh(x):
   return torch.stack(
       [(x0 + x1) / 2, (y0 + y1) / 2, (x1 - x0), (y1 - y0)], dim=-1
   )
+
+
+def coco_to_xyxy(coco_bbox):
+  """Converts a COCO-format bbox [x, y, w, h] to [x1, y1, x2, y2]."""
+  x, y, width, height = coco_bbox
+  return [x, y, x + width, y + height]
 
 
 def rescale_bboxes(

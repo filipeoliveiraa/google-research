@@ -16,6 +16,7 @@
 """Simple tests for box_utils to verify coverage."""
 
 from absl.testing import absltest
+from absl.testing import parameterized
 import torch
 from Uboreshaji_Modeli.common import box_utils
 
@@ -54,6 +55,25 @@ class BoxUtilsTest(absltest.TestCase):
     self.assertFalse(box_utils.is_valid_box([10, 20, 10, 40], "xyxy"))
     self.assertFalse(box_utils.is_valid_box([10, 20, 30, 20], "xyxy"))
     self.assertFalse(box_utils.is_valid_box([10, 20, 5, 40], "xyxy"))
+
+
+class CocoToXyxyTest(parameterized.TestCase):
+
+  @parameterized.named_parameters(
+      dict(
+          testcase_name="basic_conversion",
+          coco_box=[10, 20, 100, 200],
+          expected_xyxy=[10, 20, 110, 220],
+      ),
+      dict(
+          testcase_name="zero_size",
+          coco_box=[50, 50, 0, 0],
+          expected_xyxy=[50, 50, 50, 50],
+      ),
+  )
+  def test_coco_to_xyxy(self, coco_box, expected_xyxy):
+    result = box_utils.coco_to_xyxy(coco_box)
+    self.assertEqual(result, expected_xyxy)
 
 
 if __name__ == "__main__":
