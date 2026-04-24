@@ -8,14 +8,13 @@ available. All released materials will be summarized in this document.
 
 
 
-
 ## Data
 
 The data subdirectory currently contains the following resources, used for
-results reported in the paper. Due to size constraints at this Github location, 
-larger datasets are compressed into tarballs (`.tgz`) and are split into 1M 
-chunks (suffixed by `.part.X`) using the Unix `split` command. They can be 
-concatenated via `cat` to reform a single file, and expanded as normal 
+results reported in the paper. Due to size constraints at this Github location,
+larger datasets are compressed into tarballs (`.tgz`) and are split into 1M
+chunks (suffixed by `.part.X`) using the Unix `split` command. They can be
+concatenated via `cat` to reform a single file, and expanded as normal
 using `tar -xvzf`.
 
 In `data/spelling_pairs/american_british_spelling_alternatives.tsv`, each line
@@ -36,7 +35,7 @@ acclimatisation	practice	1
 ```
 
 This signifies that, in the BNC corpus, the words `acclimatisation` and
-`practice` cooccurred in a sentence just once.  In addition to files containing
+`practice` cooccurred in a sentence just once. In addition to files containing
 all cooccurrences, for the C4 and OWT corpora we also include gzipped TSV files
 with counts of adjacent occurrences, which are used to report results in Tables
 2 and 7 of the paper.
@@ -46,11 +45,13 @@ that were scored in the paper. There are 29 prompt templates, each presented
 with 16028 prompt-target word pairs, for a total of 464812 lines. See the
 scripts described below to use this data to generate scores with T5 and GPT2.
 
-The `data/score_pickles` subdirectory contains the computed raw scores summarized in the paper. Post-processing of these raw scores is shown in `scripts/normalize_scores.ipynb`.
+The `data/score_pickles` subdirectory contains the computed raw scores
+summarized in the paper. Post-processing of these raw scores is shown
+in `scripts/normalize_scores.ipynb`.
 
 *  GPT2
-  *   `gpt2_{nonadjacent|adjacent}_scores.pickle`: Conditional and joint GPT2 scores in the
-    adjacent and non-adjacent prompt-target condition.
+  *   `gpt2_{nonadjacent|adjacent}_scores.pickle`: Conditional and joint GPT2
+    scores in the adjacent and non-adjacent prompt-target condition.
 * T5
   * `t5_{finetuned}_{conditional|joint}_{adjacent|nonadjacent}.pickle`: Conditional and joint T5 scores in the adjacent and non-adjacent prompt-target conditions.
   * `t5_conditional_adjacent_nonce.pickle`: The scores for nonce forms corresponding to Section 5.5 in the paper.
@@ -95,7 +96,7 @@ export PYTHONPATH=PYTHONPATH:/scripts
 ```
 
 You can grab released checkpoints and vocabulary files using
-[gsutil](https://cloud.google.com/storage/docs/gsutil_install).
+[gcloud storage](https://docs.cloud.google.com/sdk/gcloud/reference/storage).
 
 ```shell
 mkdir data

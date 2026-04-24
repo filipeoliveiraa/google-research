@@ -1,6 +1,9 @@
 # This package contains SMURF, a library for research on unsupervised learning of optical flow.
 
-This code accompanies the paper **SMURF: Self-Teaching Multi-Frame Unsupervised RAFT with Full-Image Warping**. We hope that the code enables future research in unsupervised optical flow and beyond. If you find it useful in your own research, please give credit by citing our paper.
+This code accompanies the paper **SMURF: Self-Teaching Multi-Frame Unsupervised
+RAFT with Full-Image Warping**. We hope that the code enables future research
+in unsupervised optical flow and beyond. If you find it useful in your own
+research, please give credit by citing our paper.
 
 ```
 @inproceedings{stone2021smurf,
@@ -27,11 +30,18 @@ To evaluate the network, run:
 python3 -m smurf.smurf_main --eval_on="<dataset-name>:<path-to-evaluation-set>" --plot_dir=<path-to-plot-dir> --checkpoint_dir=<path-to-checkpoint>
 ```
 
-Training and evaluation can also happen simultaneously by passing both the `--eval_on` and `--train_on` flags to smurf_main.
+Training and evaluation can also happen simultaneously by passing both the
+`--eval_on` and `--train_on` flags to smurf_main.
 
-Currently, the datasets we support are KITTI ('kitti'), Sintel ('sintel'), Flying Chairs ('chairs'). You will need to download the datasets yourself and convert the data to tfrecord format using the scripts under the data_conversion_scripts folder.
+Currently, the datasets we support are KITTI ('kitti'), Sintel ('sintel'),
+Flying Chairs ('chairs'). You will need to download the datasets yourself and
+convert the data to tfrecord format using the scripts under the
+data_conversion_scripts folder.
 
-For example, if you have the sintel dataset in tfrecord format located at /usr/local/home/datasets/sintel_clean, and you wanted to run with batch size 1 on images of size 384 X 512, you could run the following commands to both train and evaluate the network:
+For example, if you have the sintel dataset in tfrecord format located at
+/usr/local/home/datasets/sintel_clean, and you wanted to run with batch size 1
+on images of size 384 X 512, you could run the following commands to both train
+and evaluate the network:
 
 ```
 python3 -m smurf.smurf_main --train_on="sintel-clean:/usr/local/home/datasets/sintel_clean/test" --global_gpu_batch_size=1 --height=384 --width=512 --plot_dir='/usr/local/home/plots/smurf' --checkpoint_dir='/usr/local/home/checkpoints/smurf'
@@ -50,8 +60,8 @@ To export the flying chairs dataset to TF records, use:
 python3 -m smurf.data_conversion_scripts.convert_flying_chairs_to_tfrecords --data_dir=<path to directory with chairs images and flow> --output_dir=<path to export directory>
 ```
 
-You can optionally break the dataset into smaller files using the --shard and --num_shards parameters.
-
+You can optionally break the dataset into smaller files using the --shard and
+--num_shards parameters.
 
 To export the Sintel dataset to TF records, use:
 
@@ -65,12 +75,16 @@ To export the KITTI dataset to TF records, use:
 python3 -m smurf.data_conversion_scripts.convert_KITTI_multiview_to_tfrecords --data_dir=<path to directory with chairs images and flow> --output_dir=<path to export directory>
 ```
 
-Please note: To convert KITTI to TF records, use the scripts `convert_KITTI_flow_to_tfrecords.py` and `convert_KITTI_multiview_to_tfrecords.py` for the labeled flow images and the unlabeled multiview extension, respectively.
-
+Note: To convert KITTI to TF records, use the scripts
+`convert_KITTI_flow_to_tfrecords.py` and
+`convert_KITTI_multiview_to_tfrecords.py` for the labeled flow images and the
+unlabeled multiview extension, respectively.
 
 ## Experimental Details
 
-We used the following conditionals to decide the resolution, smoothness, and occlusion estimation during the experiments in our paper. If not specified below, we use the default settings.
+We used the following conditionals to decide the resolution, smoothness, and
+occlusion estimation during the experiments in our paper. If not specified
+below, we use the default settings.
 
 ```
 if 'sintel' in train_dataset:
@@ -123,9 +137,9 @@ ground truth labels anywhere except for evaluation. The labels used in the prior
 step come from the unsupervised model run on multiple frames as described in the
 "Multi-Frame Self-Supervision" section of our paper.
 
-
 Pre-trained model checkpoints
-We provide checkpoints of trained models on the Sintel and KITTI dataset. The checkpoints are available on Google Cloud Storage:
+We provide checkpoints of trained models on the Sintel and KITTI dataset. The
+checkpoints are available on Google Cloud Storage:
 
 * Chairs: [gs://gresearch/smurf/chairs-smurf](https://console.cloud.google.com/storage/browser/gresearch/smurf/chairs-smurf) (~60MB)
 
@@ -133,7 +147,8 @@ We provide checkpoints of trained models on the Sintel and KITTI dataset. The ch
 
 * Sintel: [gs://gresearch/smurf/sintel-smurf](https://console.cloud.google.com/storage/browser/gresearch/smurf/sintel-smurf) (~60MB)
 
-To use these checkpoints, download all files into a local checkpoint directory, e.g. /tmp/smurf/, either by using the Google Cloud Storage web interface or using gsutil:
+To use these checkpoints, download all files into a local checkpoint directory,
+e.g. /tmp/smurf/, using the Google Cloud Storage web interface:
 
 ```
 gcloud storage cp --recursive gs://gresearch/smurf* /tmp/smurf/

@@ -1,6 +1,5 @@
 # Airdialogue
 
-
 ## Install
 
 1. install parlai
@@ -33,8 +32,6 @@ cd ../..
 ```
 parlai display_data -t airdialogue:agent:300
 ```
-
-
 
 ## Intro
 
@@ -92,7 +89,8 @@ python selfplay.py --selfchat-max-turns 10 -t airdialogue:both:300 -mf human -pm
 
 - `--start-cid` can start from a give conversation id
 
-You can enter you own words, or select predefined response by '-x', 'x=0,1,2,3' represents the response id. 
+You can enter you own words, or select predefined response by '-x', 'x=0,1,2,3'
+represents the response id.
 
 ## Generate OPE Data
 

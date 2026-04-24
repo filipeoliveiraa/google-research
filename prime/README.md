@@ -1,31 +1,29 @@
 # PRIME
 
 ## Table of contents
-<a href='#Description'>Description</a><br>
-<a href='#Dataset'>Dataset</a><br>
-<a href='#Principles'>AI Principles</a><br>
-<a href='#Acknowledgement'>Acknowledgements</a><br>
-<a href='#Citation'>How to cite</a><br>
-<a href='#Disclaimer'>Disclaimer</a><br>
 
+* [Description](#description)
+* [Dataset](#dataset)
+* [AI Principles](#principles)
+* [Acknowledgements](#acknowledgements)
+* [How to cite](#how-to-cite)
+* [Disclaimer](#disclaimer)
 
-<a id='Description'></a>
 ## Description
 
-An **introductory tutorial** for the PRIME algorithm is available as a Colaboratory
-notebook:
+An **introductory tutorial** for the PRIME algorithm is available as a
+Colaboratory notebook:
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/google-research/google-research/blob/master/prime/prime_colab.ipynb)
 
-<a id='Dataset'></a>
 ## Dataset
 
 We provide the PRIME dataset for nine applications, collected using an industry
 grade simulator. The dataset is available on Google Cloud Storage:
 
-
 * PRIME Dataset: [gs://gresearch/prime](https://console.cloud.google.com/storage/browser/gresearch/prime)
 
-You may download the dataset either by using the Google Cloud Storage web interface or using gsutil:
+You may download the dataset either by using the Google Cloud Storage web
+interface or using gcloud storage:
 
 ```
 gcloud storage cp --recursive gs://gresearch/prime /tmp/prime/
@@ -34,7 +32,6 @@ gcloud storage cp --recursive gs://gresearch/prime /tmp/prime/
 This dataset contains both infeasible and feasible data points as described in
 [PRIME](https://arxiv.org/abs/2110.11346). The descriptors of the collected
 data are presented in the table below.
-
 
 |                  | # of Infeasible | # of Feasible | Max Runtime (ms) | Min Runtime (ms) | Average Runtime (ms) |
 |------------------|-----------------|---------------|------------------|------------------|----------------------|
@@ -48,18 +45,13 @@ data are presented in the table below.
 | T-RNN Dec        |          405607 |         94459 |          4447.74 |           128.05 |               662.44 |
 | T-RNN Enc        |          410933 |         88880 |          5112.82 |           127.97 |               731.20 |
 
-
 A demo on how to parse the dataset on Google Cloud Storage and reproducing the
 numbers in the table above is available as a Colaboratory notebook: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/google-research/google-research/blob/master/prime/prime_dataset_colab.ipynb)
-
-<a id='Principles'></a>
 
 ## Principles
 This project adheres to [Google's AI principles](PRINCIPLES.md). By
 participating, using or contributing to this project you are expected to adhere
 to these principles.
-
-<a id='Acknowledgement'></a>
 
 ## Acknowledgements
 
@@ -73,8 +65,6 @@ For their invaluable feedback and suggestions, we extend our gratitude to:
 * Samira Khan
 * Xinyang Geng
 
-<a id='Citation'></a>
-
 ## How to cite
 
 If you use this dataset, please cite:
@@ -87,8 +77,6 @@ If you use this dataset, please cite:
   year={2022},
 }
 ```
-
-<a id='Disclaimer'></a>
 
 ## Disclaimer
 

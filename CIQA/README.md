@@ -1,6 +1,5 @@
 # Compression Image Quality Assessment Dataset (CIQA)
 
-
 ## Overview
 
 The CIQA dataset is an open-sourced collection of labels to the popular
@@ -30,11 +29,10 @@ distribution of semantic classes. Semantic labels for each class of animal,
 architecture, cityscape, floral, food/drink, landscape, portrait, and still life
 have almost equal occurrence (∼ 6.25%). All reference images and the
 category of ’generic’ has an occurrence of 50%. This was done to ensure the
-diversity of sampled images and to create a more accurate representation of 
+diversity of sampled images and to create a more accurate representation of
 general perceptual image quality. Similarly, we preserve a wide distribution of
 resolutions from the sampled images which which varies from 200 × 200 to
 800 × 800, and not necessarily always of equal height and width.
-
 
 ## Labels
 7808 pairwise comparisons were generated and each was rated by 32 individual
@@ -51,6 +49,7 @@ reference image in the test set and 1536 total examples in the test set.
 ## Resulting Dataset
 The result is a dataset with a training set (6372 pairwise comparisons) and a
 test set (1536 pairwise comparisons). Column names in the data are
+
 * ref_id: The reference image ID from the AVA dataset
 * jpg1: This field is the first image's name formatted as
 {reference_image_id}/{jpg_Quality_Factor_1}.
@@ -62,8 +61,9 @@ test set (1536 pairwise comparisons). Column names in the data are
 
 ## Access
 The train and test sets are stored in the Google Research GCP public data
-storage. The data can be accessed through the gcloud storage CLI, tf.io.gfile API and
-HTTP api. It is stored in gs://gresearch bucket under the CIQA directory.
+storage. The data can be accessed through the gcloud storage CLI, tf.io.gfile
+API and HTTP api. It is stored in gs://gresearch bucket under the
+CIQA directory.
 
 * Training Set - http://storage.googleapis.com/gresearch/ciqa/train.csv
 * Test Set - http://storage.googleapis.com/gresearch/ciqa/test.csv
