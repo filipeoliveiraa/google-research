@@ -89,7 +89,7 @@ gs://gresearch/mucped22, and contains original images, distorted images, ELO
 rankings, and the file `evaluations.json` containing the actual evaluation
 results.
 
-To download the results, install [gsutil](https://cloud.google.com/storage/docs/gsutil)
+To download the results, install [gcloud](https://docs.cloud.google.com/sdk/gcloud/reference/storage)
 and copy the files:
 
 ```console
