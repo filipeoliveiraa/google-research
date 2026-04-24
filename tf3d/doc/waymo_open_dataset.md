@@ -25,15 +25,15 @@ a local directory.
 ### Prerequisite
 
 *   Register with your gmail account to use the
-    [Waymo Open Dataset](https://waymo.com/open/). Please <b>Note</b> that you 
-    will not be able to download the tfrecords without having registered to the 
+    [Waymo Open Dataset](https://waymo.com/open/). Please <b>Note</b> that you
+    will not be able to download the tfrecords without having registered to the
     Waymo Open Dataset.
 *   Python 2 or 3
-*   gcloud storage (command line tool to download files from google cloud. Follow this
-    [Guide](https://cloud.google.com/sdk/docs) to install. After installing the
-    Cloud SDK, simply run `gcloud init`, then you will be asked to log into your
-    google account. Make sure it is the same account that has Waymo Dataset
-    access.)
+*   gcloud storage (command line tool to download files from google cloud.
+    Follow this [Guide](https://cloud.google.com/sdk/docs) to install. After
+    installing the Cloud SDK, simply run `gcloud init`, then you will be asked
+    to log into your google account. Make sure it is the same account that has
+    Waymo Dataset access.)
 *   Make sure you have at least 2TB of storage on the disk to which you are
     downloading the data.
 
