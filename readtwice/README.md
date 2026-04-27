@@ -1,8 +1,11 @@
 # ReadTwice model
 
-This repository contains the code for `ReadTwice: Reading Very Large Documents with Memories` paper.
+This repository contains the code for `ReadTwice: Reading Very Large Documents
+with Memories` paper.
 
-Some of the functions were originally implemented for [ETC](https://github.com/google-research/google-research/tree/master/etcmodel) project.
+Some of the functions were originally implemented for
+[ETC](https://github.com/google-research/google-research/tree/master/etcmodel)
+project.
 
 ## Requirements
 
@@ -11,7 +14,9 @@ svn export https://github.com/google-research/google-research/trunk/readtwice
 pip install -r readtwice/requirements.txt
 ```
 
-WARNING: Currently, the code relies on some ops (namely, `cross_replica_concat`), which require TPU (or CPU). However, it should be possible to adjust the code to make it GPU-friendly.
+WARNING: Currently, the code relies on some ops (namely,
+`cross_replica_concat`), which require TPU (or CPU). However, it should be
+possible to adjust the code to make it GPU-friendly.
 
 ```
 pip install cloud-tpu-client
@@ -22,19 +27,30 @@ Unit tests can be run via:
 ```bash
 python -m unittest discover -s readtwice -p '*_test.py'
 ```
-When running the unit tests and all python commands mentioned later, the current working directory must be the parent folder of the `readtwice` folder.
+
+When running the unit tests and all python commands mentioned later, the current
+working directory must be the parent folder of the `readtwice` folder.
 
 ## Pre-trained Models
 
-We release a **[pre-trained checkpoint](http://storage.googleapis.com/gresearch/readtwice/readtwice.tar.gz)** that can be used to reproduce experimental results.
+We release a
+**[pre-trained checkpoint](http://storage.googleapis.com/gresearch/readtwice/readtwice.tar.gz)**
+that can be used to reproduce experimental results.
 
-We use the same vocabulary as RoBERTa model where the equivalent SentencePiece tokenizer was provided by [BERT Seq2Seq](https://github.com/google-research/google-research/tree/master/bertseq2seq) project.
+We use the same vocabulary as RoBERTa model where the equivalent SentencePiece
+tokenizer was provided by
+[BERT Seq2Seq](https://github.com/google-research/google-research/tree/master/bertseq2seq)
+project.
 
 ## Fine-tuning
 
 Below as detailed instructions on reproducing main results from the paper.
 
-First, download the [SentencePiece vocabulary](https://storage.googleapis.com/berts2s-tokenizers-tacl20/vocab_gpt.model), and download and untar the [pre-trained checkpoint](http://storage.googleapis.com/gresearch/readtwice/readtwice.tar.gz). Set the following paths accordingly.
+First, download the
+[SentencePiece vocabulary](https://storage.googleapis.com/berts2s-tokenizers-tacl20/vocab_gpt.model),
+and download and untar the
+[pre-trained checkpoint](http://storage.googleapis.com/gresearch/readtwice/readtwice.tar.gz).
+Set the following paths accordingly.
 
 ```bash
 export PRETRAINED_MODEL_DIR=gs://path/to/directory/with/pretrained/model
@@ -47,7 +63,9 @@ export NLTK_DATA_PATH=/tmp/nltk_dir
 
 ### HotpotQA
 
-First, download the [HotpotQA dataset](https://hotpotqa.github.io/) (`hotpot_train_v1.1.json`, `hotpot_dev_distractor_v1.json`) to `${HOTPOTQA_DATA_DIR}`, and specify the following paths.
+First, download the [HotpotQA dataset](https://hotpotqa.github.io/)
+(`hotpot_train_v1.1.json`, `hotpot_dev_distractor_v1.json`) to
+`${HOTPOTQA_DATA_DIR}`, and specify the following paths.
 
 ```bash
 export HOTPOTQA_DATA_DIR=/path/to/HotpotQA
@@ -57,7 +75,8 @@ export HOTPOTQA_OUTPUT_FOLDER=gs://path/to/HotpotQA/output/folder
 mkdir -p ${HOTPOTQA_EXAMPLE_DIR}
 ```
 
-Second, generate TFExamples files using the following commands and copy files to GCS.
+Second, generate TFExamples files using the following commands and copy files to
+GCS.
 
 ```bash
 python -m readtwice.models.hotpot_qa.preprocess \
@@ -137,11 +156,14 @@ python -m readtwice.models.hotpot_qa.run_finetuning \
 --cross_attention_top_k=100
 ```
 
-WARNING: Evaluating the output requires additional steps outlined in the Appendix of the paper.
+WARNING: Evaluating the output requires additional steps outlined in the
+Appendix of the paper.
 
 ### TriviaQA
 
-First, download data from [TriviaQA official website](https://nlp.cs.washington.edu/triviaqa), and specify the following paths.
+First, download data from
+[TriviaQA official website](https://nlp.cs.washington.edu/triviaqa), and specify
+the following paths.
 
 ```bash
 export TRIVIAQA_DATA_DIR=/path/to/TriviaQA
@@ -151,7 +173,8 @@ export TRIVIAQA_OUTPUT_FOLDER=gs://path/to/TriviaQA/output/folder
 mkdir -p ${TRIVIAQA_EXAMPLE_DIR}
 ```
 
-Second, generate TFExamples files using the following commands and copy files to GCS.
+Second, generate TFExamples files using the following commands and copy files to
+GCS.
 
 ```bash
 python -m readtwice.models.trivia_qa.preprocess \
@@ -243,7 +266,9 @@ python -m readtwice.models.trivia_qa.run_finetuning \
 
 ### NarrativeQA
 
-First, download data from [NarrativeQA official website](https://github.com/deepmind/narrativeqa), and specify the following paths.
+First, download data from
+[NarrativeQA official website](https://github.com/deepmind/narrativeqa), and
+specify the following paths.
 
 ```bash
 export NARRATIVEQA_DATA_DIR=/path/to/NarrativeQA
@@ -253,7 +278,8 @@ export NARRATIVEQA_OUTPUT_FOLDER=gs://path/to/NarrativeQA/output/folder
 mkdir -p ${NARRATIVEQA_EXAMPLE_DIR}
 ```
 
-Second, generate TFExamples files using the following commands and copy files to GCS.
+Second, generate TFExamples files using the following commands and copy files to
+GCS.
 
 ```bash
 python -m readtwice.models.narrative_qa.preprocess \
@@ -348,4 +374,9 @@ python -m readtwice.models.trivia_qa.run_finetuning \
 ```
 
 ## Pre-training
-Pre-training code is yet to be released. There are two main issues that needs to be resolved. First, the pre-training is using a custom TF operations to perform words and entities masking on a fly. Second, the data preprocessing is currently relies on an proprietary infrastructure. Meanwhile, we release the pre-training demo which while not executable, demonstrates the core implementation details.
+
+Pre-training code is yet to be released. There are two main issues that needs to
+be resolved. First, the pre-training is using a custom TF operations to perform
+words and entities masking on a fly. Second, the data preprocessing is currently
+relies on an proprietary infrastructure. Meanwhile, we release the pre-training
+demo which while not executable, demonstrates the core implementation details.

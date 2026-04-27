@@ -53,9 +53,9 @@ import datasets
 import h5py
 import numpy as np
 import tensorflow as tf
-import tensorflow.python.distribute.values as values
-import tensorflow.python.framework.ops as ops
-import tensorflow.python.trackable.autotrackable as autotrackable
+from tensorflow.python.distribute import values
+from tensorflow.python.framework import ops
+from tensorflow.python.trackable import autotrackable
 import tensorflow_hub as hub
 import tf_utils
 import tqdm
@@ -470,12 +470,12 @@ def main(argv):
             desc=f"Split `{split}`: Batches"
         )
 
-        for i, batch in tqdm_inner:
+        for _, batch in tqdm_inner:
           ######################################################################
           # Enforce the current real batch size
           ######################################################################
           current_batch_size = batch["sample_id"].shape[0]
-          for k, v in batch.items():
+          for _, v in batch.items():
             utils.check_equal(v.shape[0], current_batch_size)
           ######################################################################
 
@@ -586,8 +586,12 @@ def main(argv):
     output_file.close()
     with utils.log_duration(LOGGER, "main", "gsutil transfer"):
       command = [
-          "/root/google-cloud-sdk/bin/gcloud", "storage", "cp", "--recursive",
-          str(tmp_dir / "*"), target_path
+          "/root/google-cloud-sdk/bin/gcloud",
+          "storage",
+          "cp",
+          "--recursive",
+          str(tmp_dir / "*"),
+          target_path,
       ]
       LOGGER.debug("Command: %s", " ".join(command))
       subprocess.check_call(command)

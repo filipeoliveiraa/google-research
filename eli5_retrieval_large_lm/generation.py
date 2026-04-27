@@ -20,8 +20,8 @@ import subprocess
 import tempfile
 import time
 
-import absl.app as app
-import absl.flags as flags
+from absl import app
+from absl import flags
 import absl.logging as absl_logging
 import constants
 import task_specific
