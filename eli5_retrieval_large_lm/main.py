@@ -13,8 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Training script for the retrieval solution.
-"""
+"""Training script for the retrieval solution."""
 
 import functools
 import itertools
@@ -35,8 +34,8 @@ import numpy as np
 import task_specific
 import tensor2tensor.utils.adafactor
 import tensorflow as tf
-import tensorflow.python.distribute.values as values
-import tensorflow.python.framework.ops as ops
+from tensorflow.python.distribute import values
+from tensorflow.python.framework import ops
 import tf_utils
 import transformers
 import utils
@@ -353,6 +352,7 @@ def build_evaluation_step(
     model,
     tf_function_kwargs = None,
 ):
+  """Build the evaluation step function."""
   # Can't assign {} to the default value, as assigning mutable values to
   # default value is a bad practice, warned against by the linter
   tf_function_kwargs = {} if tf_function_kwargs is None else tf_function_kwargs
@@ -563,7 +563,7 @@ def main(argv):
             context_window_size=(
                 model_or_replicas[0].config.n_positions
                 if isinstance(model_or_replicas, list)
-                else model_or_replicas.config.n_positions
+                else model_or_replicas.config.n_positions  # pytype: disable=attribute-error
             ),
             dataset_name=FLAG_DATASET_NAME.value,
             # Batches are split over the replicas:
@@ -787,7 +787,7 @@ def main(argv):
               utils.print_mem("after running", LOGGER)
 
             else:
-              loss = training_step(**training_kwargs)  # pytype: disable=wrong-arg-count
+              loss = training_step(**training_kwargs)  # pytype: disable=wrong-arg-count, no-value-for-parameter
               # If we are in the strategy-free data parallel mode, we need
               # to change the weights of all replicas to those of the model at
               # index 0
@@ -813,7 +813,7 @@ def main(argv):
                   kwargs=evaluation_kwargs
               )
             else:
-              loss = evaluation_step(**evaluation_kwargs)
+              loss = evaluation_step(**evaluation_kwargs)  # pytype: disable=no-value-for-parameter
           else:
             raise ValueError(f"Unexpected value for split: {split}")
 
