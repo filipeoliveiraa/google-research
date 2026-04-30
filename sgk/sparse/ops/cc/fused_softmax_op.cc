@@ -33,7 +33,7 @@ class FusedSoftmaxOp : public tensorflow::OpKernel {
 
     // Validate the input shapes.
     OP_REQUIRES(context, TensorShapeUtils::IsMatrix(input.shape()),
-                InvalidArgument("Expected 2-dimension input."));
+                absl::InvalidArgumentError("Expected 2-dimension input."));
 
     // Allocate the output tensor.
     Tensor* output = nullptr;

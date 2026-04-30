@@ -34,11 +34,12 @@ class BiasReluOp : public tensorflow::OpKernel {
 
     // Validate the input shapes.
     OP_REQUIRES(context, in.dims() >= 2 && in.dims() <= 4,
-                InvalidArgument("Expected 2-4 dimensional input"));
+                absl::InvalidArgumentError("Expected 2-4 dimensional input"));
     OP_REQUIRES(context, TensorShapeUtils::IsVector(bias.shape()),
-                InvalidArgument("Expected 1-dimension bias"));
+                absl::InvalidArgumentError("Expected 1-dimension bias"));
     OP_REQUIRES(context, bias.dim_size(0) == in.dim_size(1),
-                InvalidArgument("Expected one bias value for each channel."));
+                absl::InvalidArgumentError(
+                    "Expected one bias value for each channel."));
 
     // Get the problem shape.
     int n = in.dim_size(0);

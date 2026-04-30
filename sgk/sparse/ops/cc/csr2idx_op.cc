@@ -37,14 +37,18 @@ class Csr2idxOp : public tensorflow::OpKernel {
     const Tensor& column_indices = context->input(3);
 
     // Validate the input shapes.
-    OP_REQUIRES(context, TensorShapeUtils::IsScalar(m_tensor.shape()),
-                InvalidArgument("Expected scalar for argument 'm'."));
-    OP_REQUIRES(context, TensorShapeUtils::IsScalar(n_tensor.shape()),
-                InvalidArgument("Expected scalar for argument 'n'."));
-    OP_REQUIRES(context, TensorShapeUtils::IsVector(row_offsets.shape()),
-                InvalidArgument("Expected 1-dimension row_offsets tensor."));
+    OP_REQUIRES(
+        context, TensorShapeUtils::IsScalar(m_tensor.shape()),
+        absl::InvalidArgumentError("Expected scalar for argument 'm'."));
+    OP_REQUIRES(
+        context, TensorShapeUtils::IsScalar(n_tensor.shape()),
+        absl::InvalidArgumentError("Expected scalar for argument 'n'."));
+    OP_REQUIRES(
+        context, TensorShapeUtils::IsVector(row_offsets.shape()),
+        absl::InvalidArgumentError("Expected 1-dimension row_offsets tensor."));
     OP_REQUIRES(context, TensorShapeUtils::IsVector(column_indices.shape()),
-                InvalidArgument("Expected 1-dimension column_indices tensor."));
+                absl::InvalidArgumentError(
+                    "Expected 1-dimension column_indices tensor."));
 
     // Get the problem shape.
     int m = m_tensor.tensor<int32, 0>().data()[0];
@@ -53,7 +57,7 @@ class Csr2idxOp : public tensorflow::OpKernel {
 
     // Validate row offsets size.
     OP_REQUIRES(context, row_offsets.dim_size(0) == m + 1,
-                InvalidArgument("Expected m+1 row offsets."));
+                absl::InvalidArgumentError("Expected m+1 row offsets."));
 
     // Allocate the output tensor.
     Tensor* linear_indices = nullptr;

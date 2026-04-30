@@ -38,18 +38,24 @@ class CsrTransposeOp : public tensorflow::OpKernel {
     const Tensor& column_indices = context->input(4);
 
     // Validate the input shapes.
-    OP_REQUIRES(context, TensorShapeUtils::IsScalar(m_tensor.shape()),
-                InvalidArgument("Expected scalar for argument 'm'."));
-    OP_REQUIRES(context, TensorShapeUtils::IsScalar(n_tensor.shape()),
-                InvalidArgument("Expected scalar for argument 'n'."));
-    OP_REQUIRES(context, TensorShapeUtils::IsVector(values.shape()),
-                InvalidArgument("Expected 1-dimension values tensor."));
-    OP_REQUIRES(context, TensorShapeUtils::IsVector(row_offsets.shape()),
-                InvalidArgument("Expected 1-dimension row_offsets tensor."));
+    OP_REQUIRES(
+        context, TensorShapeUtils::IsScalar(m_tensor.shape()),
+        absl::InvalidArgumentError("Expected scalar for argument 'm'."));
+    OP_REQUIRES(
+        context, TensorShapeUtils::IsScalar(n_tensor.shape()),
+        absl::InvalidArgumentError("Expected scalar for argument 'n'."));
+    OP_REQUIRES(
+        context, TensorShapeUtils::IsVector(values.shape()),
+        absl::InvalidArgumentError("Expected 1-dimension values tensor."));
+    OP_REQUIRES(
+        context, TensorShapeUtils::IsVector(row_offsets.shape()),
+        absl::InvalidArgumentError("Expected 1-dimension row_offsets tensor."));
     OP_REQUIRES(context, TensorShapeUtils::IsVector(column_indices.shape()),
-                InvalidArgument("Expected 1-dimension column_indices tensor."));
+                absl::InvalidArgumentError(
+                    "Expected 1-dimension column_indices tensor."));
     OP_REQUIRES(context, values.dim_size(0) == column_indices.dim_size(0),
-                InvalidArgument("Expected same number of values and indices"));
+                absl::InvalidArgumentError(
+                    "Expected same number of values and indices"));
 
     // Get the problem shape.
     int m = m_tensor.tensor<int32, 0>().data()[0];
@@ -58,7 +64,7 @@ class CsrTransposeOp : public tensorflow::OpKernel {
 
     // Validate row offsets size.
     OP_REQUIRES(context, row_offsets.dim_size(0) == m + 1,
-                InvalidArgument("Expected m+1 row offsets."));
+                absl::InvalidArgumentError("Expected m+1 row offsets."));
 
     // Allocate the output tensor.
     Tensor* output_values = nullptr;

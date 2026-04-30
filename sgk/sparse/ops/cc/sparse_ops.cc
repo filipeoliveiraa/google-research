@@ -194,11 +194,11 @@ absl::Status DepthwiseShapeFn(
   TF_RETURN_IF_ERROR(c->GetAttr("strides", &strides));
 
   if (strides.size() != 4) {
-    return tensorflow::errors::InvalidArgument(
+    return absl::InvalidArgumentError(absl::StrCat(
         "DepthwiseConv2D requires the stride attribute to contain 4 "
         "values, "
         "but got: ",
-        strides.size());
+        strides.size()));
   }
 
   // Only supports NCHW.
@@ -227,11 +227,11 @@ absl::Status DepthwiseShapeFn(
   TF_RETURN_IF_ERROR(c->GetAttr("explicit_paddings", &padding));
 
   if (padding.size() != 4) {
-    return tensorflow::errors::InvalidArgument(
+    return absl::InvalidArgumentError(absl::StrCat(
         "DepthwiseConv2D requires the padding attribute to contain 4 "
         "values, "
         "but got: ",
-        padding.size());
+        padding.size()));
   }
   int64 pad_rows = padding[2];
   int64 pad_cols = padding[3];

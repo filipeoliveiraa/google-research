@@ -36,18 +36,22 @@ class SparseSoftmaxOp : public tensorflow::OpKernel {
     const Tensor& column_indices = context->input(3);
 
     // Validate the input shapes.
-    OP_REQUIRES(context, TensorShapeUtils::IsVector(row_indices.shape()),
-                InvalidArgument("Expected 1-dimension row_indices tensor."));
-    OP_REQUIRES(context, TensorShapeUtils::IsVector(row_offsets.shape()),
-                InvalidArgument("Expected 1-dimension row_offsets tensor."));
+    OP_REQUIRES(
+        context, TensorShapeUtils::IsVector(row_indices.shape()),
+        absl::InvalidArgumentError("Expected 1-dimension row_indices tensor."));
+    OP_REQUIRES(
+        context, TensorShapeUtils::IsVector(row_offsets.shape()),
+        absl::InvalidArgumentError("Expected 1-dimension row_offsets tensor."));
     OP_REQUIRES(context, TensorShapeUtils::IsVector(column_indices.shape()),
-                InvalidArgument("Expected 1-dimension column_indices tensor."));
-    OP_REQUIRES(context, row_indices.dim_size(0) + 1 == row_offsets.dim_size(0),
-                InvalidArgument("Expected 1 more row index than offset."));
+                absl::InvalidArgumentError(
+                    "Expected 1-dimension column_indices tensor."));
+    OP_REQUIRES(
+        context, row_indices.dim_size(0) + 1 == row_offsets.dim_size(0),
+        absl::InvalidArgumentError("Expected 1 more row index than offset."));
     OP_REQUIRES(
         context,
         TensorShapeUtils::IsVector(values.shape()) || values.dims() == 2,
-        InvalidArgument("Expected 1-dim or 2-dim values tensor."));
+        absl::InvalidArgumentError("Expected 1-dim or 2-dim values tensor."));
 
     // Get the problem shape.
     //
@@ -60,8 +64,9 @@ class SparseSoftmaxOp : public tensorflow::OpKernel {
     int replication = dim_offset == 1 ? values.dim_size(0) : 1;
 
     // Validate the sparse matrix shape.
-    OP_REQUIRES(context, values.dim_size(dim_offset) == nonzeros,
-                InvalidArgument("Num values must equal num col indices."));
+    OP_REQUIRES(
+        context, values.dim_size(dim_offset) == nonzeros,
+        absl::InvalidArgumentError("Num values must equal num col indices."));
 
     // Allocate the output tensor.
     Tensor* output_values = nullptr;

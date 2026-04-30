@@ -31,10 +31,12 @@ class SpmmOp : public tensorflow::OpKernel {
     OP_REQUIRES_OK(context, context->GetAttr("transpose_rhs", &transpose_rhs_));
 
     // NOTE: We currently do not support transposition for either argument.
-    OP_REQUIRES(context, !transpose_lhs_,
-                InvalidArgument("transpose_lhs=True not yet supported."));
-    OP_REQUIRES(context, !transpose_rhs_,
-                InvalidArgument("transpose_rhs=True not yet supported."));
+    OP_REQUIRES(
+        context, !transpose_lhs_,
+        absl::InvalidArgumentError("transpose_lhs=True not yet supported."));
+    OP_REQUIRES(
+        context, !transpose_rhs_,
+        absl::InvalidArgumentError("transpose_rhs=True not yet supported."));
   }
 
   void Compute(tensorflow::OpKernelContext* context) override {
@@ -53,33 +55,41 @@ class SpmmOp : public tensorflow::OpKernel {
     const Tensor& dense_matrix = context->input(6);
 
     // Validate the input shapes.
-    OP_REQUIRES(context, TensorShapeUtils::IsScalar(m_tensor.shape()),
-                InvalidArgument("Expected scalar for argument 'm'."));
-    OP_REQUIRES(context, TensorShapeUtils::IsScalar(k_tensor.shape()),
-                InvalidArgument("Expected scalar for argument 'k'."));
+    OP_REQUIRES(
+        context, TensorShapeUtils::IsScalar(m_tensor.shape()),
+        absl::InvalidArgumentError("Expected scalar for argument 'm'."));
+    OP_REQUIRES(
+        context, TensorShapeUtils::IsScalar(k_tensor.shape()),
+        absl::InvalidArgumentError("Expected scalar for argument 'k'."));
     OP_REQUIRES(
         context,
         TensorShapeUtils::IsVector(values.shape()) || values.dims() == 2,
-        InvalidArgument("Expected 1-dim or 2-dim values tensor."));
-    OP_REQUIRES(context, TensorShapeUtils::IsVector(row_indices.shape()),
-                InvalidArgument("Expected 1-dimension row_indices tensor."));
-    OP_REQUIRES(context, TensorShapeUtils::IsVector(row_offsets.shape()),
-                InvalidArgument("Expected 1-dimension row_offsets tensor."));
+        absl::InvalidArgumentError("Expected 1-dim or 2-dim values tensor."));
+    OP_REQUIRES(
+        context, TensorShapeUtils::IsVector(row_indices.shape()),
+        absl::InvalidArgumentError("Expected 1-dimension row_indices tensor."));
+    OP_REQUIRES(
+        context, TensorShapeUtils::IsVector(row_offsets.shape()),
+        absl::InvalidArgumentError("Expected 1-dimension row_offsets tensor."));
     OP_REQUIRES(context, TensorShapeUtils::IsVector(column_indices.shape()),
-                InvalidArgument("Expected 1-dimension column_indices tensor."));
-    OP_REQUIRES(context,
-                TensorShapeUtils::IsMatrix(dense_matrix.shape()) ||
-                    dense_matrix.dims() == 3,
-                InvalidArgument("Expected 2 or 3-dim dense matrix tensor."));
-    OP_REQUIRES(context, row_indices.dim_size(0) + 1 == row_offsets.dim_size(0),
-                InvalidArgument("Expected one more row index than offset."));
+                absl::InvalidArgumentError(
+                    "Expected 1-dimension column_indices tensor."));
+    OP_REQUIRES(
+        context,
+        TensorShapeUtils::IsMatrix(dense_matrix.shape()) ||
+            dense_matrix.dims() == 3,
+        absl::InvalidArgumentError("Expected 2 or 3-dim dense matrix tensor."));
+    OP_REQUIRES(
+        context, row_indices.dim_size(0) + 1 == row_offsets.dim_size(0),
+        absl::InvalidArgumentError("Expected one more row index than offset."));
 
     // TODO(tgale): We can lift this constraint to support arbitrary replication
     // of rhs/lhs matrix. For example, if lhs is a 3-tensor and rhs is a matrix
     // we can compute `lhs.shape[0]` spmms with each kernel using the same rhs
     // matrix.
     OP_REQUIRES(context, values.dims() == dense_matrix.dims() - 1,
-                InvalidArgument("Values and rhs must be replicated the same."));
+                absl::InvalidArgumentError(
+                    "Values and rhs must be replicated the same."));
 
     // Get the problem shape.
     int m = m_tensor.tensor<int32, 0>().data()[0];
@@ -91,17 +101,21 @@ class SpmmOp : public tensorflow::OpKernel {
     int replication = dim_offset == 1 ? dense_matrix.dim_size(0) : 1;
 
     // Validate the sparse matrix and dense matrix shapes match.
-    OP_REQUIRES(context, values.dim_size(dim_offset) == nonzeros,
-                InvalidArgument("Num values must equal num col indices."));
-    OP_REQUIRES(context, row_indices.dim_size(0) == m,
-                InvalidArgument("Num row indices and 'm' must match."));
-    OP_REQUIRES(context, dense_matrix.dim_size(dim_offset) == k,
-                InvalidArgument("Inner matrix dimensions must match."));
+    OP_REQUIRES(
+        context, values.dim_size(dim_offset) == nonzeros,
+        absl::InvalidArgumentError("Num values must equal num col indices."));
+    OP_REQUIRES(
+        context, row_indices.dim_size(0) == m,
+        absl::InvalidArgumentError("Num row indices and 'm' must match."));
+    OP_REQUIRES(
+        context, dense_matrix.dim_size(dim_offset) == k,
+        absl::InvalidArgumentError("Inner matrix dimensions must match."));
 
     // If we're going to run multiple spmms, the first dimension of the
     // matrices must match.
-    OP_REQUIRES(context, replication == 1 || replication == values.dim_size(0),
-                InvalidArgument("First dim of values and rhs must match"));
+    OP_REQUIRES(
+        context, replication == 1 || replication == values.dim_size(0),
+        absl::InvalidArgumentError("First dim of values and rhs must match"));
 
     // Allocate the output tensor.
     Tensor* output_matrix = nullptr;
@@ -142,13 +156,16 @@ class FusedSpmmOp : public SpmmOp<Device, T> {
   void Compute(tensorflow::OpKernelContext* context) override {
     const Tensor& m_tensor = context->input(0);
     const Tensor& bias = context->input(7);
-    OP_REQUIRES(context, TensorShapeUtils::IsScalar(m_tensor.shape()),
-                InvalidArgument("Expected scalar for argument 'm'."));
-    OP_REQUIRES(context, TensorShapeUtils::IsVector(bias.shape()),
-                InvalidArgument("Expected vector for argument 'bias'."));
+    OP_REQUIRES(
+        context, TensorShapeUtils::IsScalar(m_tensor.shape()),
+        absl::InvalidArgumentError("Expected scalar for argument 'm'."));
+    OP_REQUIRES(
+        context, TensorShapeUtils::IsVector(bias.shape()),
+        absl::InvalidArgumentError("Expected vector for argument 'bias'."));
     int m = m_tensor.tensor<int32, 0>().data()[0];
-    OP_REQUIRES(context, bias.dim_size(0) == m,
-                InvalidArgument("Num biases size and 'm' must match."));
+    OP_REQUIRES(
+        context, bias.dim_size(0) == m,
+        absl::InvalidArgumentError("Num biases size and 'm' must match."));
     this->ComputeHelper(context, bias.tensor<float, 1>().data());
   }
 };
