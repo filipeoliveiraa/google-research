@@ -106,15 +106,15 @@ antheaTemplates['MQM-Speech-to-Speech'] = {
   errors: {
     accuracy: {
       display: 'Accuracy',
-      description: 'The target text does not accurately reflect the source text.',
+      description: 'The translation does not accurately reflect the source speech.',
       subtypes: {
         reinterpretation: {
           display: 'Creative Reinterpretation',
-          description: 'The target text reinterprets the source, but preserves its intent within its broader context (the document and its purpose, and the target locale). This can be because the translation adds, removes, or modifies text in accordance with the target locale, or simply makes creative changes that fully preserve the intent of the source text.',
+          description: 'The translation reinterprets the source, but preserves its intent within its broader context (the document and its purpose, and the target locale). This can be because the translation adds, removes, or modifies content in accordance with the target locale, or simply makes creative changes that fully preserve the intent of the source.',
         },
         mistranslation: {
           display: 'Mistranslation',
-          description: 'The target text does not accurately represent the source text.',
+          description: 'The translation does not accurately represent the source speech.',
         },
         gender_mismatch: {
           display: 'Gender Mismatch',
@@ -126,7 +126,7 @@ antheaTemplates['MQM-Speech-to-Speech'] = {
         },
         addition: {
           display: 'Addition',
-          description: 'The target text includes information not present in the source.',
+          description: 'The translation includes information not present in the source.',
         },
         omission: {
           display: 'Omission',
@@ -137,15 +137,15 @@ antheaTemplates['MQM-Speech-to-Speech'] = {
     },
     fluency: {
       display: 'Fluency',
-      description: 'Issues related to the form or content of translated text, independent of its relation to the source text; errors in the translated text that prevent it from being understood clearly.',
+      description: 'Issues related to the form or content of the translation, independent of its relation to the source; errors in the translation that prevent it from being understood clearly.',
       subtypes: {
         inconsistency: {
           display: 'Inconsistency',
-          description: 'The text shows internal inconsistency (not related to terminology).',
+          description: 'The translation shows internal inconsistency (not related to terminology).',
         },
         grammar: {
           display: 'Grammar',
-          description: 'Issues related to the grammar or syntax of the text, other than spelling and orthography.',
+          description: 'Issues related to the grammar or syntax of the translation, other than spelling and orthography.',
         },
         register: {
           display: 'Register',
@@ -171,25 +171,21 @@ antheaTemplates['MQM-Speech-to-Speech'] = {
     },
     style: {
       display: 'Style',
-      description: 'The text has stylistic problems.',
+      description: 'The translation has stylistic problems.',
       subtypes: {
         awkward: {
           display: 'Unnatural or awkward',
-          description: 'The text is literal, written in an awkward style, unidiomatic or inappropriate in the context.',
+          description: 'The translation is literal, awkward, unidiomatic, or inappropriate in the context.',
         },
         sentence_structure: {
           display: 'Bad sentence structure',
-          description: 'The marked span of text is an unnecessary repetition, or makes the sentence unnecessarily long, or would have been better as a clause in the previous sentence.'
+          description: 'The marked span is an unnecessary repetition, or makes the sentence unnecessarily long, or would have been better as a clause in the previous sentence.'
         },
         archaic_word: {
           display: 'Archaic or obscure word choice',
           description: 'An archaic or lesser-known word is used where a more colloquial term would be a better fit.',
         },
       },
-    },
-    idiom_culture_consistency: {
-      display: 'Idiom/culture consistency',
-      description: 'The ability to culturally localize idioms, jokes, or culturally specific references on the fly so the target audience reacts exactly as the source audience did.',
     },
     terminology: {
       display: 'Terminology',
@@ -201,13 +197,13 @@ antheaTemplates['MQM-Speech-to-Speech'] = {
         },
         inconsistent: {
           display: 'Inconsistent',
-          description: 'Terminology is used in an inconsistent manner within the text.',
+          description: 'Terminology is used in an inconsistent manner within the translation.',
         },
       },
     },
     locale_convention: {
       display: 'Locale convention',
-      description: 'The text does not adhere to locale-specific mechanical conventions and violates requirements for the presentation of content in the target locale.',
+      description: 'The translation does not adhere to locale-specific conventions and violates requirements for the presentation of content in the target locale.',
       subtypes: {
         address: {
           display: 'Address format',
@@ -215,7 +211,7 @@ antheaTemplates['MQM-Speech-to-Speech'] = {
         },
         date: {
           display: 'Date format',
-          description: 'A text uses a date format inappropriate for its locale.',
+          description: 'A date format inappropriate for the locale is used.',
         },
         currency: {
           display: 'Currency format',
@@ -235,121 +231,93 @@ antheaTemplates['MQM-Speech-to-Speech'] = {
         },
       },
     },
-    source_audio_mismatch: {
-      display: 'Source/Audio Mismatches',
-      description: 'Mismatches between the source audio (or text) and the output delivery.',
+    voice_inconsistency: {
+      display: 'Voice Inconsistency',
+      description: 'The target speaker voice is inconsistent with itself or with the source speaker voice.',
       subtypes: {
+        voice_drifting: {
+          display: 'Voice Drifting',
+          description: 'The target speaker voice appears to change (e.g. in pitch or accent), in a way that the source speaker voice does not.',
+        },
         voice_mismatch: {
-          display: 'Voice Mismatch',
-          description: 'The target speaker appears to be a different person than the source speaker (e.g. incorrect gender, age, or general vocal identity).',
+          display: 'Source-Target Voice Mismatch',
+          description: 'The target speaker voice is different from the source speaker voice.',
           auto_expand_span: true,
         },
+      }
+    },
+
+    prosody: {
+      display: 'Prosody',
+      description: 'Issues related to the rhythm, intonation, volume, and emotional tone of the target audio.',
+      subtypes: {
         affective_mismatch: {
           display: 'Affective Mismatch',
-          description: 'Overall emotional tone (happy, sad, urgent) does not match the source speaker.',
-          auto_expand_span: true,
+          description: 'Overall emotional tone (happy, sad, excited, etc.) does not match the source.',
+        },
+        awkward_pauses: {
+          display: 'Awkward Pauses',
+          description: 'Unnatural or awkward silences between words or sentences.',
+        },
+        intonation: {
+          display: 'Intonation',
+          description: 'Pitch change is inappropriate for the sentence type in the target locale (e.g. in English, a non-rising pitch for a question).',
         },
         volume_mismatch: {
           display: 'Volume Mismatch',
-          description: 'The segment volume characteristics do not match the source.',
-          auto_expand_span: true,
+          description: 'The volume of the target voice does not match the volume of the source voice.',
         },
-        accent_bleeding: {
-          display: 'Accent Bleeding',
-          description: 'Clone adopts target language accent instead of source speaker\'s characteristic accent.',
-          auto_expand_span: true,
-        },
-      },
-    },
-    audio_voice_quality: {
-      display: 'Audio/Voice Quality',
-      description: 'Synthesis quality issues and artifacts, capturing both holistic metallic sounds and localized glitches.',
-      subtypes: {
-        metallic_thin: {
-          display: 'Metallic / Thin',
-          description: 'The overall voice sounds "tinny" or artificial due to neural artifacts.',
-          auto_expand_span: true,
-        },
-        background_staining: {
-          display: 'Background Staining',
-          description: 'Environmental noise from the source is "baked" into the voice output.',
-          auto_expand_span: true,
-        },
-        timbre_inconsistency: {
-          display: 'Timbre Inconsistency',
-          description: 'The vocal "texture" or identity suddenly shifts for a specific word or phrase.',
-        },
-        breath_irregularity: {
-          display: 'Breath Irregularity',
-          description: 'Specific synthetic "gasping" or unnatural breath sounds.',
-        },
-        choppiness: {
-          display: 'Choppiness',
-          description: 'Audio sounds stitched together; words or sounds are cut off abruptly.',
-        },
-        jitter_pops: {
-          display: 'Jitter & Pops',
-          description: 'Audible "clicks" or micro-stutters where audio chunks are joined.',
-        },
-        echo_repetition: {
-          display: 'Echo / Repetition',
-          description: 'A word, phrase, or sound is unnaturally repeated.',
-        },
-        audio_artifacts: {
-          display: 'Audio Artifacts',
-          description: 'Specific instances of static, high-pitched noises, or non-speech hums.',
-        },
-      },
-    },
-    prosody_delivery: {
-      display: 'Prosody & Delivery',
-      description: 'Rhythmic, intonation, and delivery pacing issues.',
-      subtypes: {
         robotic_cadence: {
           display: 'Robotic Cadence',
           description: 'Evenly spaced, monotonous timing across the segment.',
           auto_expand_span: true,
         },
-        inappropriate_prosody: {
-          display: 'Inappropriate Prosody',
-          description: 'Delivery style is inappropriate for the target language or context.',
-          auto_expand_span: true,
+      },
+    },
+    pronunciation: {
+      display: 'Pronunciation',
+      description: 'Issues related to the pronunciation of words in the target audio.',
+      subtypes: {
+        emphasis_error: {
+          display: 'Emphasis',
+          description: 'Stress or emphasis is placed on the wrong syllable.',
         },
-        emphasis: {
-          display: 'Emphasis Error',
-          description: 'Stress is placed on the wrong word/syllable, changing the intent.',
-        },
-        intonation_drift: {
-          display: 'Intonation Drift',
-          description: 'A localized pitch change that contradicts the sentence type (e.g., rising pitch on a statement).',
-        },
-        awkward_chunking: {
-          display: 'Awkward chunking',
-          description: 'Pauses between chunks that make the sentence hard to parse.',
-        },
-        inappropriate_pauses: {
-          display: 'Inappropriate Pauses',
-          description: 'Excessive or unnatural silences between specific words.',
+        mispronunciation: {
+          display: 'Mispronunciation',
+          description: 'Words are pronounced incorrectly (prefer more specific sub-category if applicable).',
         },
       },
     },
-    intelligibility: {
-      display: 'Intelligibility',
-      description: 'Audio-specific errors related to the clarity and correctness of spoken words.',
+    audio_naturalness: {
+      display: 'Audio Naturalness',
+      description: 'Issues related to how (un)natural the target audio sounds.',
       subtypes: {
-        mispronunciation: {
-          display: 'Mispronunciation',
-          description: 'Words are phonetically incorrect, garbled, or "slurred."',
+        choppiness: {
+          display: 'Choppiness',
+          description: 'Audio sounds stitched together; words or sounds are cut off abruptly.',
         },
-        heteronym: {
-          display: 'Heteronym Error',
-          description: 'Incorrect pronunciation of words spelled the same (e.g., "lead" vs. "lead").',
+        echo_repetition: {
+          display: 'Echo or Repetition',
+          description: 'A word, phrase, or sound is unnaturally repeated.',
         },
-        truncation: {
-          display: 'Truncation',
-          description: 'Words or sentence endings are cut off prematurely.',
+        audio_artifacts: {
+          display: 'Audio Artifacts',
+          description: 'Static, high-pitched noises, or non-speech hums.',
+        },
+        breath_irregularity: {
+          display: 'Breath Irregularity',
+          description: 'Unnatural breathing sounds (e.g. gasping).',
+        },
+        metallic_thin: {
+          display: 'Metallic or Thin',
+          description: 'The overall voice sounds "tinny" or artificial.',
         },
       },
+    },
+    background_staining: {
+      display: 'Background Staining',
+      description: 'Background noise from the source is present in the target audio.',
+      auto_expand_span: true,
     },
     other: {
       display: 'Other',
@@ -488,7 +456,7 @@ antheaTemplates['MQM-Speech-to-Speech'] = {
           <ul>
             <li>For most errors, click on the word where the issue begins, then on the word where it ends. If it's only one word, click on it twice.</li>
             <li>The marked span should be the minimal contiguous sequence affected by the issue.</li>
-            <li><b>Full-Segment Errors:</b> For error categories labeled <b>(Full-Segment)</b> (e.g., Voice Mismatch, Metallic/Thin), the span will automatically expand to cover the full text block regardless of which word you select. Visually, these are shown as a colored border around the text block. Mark each full-segment error only <b>once per segment</b>.</li>
+            <li><b>Full-Segment Errors:</b> For error categories labeled <b>(Full-Segment)</b> (e.g., Source-Target Voice Mismatch, Background Staining, Robotic Cadence), the span will automatically expand to cover the full text block regardless of which word you select. Visually, these are shown as a colored border around the text block. Mark each full-segment error only <b>once per segment</b>.</li>
             <li>When the error is an omission, the error span must be selected on the source side.</li>
           </ul>
         </li>
@@ -504,69 +472,464 @@ antheaTemplates['MQM-Speech-to-Speech'] = {
     'Speech Error Categories': `
       <h2>Speech Error Categories</h2>
       <p>
-        In addition to the standard textual translation errors (Accuracy, Fluency, Style, etc.), this template introduces several new categories for speech evaluation.
+        In addition to the standard translation errors (Accuracy, Fluency,
+        Style, etc.), this template introduces several categories specific to
+        speech evaluation:
       </p>
-      <h3>Translation Quality</h3>
-      <ul>
-        <li><b>Idiom/culture consistency:</b> The ability to culturally localize idioms, jokes, or culturally specific references on the fly so the target audience reacts exactly as the source audience did.</li>
-      </ul>
-      <h3>Audio and Speech Quality</h3>
       <ul>
         <li>
-          <b>Source/Audio Mismatches.</b> Mismatches between the source audio (or text) and the output delivery.
+          <b>Voice Inconsistency.</b> The target speaker voice is inconsistent with itself or with the source speaker voice.
           <details>
-            <summary>Subtypes of Source/Audio Mismatches:</summary>
+            <summary>Subtypes of Voice Inconsistency:</summary>
             <ul>
-              <li><b>Voice Mismatch</b> <i>(Full-Segment)</i>. The target speaker appears to be a different person than the source speaker (e.g. incorrect gender, age, or general vocal identity).</li>
-              <li><b>Affective Mismatch</b> <i>(Full-Segment)</i>. Overall emotional tone (happy, sad, urgent) does not match the source speaker.</li>
-              <li><b>Volume Mismatch</b> <i>(Full-Segment)</i>. The segment volume characteristics do not match the source.</li>
-              <li><b>Accent Bleeding</b> <i>(Full-Segment)</i>. Clone adopts target language accent instead of source speaker's characteristic accent.</li>
+              <li><b>Voice Drifting.</b> The target speaker voice appears to change (e.g. in pitch or accent), in a way that the source speaker voice does not. Please mark the location where the voice change begins.</li>
+              <li><b>Source-Target Voice Mismatch</b> <i>(Full-Segment)</i>. The target speaker voice is consistent throughout the target audio but is different from the source speaker voice. If the target speaker voice <b>changes</b> during the segment, select Voice Drifting instead.</li>
             </ul>
           </details>
         </li>
         <li>
-          <b>Audio/Voice Quality.</b> Synthesis quality issues and artifacts, capturing both holistic metallic sounds and localized glitches.
+          <b>Prosody.</b> Issues related to the rhythm, intonation, volume, and emotional tone of the target audio.
           <details>
-            <summary>Subtypes of Audio/Voice Quality:</summary>
+            <summary>Subtypes of Prosody:</summary>
             <ul>
-              <li><b>Metallic / Thin</b> <i>(Full-Segment)</i>. The overall voice sounds "tinny" or artificial due to neural artifacts.</li>
-              <li><b>Background Staining</b> <i>(Full-Segment)</i>. Environmental noise from the source is "baked" into the voice output.</li>
-              <li><b>Timbre Inconsistency.</b> The vocal "texture" or identity suddenly shifts for a specific word or phrase.</li>
-              <li><b>Breath Irregularity.</b> Specific synthetic "gasping" or unnatural breath sounds.</li>
-              <li><b>Choppiness.</b> Audio sounds stitched together; words or sounds are cut off abruptly.</li>
-              <li><b>Jitter &amp; Pops.</b> Audible "clicks" or micro-stutters where audio chunks are joined.</li>
-              <li><b>Echo / Repetition.</b> A word, phrase, or sound is unnaturally repeated.</li>
-              <li><b>Audio Artifacts.</b> Specific instances of static, high-pitched noises, or non-speech hums.</li>
-            </ul>
-          </details>
-        </li>
-        <li>
-          <b>Prosody &amp; Delivery.</b> Rhythmic, intonation, and delivery pacing issues.
-          <details>
-            <summary>Subtypes of Prosody &amp; Delivery:</summary>
-            <ul>
+              <li><b>Affective Mismatch.</b> Overall emotional tone (happy, sad, excited, etc.) does not match the source.</li>
+              <li><b>Awkward Pauses.</b> Unnatural or awkward silences between words or sentences.</li>
+              <li><b>Intonation.</b> Pitch change is inappropriate for the sentence type in the target locale (e.g. in English, a non-rising pitch for a question).</li>
+              <li><b>Volume Mismatch.</b> The volume of the target voice does not match the volume of the source voice.</li>
               <li><b>Robotic Cadence</b> <i>(Full-Segment)</i>. Evenly spaced, monotonous timing across the segment.</li>
-              <li><b>Inappropriate Prosody</b> <i>(Full-Segment)</i>. Delivery style is inappropriate for the target language or context.</li>
-              <li><b>Emphasis Error.</b> Stress is placed on the wrong word/syllable, changing the intent.</li>
-              <li><b>Intonation Drift.</b> A localized pitch change that contradicts the sentence type (e.g., rising pitch on a statement).</li>
-              <li><b>Awkward chunking.</b> Pauses between chunks that make the sentence hard to parse.</li>
-              <li><b>Inappropriate Pauses.</b> Excessive or unnatural silences between specific words.</li>
             </ul>
           </details>
         </li>
         <li>
-          <b>Intelligibility.</b> Audio-specific errors related to the clarity and correctness of spoken words.
+          <b>Pronunciation.</b> Issues related to the pronunciation of words in the target audio.
           <details>
-            <summary>Subtypes of Intelligibility:</summary>
+            <summary>Subtypes of Pronunciation:</summary>
             <ul>
-              <li><b>Mispronunciation.</b> Words are phonetically incorrect, garbled, or "slurred."</li>
-              <li><b>Heteronym Error.</b> Incorrect pronunciation of words spelled the same (e.g., "lead" vs. "lead").</li>
-              <li><b>Truncation.</b> Words or sentence endings are cut off prematurely.</li>
+              <li><b>Emphasis.</b> Stress or emphasis is placed on the wrong syllable.</li>
+              <li><b>Mispronunciation.</b> Words are pronounced incorrectly (prefer more specific sub-category if applicable).</li>
             </ul>
           </details>
+        </li>
+        <li>
+          <b>Audio Naturalness.</b> Issues related to how (un)natural the target audio sounds.
+          <details>
+            <summary>Subtypes of Audio Naturalness:</summary>
+            <ul>
+              <li><b>Choppiness.</b> Audio sounds stitched together; words or sounds are cut off abruptly.</li>
+              <li><b>Echo or Repetition.</b> A word, phrase, or sound is unnaturally repeated.</li>
+              <li><b>Audio Artifacts.</b> Static, high-pitched noises, or non-speech hums.</li>
+              <li><b>Breath Irregularity.</b> Unnatural breathing sounds (e.g. gasping).</li>
+              <li><b>Metallic or Thin.</b> The overall voice sounds "tinny" or artificial.</li>
+            </ul>
+          </details>
+        </li>
+        <li>
+          <b>Background Staining</b> <i>(Full-Segment)</i>. Background noise from the source is present in the target audio.
         </li>
       </ul>
       `,
+    'Severities defined': `
+      <h2>Severities defined</h2>
+      <p>We define error/issue severity levels in this section.</p>
+      <ul>
+        <li>
+          <b>Major severity</b>:
+          Major severity errors significantly alter the meaning of the source
+          speech, or significantly degrade the quality of the speech.
+          <ul>
+            <li>
+              The translation says something different from the intent of
+              the source, or is substantially difficult to understand, or
+              has some very jarring linguistic or audio quality flaw.
+            </li>
+            <li>
+              Typically, accuracy and terminology errors fall here, as well as
+              egregious style, grammar, or audio quality errors.
+            </li>
+            <li>
+              The context of the document is sometimes the key in determining
+              whether an error is major or minor. For example, changing the
+              tense of a standalone sentence may be a minor error, but doing so
+              in the middle of a narrative would be a major error.
+            </li>
+          </ul>
+        </li>
+        <li>
+          <b>Minor severity</b>:
+          Minor severity errors are noticeable but minor flaws in the
+          translation. They do not significantly alter the meaning of the
+          source speech, and they do not significantly degrade the quality of
+          the speech.
+          <ul>
+            <li>
+              Minor severity errors might add, drop, or modify minor details, or
+              they may slightly decrease the stylistic quality of the
+              translation.
+            </li>
+            <li>
+              Typically, the kinds of errors that fall under this severity level
+              are grammar, spelling (including capitalization and whitespace),
+              style, punctuation, locale convention, and creative
+              reinterpretation.
+            </li>
+            <li>
+              As mentioned earlier, the context of the document is sometimes the
+              key in determining whether an error is major or minor.
+            </li>
+          </ul>
+        </li>
+      </ul>`,
+    'Error Types and Subtypes defined': `
+      <h2>Error Types and Subtypes defined</h2>
+      <ul>
+        <li>
+          <b>Accuracy</b>.
+          The translation does not accurately reflect the source speech.
+          <details>
+            <summary>Subtypes of Accuracy:</summary>
+            <ul>
+              <li>
+                <b>Creative Reinterpretation</b>.
+                The translation <i>reinterprets the source, but preserves
+                its intent</i>. Note that if the translation reinterprets the
+                source to such a great degree that it <i>changes</i> the
+                intent, then it should be marked as using Mistranslation,
+                Addition, or Omission subtypes, as appropriate.
+                <ul>
+                  <li>
+                    Mark Creative Reinterpretation if the translation includes
+                    additional content or omits some content that provides
+                    explanations or context that may be obvious in the source
+                    (target) locale, but not in the target (source) locale. For
+                    example, an added short introduction of an entity not well
+                    known in the target locale, or an omitted introduction of an
+                    entity well known in the target locale.
+                  </li>
+                  <li>
+                    The translation edits the source creatively, perhaps to make
+                    the translation more fluent or expressive or localized.
+                    For example, a reordering of sentences or an addition of
+                    content that is supported by the overall passage being
+                    translated and does not change the intent of the source.
+                    Another example would be that of the name of an
+                    exemplifying entity being changed to a better local
+                    equivalent.
+                  </li>
+                </ul>
+              </li>
+              <li>
+                <b>Mistranslation</b>.
+                The translation does not accurately represent the source
+                speech. Examples: (1) The source talks about a person A
+                knowing another person B, but the translation says
+                "A was intimate with B." (2) The source states that
+                something never happens, whereas the translation says it happens
+                "often" or "rarely."
+              </li>
+              <li>
+                <b>Gender Mismatch</b>.
+                Given the context, the gender is incorrect (incorrect pronouns,
+                noun/adjective endings, etc). Misgendering errors typically have
+                a major severity as they significantly alter the meaning of the
+                source. If the correct gender is not clear from the source
+                context, assume the first instance of gender is correct and mark
+                subsequent gender inconsistencies as errors. Examples: (1) "Mary
+                slammed the door as he left." (2) Given the source "My
+                friend is an engineer. She is great at coding.", if the
+                translation used a male form for the term "engineer", it would
+                be incorrect, as we know the subject is female from the source
+                context.
+              </li>
+              <li>
+                <b>Source language fragment</b>.
+                Content that should have been translated has been left
+                untranslated. Example: A word, phrase or sentence in a German
+                document has been copied verbatim into the English translation,
+                but a natural translation is possible. Note that if only a short
+                phrase or term is left untranslated, and that phrase or term
+                is commonly used in the target language (for example, the French
+                phrase "c'est la vie" used in English), then it's not an
+                error (or is, at best, a minor error).
+              </li>
+              <li>
+                <b>Addition</b>.
+                The translation includes information not present in the
+                source. Example: A translated sentence that includes adverbs or
+                adjectives without equivalents in the source, even after
+                taking context into account.
+              </li>
+              <li>
+                <b>Omission</b>.
+                Content is missing from the translation that is present in the
+                source. Example: A phrase has been dropped from the translation
+                and it is not already implied by context. This error type needs
+                to be annotated on the source side.
+              </li>
+            </ul>
+          </details>
+        </li>
+        <li>
+          <b>Fluency</b>.
+          Issues related to the form or content of the translation, independent
+          of its relation to the source; errors in the translation that
+          make it harder to understand.
+          <details>
+            <summary>Subtypes of Fluency:</summary>
+            <ul>
+              <li>
+                <b>Inconsistency</b>.
+                The translation shows internal inconsistency (not related to
+                terminology). Examples: (1) A person is referred to with a
+                masculine pronoun in one sentence and a feminine pronoun in the
+                next sentence. This would be a major error. (2) An entity is
+                referred to as "Secretary of State" in one paragraph but as
+                "Minister of State" in the next. This would be a minor error,
+                unless the context is one where both "Minister of State" and
+                "Secretary of State" are valid technical terms with different
+                meanings, in which case it would be a major error.
+              </li>
+              <li>
+                <b>Grammar</b>.
+                Issues related to the grammar or syntax of the translation,
+                other than spelling and orthography. Example: An English
+                translation reads "They goes together," or "He could of fixed
+                it." Both of these examples have jarring flaws that
+                significantly degrade the fluency of the translation and would
+                justify a major severity. However,
+                it's possible that these sentence constructs are present in a
+                context where such colloquial usage would not be out of place,
+                and in such contexts they may not be errors.
+              </li>
+              <li>
+                <b>Register</b>.
+                The content uses the wrong grammatical register, such as using
+                informal pronouns or verb forms when their formal counterparts
+                are required. Example: A formal invitation uses the German
+                informal pronoun "du" instead of "Sie." The annotator has to
+                judge how egregious such a mistake is, in the context of the
+                document, to decide the severity level of such an error. The use
+                of an informal pronoun instead of a formal pronoun, in the
+                context of a formal invitation may merit a major severity level,
+                for example.
+              </li>
+              <li>
+                <b>Spelling</b>.
+                Issues related to spelling or capitalization of words, and
+                whitespace. Example: The French word "mer" (sea) is used instead
+                of the identically pronounced "maire" (mayor). This example
+                would merit a major severity, as the meaning is substantially
+                altered. Example: "Nobody in arizona expected snow." The word
+                "Arizona" should start with an upper case letter, and this would
+                be a minor error. Example: "Theyreached safely." This is a minor
+                severity Spelling error because of the missing whitespace.
+              </li>
+              <li>
+                <b>Text-Breaking</b>.
+                Issues related to paragraph breaks and line breaks.
+                If a sentence ends with an incorrect or missing paragraph break
+                or line break, then mark the last part of it (word or
+                punctuation) with this error type. Examples: (1) There should be
+                a paragraph break but there is only a line break or there is not
+                even a line break. (2) There should not be any break but a
+                paragraph break is present in the middle of a sentence.
+                <br><br>
+                Certain paragraph breaks are very
+                important for establishing the proper flow of the text: for
+                example, before and after a section heading or a block-quote.
+                If an important paragraph break is completely missing (there is
+                not even a line break), then that is a major error, as it
+                severely degrades the quality of the text. If an unwarranted
+                paragraph break is seen in the middle of a sentence, that is
+                also a major error. Most other errors of type
+                "Fluency / Text-Breaking" are usually minor errors.
+                <br><br>
+                Note that if sentences in the translation are structured
+                differently compared to the source (eg., a source sentence has
+                been translated into two sentences, or two source sentences
+                have been combined into a single translated sentence), that
+                by itself is not a text-breaking error.
+              </li>
+              <li>
+                <b>Punctuation</b>.
+                Punctuation is used incorrectly (for the locale or style).
+                Example: An English compound adjective appearing before a noun
+                is not hyphenated, as in "dog friendly hotel." The reader can
+                still grasp the intent quite easily in this case, so this
+                example would have a minor severity.
+              </li>
+              <li>
+                <b>Character encoding</b>.
+                Characters are garbled due to incorrect application of an
+                encoding. Examples: "ﾊｸｻ�ｽ､ｱ" and "瓣в眏." See
+                <a href="https://en.wikipedia.org/wiki/Mojibake">en.wikipedia.org/wiki/Mojibake</a>
+                for more. If such garbling is limited in scope and the overall
+                text can still be understood, the severity level would be minor.
+              </li>
+            </ul>
+          </details>
+        </li>
+        <li>
+          <b>Style</b>.
+          The translation has stylistic problems.
+          <details>
+            <summary>Subtypes of Style:</summary>
+            <ul>
+              <li>
+                <b>Unnatural or awkward</b>.
+                The translation is literal, awkward, unidiomatic, or
+                inappropriate in the context. Examples: (1) A sentence is
+                translated literally, which copies a style that is not used in
+                the target language. For example, “कौन कौन आया था?” in Hindi is
+                translated into English as “Who who had come?” This would be a
+                minor severity error. (2) A sentence is unnecessarily convoluted
+                or too wordy, such as, "The lift traveled away from the ground
+                floor." This would be a minor error. (3) Grammatically correct
+                but slightly unnatural sounding sentences such as “From where
+                did he come?” This would also be a minor error.
+              </li>
+              <li>
+                <b>Bad sentence structure</b>.
+                This error type is related to the arrangement of the sentence
+                structure. The marked span is an unnecessary repetition,
+                or it makes the sentence unnecessarily long, or it would have
+                been better expressed as a clause in the previous sentence.
+                Example (repetition): "Alexander had an idea. Alexander had a
+                thought." This example would be a minor error, unless the
+                context dictates otherwise. Example (long sentence): "The party,
+                after blaming its losses on poor leadership, that the spokesman
+                said could have paid more attention to the people's needs, split
+                into two factions." This sentence could have been split into
+                multiple sentences. Example (mergeable): "He gave him the money.
+                He accepted the reward." These two sentences can be phrased
+                better as a single sentence that makes it clearer who accepted
+                the reward. This example is a minor error, without additional
+                contextual information.
+              </li>
+              <li>
+                <b>Archaic or obscure word choice</b>.
+                The translation contains archaic or obscure words that an average
+                speaker of the target language may find hard to understand. This
+                includes cases where obscure translations of terms are used,
+                where instead transliterating or copying the source language
+                would be more natural. (Archaic/formal terms may be okay in
+                certain contexts such as government or historical documents,
+                academic papers, etc.) Examples: (1) "He was transparently evil"
+                gets translated to "वह पारदर्शी रूप से दुष्ट था।" in Hindi which uses an
+                obscure term for "transparently" instead of the more common
+                "स्पष्ट". (2) The term "computer" is translated into Hindi as
+                "संगणक" (saṅgaṇaka) but the transliterated version "कंप्यूटर"
+                (kampyootar) is much more common and easily understood. (3) In
+                the sentence "Last night we went to a bar and drank a homerkin
+                of beer", the term 'homerkin' (meaning 'several gallons') is
+                unnecessarily obscure. It would be much more colloquial to say
+                'we drank a ton of beer', or similar.
+              </li>
+            </ul>
+          </details>
+        </li>
+        <li>
+          <b>Terminology</b>.
+          A term (domain-specific word) is translated with a term other than the
+          one expected for the domain or otherwise specified.
+          <details>
+            <summary>Subtypes of Terminology:</summary>
+            <ul>
+              <li>
+                <b>Inappropriate for context</b>.
+                Translation does not adhere to appropriate industry standard
+                terminology or contains terminology that does not fit the
+                context. Example: "acide sulfurique" is translated to
+                "acid of sulfur" instead of "sulfuric acid." This example would
+                have a minor severity level.
+              </li>
+              <li>
+                <b>Inconsistent</b>.
+                Terminology is used in an inconsistent manner within the translation.
+                Example: The translation of a phone manual alternates between
+                the terms "front camera" and "front lens." This example would
+                have a minor severity level.
+              </li>
+            </ul>
+          </details>
+        </li>
+        <li>
+          <b>Locale convention</b>.
+          The translation does not adhere to locale-specific conventions and
+          violates requirements for the presentation of content in the target
+          locale.
+          <details>
+            <summary>Subtypes of Locale convention:</summary>
+            <ul>
+              <li>
+                <b>Address format</b>.
+                Content uses the wrong format for addresses. A part of the
+                address was translated that should be kept in English. Examples:
+                "1600 Pennsylvania Ave" is translated to Russian as
+                "1600 Пенсильвания авеню" instead of "Пенсильвания авеню 1600."
+                This example would have a minor severity level.
+              </li>
+              <li>
+                <b>Date format</b>.
+                A date format inappropriate for the locale is used. Example:
+                The date "1969年1月6日" is shown as "6/1/1969" (instead of
+                "1/6/1969") and the target locale can be clearly inferred to be
+                U.S. English. For this example, the severity level would be
+                major as the meaning of the date has been significantly altered.
+              </li>
+              <li>
+                <b>Currency format</b>.
+                Content uses the wrong format for currency. Example: The dollar
+                symbol is used as a suffix, as in "100$." This example would
+                have a minor severity level.
+              </li>
+              <li>
+                <b>Telephone format</b>.
+                Content uses the wrong form for telephone numbers. Example: An
+                Indian phone number such as "xxxx-nnnnnn" is formatted as
+                "(xxx) xnn-nnnn". This example would have a minor severity
+                level.
+              </li>
+              <li>
+                <b>Time format</b>.
+                Content uses the wrong form for time. Example: Time is shown as
+                "11.0" instead of "11:00" in a language where the former is a
+                mistake. This example would have a minor severity level.
+              </li>
+              <li>
+                <b>Name format</b>.
+                Content uses the wrong form for name. Example: The Chinese name
+                (which lists surname first) "马琳" is translated as "Lin Ma"
+                instead of "Ma Lin". This example would also have a minor
+                severity level as it the reader can make out the true intent
+                quite easily.
+              </li>
+            </ul>
+          </details>
+        </li>
+        <li>
+          <b>Other</b>.
+          Any other issues (please provide a short description when prompted).
+        </li>
+        <li>
+          <b>Non-translation!</b>
+          The sentence as a whole is completely not a translation of the source.
+          This rare category, when used, overrides any other marked errors for
+          that sentence and labels the full translated sentence as the error
+          span. Only available after choosing a major severity error. Example:
+          the translated sentence is completely unrelated to the source sentence
+          or is gibberish or is such a bad translation that there is virtually
+          no part of the meaning of the source that has been retained.
+        </li>
+        <li>
+          <b>Source issue</b>.
+          Any issue in the source. Examples: The source has meaning-altering
+          typos or omissions ("The was blue.") or is nonsensical
+          ("Th,jad jakh ;ih"). Note that even in the presence of source issues,
+          translation errors should be annotated when possible. If some part of
+          the source is completely garbled, then the corresponding translation
+          need only be checked for Fluency/Style errors.
+        </li>
+      </ul>`,
   },
 
   // Default instructions section order.
