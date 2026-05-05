@@ -1,0 +1,5 @@
+google-genai
+jinja2
+pandas
+tqdm
+kagglehub
