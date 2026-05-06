@@ -14,64 +14,35 @@
 # limitations under the License.
 
 
+set -euo pipefail
 
 TASK=$1
 MODEL=$2
 RUN_NAME=$3
-
 shift 3
 
-# Assign all remaining arguments ($@) into a single string variable named ARGS.
-OVERRIDES="$@"
+RUN_ID="${MODEL}_${RUN_NAME}"
+RUN_ROOT="${TB_DIR:-./runs}/evals"
+RUN_DIR="${RUN_ROOT}/${RUN_ID}"
 
-####
-ARGS="--config-name=eval"
-RUN_NAME="${MODEL}_${RUN_NAME}"
+mkdir -p "$RUN_DIR"
+echo "Launching ${RUN_ID}"
+echo "Runtime dir: ${RUN_DIR}"
 
-echo "---------------------------------------------------------"
+git rev-parse HEAD > "${RUN_DIR}/commit_id.txt"
+git diff > "${RUN_DIR}/diff.patch"
 
-RUN_ID=$RUN_NAME #$(python version.py $ARGS runtime.version=$RUN_NAME 2> /dev/null)
-PY_STATUS=$?
+CMD=(
+  python
+  "eval_${TASK}.py"
+  "--config-name=eval"
+  "runtime.root=${RUN_ROOT}"
+  "runtime.name=${RUN_ID}"
+  "model.name=${MODEL}"
+  "$@"
+)
 
-# Check if version.py executed successfully.
-if [ "$PY_STATUS" -ne 0 ]; then
-  echo "Error: Failed to execute version.py (exit code $PY_STATUS)."
-  exit 1
-fi
+printf '%q ' "${CMD[@]}" | tee "${RUN_DIR}/cmd.bash"
+echo
 
-echo "LAUNCHING *** $RUN_ID ***"
-
-shift 1  # Remove model and run_id from the argument list.
-#AUX_ARGS=("$@") # capture all remaining arguments in an array. crucial for handling spaces correctly.
-
-# Create a directory for the run.
-RUN_ROOT="${TB_DIR}_evals"
-RUN_DIR="${RUN_ROOT}/$RUN_ID"
-mkdir -p "$RUN_DIR" || { echo "Failed to create run directory: $RUN_DIR"; exit 1; }
-echo "RUNTIME DIR: $RUN_DIR"
-
-# Get the current Git commit ID.
-COMMIT_ID=$(git rev-parse HEAD)
-
-# Save the Git commit ID to a file.
-echo "Commit ID: $COMMIT_ID" > "$RUN_DIR/commit_id.txt"
-
-# Save the Git diff to a file.
-git diff > "$RUN_DIR/diff.patch" || { echo "Failed to save git diff"; exit 1; }
-
-
-# Check if the script exists.  Important for preventing silent failures.
-CMD="python eval_${TASK}.py $ARGS runtime.root=$RUN_ROOT runtime.name=$RUN_ID $OVERRIDES model.name=${MODEL}"
-echo $CMD
-echo $CMD > "$RUN_DIR/cmd.bash" || { echo "Failed to save command"; exit 1; }
-
-#Run the script, redirect output.
-$CMD
-
-#echo "Started process $!"
-#echo "---------------------------------------------------------"
-
-# sleep 5
-# tail -f "$RUN_DIR/train.log"
-
-exit 0
+"${CMD[@]}"

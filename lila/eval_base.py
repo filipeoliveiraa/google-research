@@ -13,150 +13,95 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import glob
 import os
-import random
-import time
 
-import hydra
-from hydra.utils import instantiate
-from lila.config import lila_config
-from lila.dpt_flowfeat import FlowFeat
-from lila.dpt_lila import LILA
-import numpy as np
-from omegaconf import DictConfig, OmegaConf
-from PIL import Image
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
-import torch.optim as optim
-from torch.utils import tensorboard
-from torch.utils.data import DataLoader, Dataset
-import torchvision.transforms.functional as TVF
-from tqdm.auto import tqdm
+
+from lila.config import lila_config
+from lila.dpt_lila import LILA, load_lila_weights, shorten_incompatible_keys
 
 
 class PatchResample:
+    """Resize a frame so the smaller side matches `resize_min` and stays patch-aligned."""
 
-  def __init__(self, h, w, resize_min, patch_size):
-    if w < h:
-      # If width is the smaller side, set it to resize_min
-      new_w = resize_min
-      # Calculate the new height to maintain the aspect ratio
-      new_h = int(h * resize_min / w)
-      # Adjust the new height (the larger dimension) to be the nearest
-      # multiple of patch_size.
-      new_h = int(round(new_h / patch_size) * patch_size)
-    else:
-      # If height is the smaller or equal side, set it to resize_min
-      new_h = resize_min
-      # Calculate the new width to maintain the aspect ratio
-      new_w = int(w * resize_min / h)
-      # Adjust the new width (the larger dimension) to be the nearest
-      # multiple of patch_size.
-      new_w = int(round(new_w / patch_size) * patch_size)
+    def __init__(self, h, w, resize_min, patch_size):
+        if w < h:
+            new_w = resize_min
+            new_h = int(h * resize_min / w)
+            new_h = int(round(new_h / patch_size) * patch_size)
+        else:
+            new_h = resize_min
+            new_w = int(w * resize_min / h)
+            new_w = int(round(new_w / patch_size) * patch_size)
 
-    self.norm_hw = (new_h, new_w)
-    self.orig_hw = (h, w)
-    self.patch_size = patch_size
+        self.norm_hw = (new_h, new_w)
 
-  def adjust_to_patch_size(self, x):
-    return F.interpolate(x, self.norm_hw, mode="bilinear", align_corners=False)
+    def adjust_to_patch_size(self, x):
+        return F.interpolate(x, self.norm_hw, mode="bilinear", align_corners=False)
 
 
 class EvalBase:
+    def __init__(self, cfg):
+        self.cfg = cfg
 
-  def __init__(self, cfg):
-    self.cfg = cfg
+        arch_config = lila_config[cfg.model.encoder]
+        self.model = self._init_model(cfg.model, cfg.eval.random_dpt, **arch_config)
+        self.patch_size = arch_config["patch_size"]
+        self.eval_dir = os.path.join(cfg.runtime.root, cfg.runtime.name)
 
-    arch_config = lila_config[cfg.model.encoder]
-    self.model = self._init_model(cfg.model, cfg.eval.random_dpt, **arch_config)
-    self.patch_size = arch_config["patch_size"]
-    self.eval_dir = os.path.join(cfg.runtime.root, cfg.runtime.name)
+    @staticmethod
+    def _rescale(x, hw):
+        return F.interpolate(x, hw, mode="bilinear", align_corners=False)
 
-  def _denorm(self, x):
-    return x
+    @staticmethod
+    def _rescale_as(x, yref):
+        return F.interpolate(x, yref.shape[-2:], mode="bilinear", align_corners=False)
 
-  def _setup_v(self, name):  # setting up visualisation
-    self.root_v = os.path.join(self.job_root, name)
-    if not os.path.isdir(self.root_v):
-      os.makedirs(self.root_v)
+    def rectify(self, feats, orig_size):
+        h = orig_size[0] // self.patch_size
+        w = orig_size[1] // self.patch_size
+        return feats.movedim(1, -1).unflatten(-1, (h, w))
 
-  @staticmethod
-  def _rescale(x, HW):
-    return F.interpolate(x, HW, mode="bilinear", align_corners=False)
+    @torch.no_grad()
+    def encode(self, x):
+        if self.cfg.eval.resize_input:
+            resize_size = self.cfg.eval.resize_input_size
+            if isinstance(resize_size, int):
+                resize_hw = (resize_size, resize_size)
+            else:
+                resize_hw = tuple(resize_size)
+            x = self._rescale(x, resize_hw)
 
-  @staticmethod
-  def _rescale_as(x, yref):
-    return F.interpolate(
-        x, yref.shape[-2:], mode="bilinear", align_corners=False
-    )
+        feats, enc_feats = self.model.sem_head(
+            x.cuda(),
+            with_norm=self.cfg.eval.dec_norm,
+            with_enc_norm=self.cfg.eval.enc_norm,
+        )
+        enc_feats_last = enc_feats[self.cfg.eval.enc_layer_idx][0]
+        feats_enc_hw = self.rectify(enc_feats_last, x.shape[-2:])
 
-  def rectify(self, feats, orig_size):
-    h = orig_size[0] // self.patch_size
-    w = orig_size[1] // self.patch_size
-    return feats.movedim(1, -1).unflatten(-1, (h, w))
+        return feats_enc_hw, feats
 
-  @torch.no_grad()
-  def encode(self, x):
-    HW = x.shape[-2:]
-    HW_orig = x.shape[-2:]
+    def _init_model(self, cfg_model, random_dpt, **arch_config):
+        device = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
+        model = LILA(cfg_model, denorm=nn.Identity(), **arch_config)
 
-    if self.cfg.eval.resize_input:
-      HW = list(self.cfg.eval.resize_input_size)
-      x = self._rescale(x, HW)
+        if not random_dpt:
+            incompatible = load_lila_weights(
+                model,
+                checkpoint_path=cfg_model.checkpoint_path or None,
+                checkpoints_dir=cfg_model.checkpoints_dir or None,
+                model_name=None if cfg_model.checkpoint_path else cfg_model.name,
+                checkpoint_name=cfg_model.checkpoint,
+                strict=False,
+            )
+            print("Missing Keys (shortened):", shorten_incompatible_keys(incompatible.missing_keys))
+            print("Unexpected Keys (shortened):", shorten_incompatible_keys(incompatible.unexpected_keys))
 
-    feats, enc_feats = self.model.sem_head(
-        x.cuda(),
-        with_norm=self.cfg.eval.dec_norm,
-        with_enc_norm=self.cfg.eval.enc_norm,
-    )
-    # flowfeat
-    # feats_enc_hw, feats = self.model(x.cuda()) #, with_norm=self.cfg.eval.dec_norm, with_enc_norm=self.cfg.eval.enc_norm)
+        model = model.to(device).eval()
+        for param in model.parameters():
+            param.requires_grad = False
 
-    enc_feats_last = enc_feats[self.cfg.eval.enc_layer_idx][0]
-    feats_enc_hw = self.rectify(enc_feats_last, HW)
-
-    return feats_enc_hw, feats
-
-  def _init_model(
-      self, cfg_model, random_dpt, **arch_config
-  ):  # or 'vits', 'vitb', 'vitg'
-    DEVICE = (
-        "cuda"
-        if torch.cuda.is_available()
-        else "mps"
-        if torch.backends.mps.is_available()
-        else "cpu"
-    )
-
-    model = LILA(cfg_model, denorm=self._denorm, **arch_config)
-
-    if not random_dpt:
-      model_path = f"/gcs/araslanov-71167094c93f/logs/codelab_v2/{cfg_model.name}/{cfg_model.checkpoint}"
-      print(f"Loading {model_path}")
-      model_weights = torch.load(
-          model_path, weights_only=True, map_location="cpu"
-      )
-
-      if "pretrained.pos_embed" in model_weights:
-        del model_weights["pretrained.pos_embed"]
-
-      shorten_keys = lambda keys: sorted(
-          list(set(k.split(".")[0] + ".*" for k in keys))
-      )
-
-      incompatible = model.load_state_dict(model_weights, strict=False)
-      print(
-          "Missing Keys (shortened):", shorten_keys(incompatible.missing_keys)
-      )
-      print(
-          "Unexpected Keys (shortened):",
-          shorten_keys(incompatible.unexpected_keys),
-      )
-
-    model = model.to(DEVICE).eval()
-
-    for param in model.parameters():
-      param.requires_grad = False
-
-    return model
+        return model

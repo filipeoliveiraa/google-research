@@ -2,10 +2,18 @@ runtime:
   name: "" # will be overridden
   root: "" # will be overridden
 
+data:
+  davis_root: "/workdir/data/DAVIS2017"
+  coco_root: "/workdir/data/COCOStuff"
+  nyuv2_root: "/workdir/data/NYUv2"
+  coco_embeddings: "splits/coco_embeddings.pt"
+
 model:
   name: "" # will be overridden
   checkpoint: "best_checkpoint.pt"
-  encoder: "vitl14"
+  checkpoint_path: ""
+  checkpoints_dir: ""
+  encoder: "dinov2_vitl14"
   depthcore:
       _target_: lila.dpt_lila.DepthCore
       scale: 1.0

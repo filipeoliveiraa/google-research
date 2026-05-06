@@ -1,6 +1,7 @@
 runtime:
   version: "test"
   name: "" # will be overrriden
+  root: "" # will be overridden
   PJRT_DEVICE: CUDA
 
 opt:
@@ -9,7 +10,8 @@ opt:
   weight_decay: 0.0001
 
 model:
-  encoder: 'vitl14'
+  encoder: "dinov2_vitl14"
+  checkpoints_dir: ""
   ridge: 0.1
   conf_temp: 0.05
   w_edge: 1.0
