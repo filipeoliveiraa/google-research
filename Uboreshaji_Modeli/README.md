@@ -39,11 +39,13 @@ separation of concerns and configuration-driven workflows.
 ```
 Uboreshaji_Modeli/
 ├── README.md                    # Complete project overview & index
+├── USER_GUIDE.md                # Exhaustive multimodal SFT user guide
 ├── main.py                      # CLI frontend wrapper (allocations, flags)
 ├── main_lib.py                  # Universal modality-agnostic orchestrator
 ├── requirements.txt             # Core Python dependencies
 ├── run.sh                       # Automated environment setup & verification
 ├── workflow.ipynb               # Interactive Jupyter notebook walkthrough
+├── configs/                     # Model reference configurations (Gemma, Whisper, MMS)
 ├── common/                      # Shared infrastructure & data utilities
 │   ├── config.py                # Global configurations and enums
 │   ├── config_utils.py          # Config loading and paths derivation
@@ -54,7 +56,7 @@ Uboreshaji_Modeli/
 │   ├── base.py                  # Composed ModelEngine & protocols ABCs
 │   ├── decoders.py              # Bounding box, polygon, and CTC decoders
 │   ├── factory.py               # Engine assembler resolver factory
-│   └── [model-specific engines] # Composed engines (owl, gemma_vision)
+│   └── [model-specific engines] # Composed engines (gemma_vision, whisper, mms, owl)
 └── trainers/                    # Concrete training strategies
     ├── base.py                  # TrainerStrategy interface ABC
     ├── detection.py             # OWL-v2 object detection strategy
@@ -94,7 +96,7 @@ runs all unit and integration tests.
 
 
 For exhaustive configuration details across vision, text, and speech, see the
-[USER_GUIDE.md](google/USER_GUIDE.md).
+[USER_GUIDE.md](USER_GUIDE.md).
 
 --------------------------------------------------------------------------------
 
