@@ -25,7 +25,6 @@ import torch
 from torch import nn
 import transformers
 
-
 from Uboreshaji_Modeli.common import box_utils
 from Uboreshaji_Modeli.common import config as base_config
 from Uboreshaji_Modeli.common import losses
