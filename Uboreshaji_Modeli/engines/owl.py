@@ -24,8 +24,6 @@ import numpy as np
 import torch
 from torch import nn
 import transformers
-from transformers import Owlv2ForObjectDetection
-from transformers import Owlv2Processor
 
 
 from Uboreshaji_Modeli.common import box_utils
