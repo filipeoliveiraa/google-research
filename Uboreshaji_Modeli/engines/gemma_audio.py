@@ -1,0 +1,280 @@
+# coding=utf-8
+# Copyright 2026 The Google Research Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Gemma audio engine for composed multimodal speech causal SFT."""
+
+from collections.abc import Mapping, Sequence
+import functools
+from typing import Any, Callable
+
+from absl import logging
+import ml_collections
+import torch
+from torch import nn
+import transformers
+
+from Uboreshaji_Modeli.common import audio_utils
+from . import base
+from . import decoders
+
+
+def _mask_labels(labels, processor):
+  """Masks padding and special tokens in labels for loss computation."""
+  labels = labels.clone()
+  if not hasattr(processor, "tokenizer"):
+    return labels
+
+  tokenizer = processor.tokenizer
+  mask_attrs = [
+      "pad_token_id",
+      "image_token_id",
+      "audio_token_id",
+      "boi_token_id",
+      "eoi_token_id",
+  ]
+  mask_ids = [
+      getattr(tokenizer, attr)
+      for attr in mask_attrs
+      if getattr(tokenizer, attr, None) is not None
+  ]
+
+  if mask_ids:
+    labels[torch.isin(labels, torch.tensor(mask_ids, device=labels.device))] = (
+        -100
+    )
+
+  return labels
+
+
+def _collate_fn(
+    examples,
+    processor,
+    cfg = None,
+):
+  """Collates a batch of examples for training with Gemma audio.
+
+  Calls the full processor in one shot to produce all tensors with correct
+  dtypes, following the waxal/gemma3n pattern.
+
+  Args:
+    examples: A list of dicts, each with 'messages' and 'audio' keys.
+    processor: The AutoProcessor instance for tokenization and audio features.
+    cfg: Optional configuration dictionary.
+
+  Returns:
+    A dictionary containing 'input_ids', 'attention_mask',
+    'input_features', 'input_features_mask', and 'labels'.
+  """
+  texts = [
+      processor.apply_chat_template(
+          example["messages"], tokenize=False, add_generation_prompt=False
+      )
+      for example in examples
+  ]
+  audios = [example["audio"]["array"] for example in examples]
+
+  device_type = cfg.training.get("device", "cuda") if cfg else "cuda"
+  if device_type == "tpu":
+    padding = "max_length"
+    max_length = cfg.get("max_seq_length", 512) if cfg else 512
+  else:
+    padding = True
+    max_length = None
+
+  batch = processor(
+      text=texts,
+      audio=audios,
+      return_tensors="pt",
+      padding=padding,
+      max_length=max_length,
+  )
+  # Detach and clone to avoid issues with in-place operations
+  batch = {
+      k: v.detach().clone() if isinstance(v, torch.Tensor) else v
+      for k, v in batch.items()
+  }
+
+  batch["labels"] = _mask_labels(batch["input_ids"], processor)
+  return batch
+
+
+class GemmaAudioPreprocessor(base.DataPreprocessor):
+  """Preprocessor for Gemma audio-speech SFT tasks."""
+
+  def get_transform_fn(
+      self,
+      processor,
+      cfg = None,
+      *,
+      is_train = False,
+      **kwargs,
+  ):
+    """Returns a transform function that decodes audio and formats chat messages.
+
+    The transform_fn prepares each example with a 'messages' key (chat format)
+    and an 'audio' key (decoded array + sampling rate). The actual tokenization
+    and feature extraction happen later in the collate_fn.
+
+    Args:
+      processor: The AutoProcessor associated with the model.
+      cfg: Optional configuration override.
+      is_train: Whether to process in training mode.
+      **kwargs: Additional keyword options.
+
+    Returns:
+      A callable transform function.
+    """
+    del self, processor  # Unused; processor is used at collation time.
+    prompt = (
+        cfg.prompt
+        if cfg and "prompt" in cfg
+        else "Transpose the following audio:"
+    )
+
+    def transform_fn(
+        batch,
+    ):
+      batch_dict = dict(batch)
+      audio_column = batch_dict["audio"]
+      if isinstance(audio_column, dict):
+        audio_inputs = [audio_column]
+      else:
+        audio_inputs = audio_column
+
+      sampling_rate = 16000
+      if cfg and "training" in cfg and "audio_sample_rate" in cfg.training:
+        sampling_rate = cfg.training.audio_sample_rate
+
+      if "text" in batch_dict:
+        text_key = "text"
+      elif "transcription" in batch_dict:
+        text_key = "transcription"
+      else:
+        text_key = None
+
+      text_column = batch_dict.get(text_key) if text_key else None
+      text_inputs = (
+          ([text_column] if isinstance(text_column, str) else text_column)
+          if text_column is not None
+          else [None] * len(audio_inputs)
+      )
+
+      # Decode audio and filter bad samples, building messages simultaneously
+      messages_list = []
+      audio_list = []
+      for i, (audio_input, text) in enumerate(zip(audio_inputs, text_inputs)):
+        arr = audio_utils.get_audio_array(audio_input, target_sr=sampling_rate)
+        if arr is None:
+          logging.warning("Skipping bad audio record at index %d", i)
+          continue
+
+        audio_list.append({"array": arr, "sampling_rate": sampling_rate})
+
+        # Build chat messages
+        user_content = [
+            {"type": "audio", "audio": arr},
+            {"type": "text", "text": prompt},
+        ]
+        assistant_content = [
+            {"type": "text", "text": text if text else ""},
+        ]
+        messages_list.append([
+            {"role": "user", "content": user_content},
+            {"role": "assistant", "content": assistant_content},
+        ])
+
+      return {"messages": messages_list, "audio": audio_list}
+
+    return transform_fn
+
+  def get_collate_fn(
+      self,
+      cfg = None,
+      **kwargs,
+  ):
+    """Returns a collation function that calls the full processor in one shot.
+
+    This follows the waxal/gemma3n pattern: the processor handles tokenization,
+    audio feature extraction, and padding together, ensuring all tensors have
+    correct dtypes.
+
+    Args:
+      cfg: Optional configuration dictionary containing hyper-parameters.
+      **kwargs: Additional config keyword options including "processor".
+
+    Returns:
+      A collation callable that produces model-ready tensors.
+    """
+    del self  # Unused.
+    processor = kwargs.get("processor")
+    if processor is None:
+      raise ValueError(
+          "processor is required in kwargs for GemmaAudioPreprocessor"
+          " collate_fn."
+      )
+    return functools.partial(_collate_fn, processor=processor, cfg=cfg)
+
+  def get_sft_config_overrides(
+      self, cfg
+  ):
+    """Returns SFTConfig overrides for the custom Gemma preprocessor.
+
+    Args:
+      cfg: Config dictionary container.
+
+    Returns:
+      A dictionary containing training and checkpointing overrides.
+    """
+    del self, cfg  # Unused.
+    return {
+        "dataset_kwargs": {"skip_prepare_dataset": True},
+        "gradient_checkpointing_kwargs": {"use_reentrant": False},
+    }
+
+
+class GemmaAudioEngine(base.ModelEngine):
+  """Coordinated multimodal training setup for the Gemma speech pipeline."""
+
+  def __init__(self):
+    """Initializes the composed speech preprocessor and prediction decoder."""
+    super().__init__(
+        preprocessor=GemmaAudioPreprocessor(),
+        loss_handler=None,
+        decoder=decoders.TextDecoder(),
+    )
+
+  def load_model_and_processor(
+      self,
+      model_id,
+      device,
+      **kwargs,
+  ):
+    """Loads the pretrained Gemma audio visual model and its processor.
+
+    Args:
+      model_id: Pretrained repository ID or local checkpoint path.
+      device: Target torch device mapping.
+      **kwargs: Additional config overrides.
+
+    Returns:
+      A tuple (model, processor), where model is the initialized
+      AutoModelForCausalLM model on the device, and processor is the
+      AutoProcessor instance.
+    """
+    del self, kwargs  # Unused.
+    processor = transformers.AutoProcessor.from_pretrained(model_id)
+    model = transformers.AutoModelForMultimodalLM.from_pretrained(model_id)
+    model.to(device)
+    return model, processor
