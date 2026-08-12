@@ -21,10 +21,41 @@ import ml_collections
 from Uboreshaji_Modeli.common import config
 from Uboreshaji_Modeli.engines import base
 from Uboreshaji_Modeli.engines import factory
+from Uboreshaji_Modeli.engines import gemma_audio
+from Uboreshaji_Modeli.engines import gemma_text
+from Uboreshaji_Modeli.engines import gemma_vision
+from Uboreshaji_Modeli.engines import mms
 from Uboreshaji_Modeli.engines import owl
+from Uboreshaji_Modeli.engines import whisper
 
 
 class EngineFactoryTest(parameterized.TestCase):
+
+  @parameterized.named_parameters(
+      ("gemma_3", config.ModelFlavor.GEMMA_3, gemma_vision.GemmaVisionEngine),
+      ("gemma_4", config.ModelFlavor.GEMMA_4, gemma_vision.GemmaVisionEngine),
+      (
+          "gemma_3_text",
+          config.ModelFlavor.GEMMA_3_TEXT,
+          gemma_text.GemmaTextEngine,
+      ),
+      (
+          "gemma_4_text",
+          config.ModelFlavor.GEMMA_4_TEXT,
+          gemma_text.GemmaTextEngine,
+      ),
+      (
+          "gemma_3n_asr",
+          config.ModelFlavor.GEMMA_3N_ASR,
+          gemma_audio.GemmaAudioEngine,
+      ),
+      ("whisper", config.ModelFlavor.WHISPER, whisper.WhisperEngine),
+      ("mms", config.ModelFlavor.MMS, mms.MmsEngine),
+  )
+  def test_get_gemma_engines(self, flavor, expected_class):
+    engine = factory.get_engine(flavor)
+    self.assertIsInstance(engine, expected_class)
+    self.assertIsInstance(engine, base.ModelEngine)
 
   def test_get_owl_v2_engine_composition(self):
     engine = factory.get_engine(config.ModelFlavor.OWL_V2_TORCH)

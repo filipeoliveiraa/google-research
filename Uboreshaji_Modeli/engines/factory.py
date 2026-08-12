@@ -16,8 +16,8 @@
 """Factory for model engines."""
 
 from Uboreshaji_Modeli.common import config
-from Uboreshaji_Modeli.engines import base
-from Uboreshaji_Modeli.engines import owl
+from . import base
+from . import owl
 
 
 def get_engine(model_flavor):
