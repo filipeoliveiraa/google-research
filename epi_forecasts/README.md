@@ -1,12 +1,13 @@
-# Epidemiological Forecast
+# Google Research EpiHub
 
 This repository serves as a public archive for prospective epidemiological
-forecasts generated as part of ongoing research. The forecasts cover various
-public health targets, such as seasonal influenza.
+forecasts generated as part of ongoing research. The forecasts cover three
+public health targets: US jurisdiction-level quantile forecasts for weekly
+influenza, COVID-19 and RSV hospitalizations.
 
 ## Repository Structure
 
-Forecasts are organized by forecasting target and season. The general structure
+Forecasts are organized by pathogen and season. The general structure
 is as follows:
 
 ```
