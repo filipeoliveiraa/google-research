@@ -4165,6 +4165,63 @@ class AntheaEval {
       }
     }
   }
+
+  /**
+   * Extract image translation URLs, if provided via an annotation on the
+   * first segment of each docsys. The annotation should contain an
+   * "image_translation" key with "source" and "target" image URLs.
+   */
+  extractImageTranslation() {
+    this.manager_.log(this.manager_.INFO,
+                      'Extracting image translation from annotations');
+    const parseImageObj = (docsys, docIndex, sideLabel) => {
+      const targetDesc = sideLabel ? ` for ${sideLabel}` : '';
+      if (!docsys || !docsys.annotations || !docsys.annotations.length ||
+          !docsys.annotations[0]) {
+        this.manager_.log(
+            this.manager_.ERROR,
+            `No annotation (hence no image translation)${targetDesc} ` +
+            `for doc ${docIndex}`);
+        return null;
+      }
+      try {
+        const annotation = JSON.parse(docsys.annotations[0]);
+        const imageObj = annotation.image_translation;
+        if (!imageObj) {
+          this.manager_.log(
+              this.manager_.ERROR,
+              `Missing "image_translation" in the annotation${targetDesc} ` +
+              `for doc ${docIndex}`);
+          return null;
+        }
+        if (!imageObj.source || !imageObj.target) {
+          this.manager_.log(
+              this.manager_.ERROR,
+              `Incomplete image translation${targetDesc} (need both source ` +
+              `and target) in the annotation for doc ${docIndex}`);
+          return null;
+        }
+        return imageObj;
+      } catch (err) {
+        this.manager_.log(
+            this.manager_.ERROR,
+            `Unparseable image translation${targetDesc} in the annotation ` +
+            `for doc ${docIndex}`);
+        return null;
+      }
+    };
+
+    for (let i = 0; i < this.docs_.length; i++) {
+      const thisDoc = this.docs_[i];
+      const side1Label = this.config.SIDE_BY_SIDE ? 'target 1' : '';
+      thisDoc.imageTranslation = parseImageObj(thisDoc.docsys, i, side1Label);
+      if (this.config.SIDE_BY_SIDE && thisDoc.docsys2) {
+        thisDoc.imageTranslation2 =
+            parseImageObj(thisDoc.docsys2, i, 'target 2');
+      }
+    }
+  }
+
   /**
    * Initialize or retrieve the shared AudioContext and Buffer Cache.
    * @return {{context: !AudioContext, cache: !Map<string, !Promise<!AudioBuffer>>, activePlayers: !Object}}
@@ -4668,13 +4725,89 @@ class AntheaEval {
   }
 
   /**
-   * If the current document has available page context or source media, then
-   * display them. See showPageContextIfPresent() and showSourceMediaIfPresent()
-   * for more details.
+   * If the current document has image translation (source and target) and
+   * USE_IMAGE_TRANSLATION is enabled in the template config, display them
+   * inline above the text in the corresponding columns.
+   */
+  showImageTranslationIfPresent() {
+    if (!this.config.USE_IMAGE_TRANSLATION) {
+      return;
+    }
+    const doc = this.docs_[this.cursor.doc];
+    if (!doc.imageTranslation || !doc.srcCell || !doc.tgtCell) {
+      return;
+    }
+    // Collect all target columns and their corresponding image translations.
+    const targetEntries = [
+      {
+        cell: doc.tgtCell,
+        translation: doc.imageTranslation,
+        title: this.config.SIDE_BY_SIDE ? 'Target 1 image' : 'Target image',
+      },
+    ];
+    if (this.config.SIDE_BY_SIDE && doc.tgtCell2 && doc.imageTranslation2) {
+      targetEntries.push({
+        cell: doc.tgtCell2,
+        translation: doc.imageTranslation2,
+        title: 'Target 2 image',
+      });
+    }
+
+    // Remove any previously added image translation containers.
+    const allCells = [doc.srcCell, ...targetEntries.map((e) => e.cell)];
+    for (const cell of allCells) {
+      const existing = cell.querySelector(
+          '.anthea-image-translation-inline-container');
+      if (existing) {
+        existing.remove();
+      }
+    }
+
+    // Create and prepend image container for source.
+    const srcContainer = this.createImageTranslationContainer_(
+        doc.imageTranslation.source, 'Source image');
+    doc.srcCell.prepend(srcContainer);
+
+    // Create and prepend image containers for each target column.
+    for (const entry of targetEntries) {
+      const tgtContainer = this.createImageTranslationContainer_(
+          entry.translation.target, entry.title);
+      entry.cell.prepend(tgtContainer);
+    }
+  }
+
+  /**
+   * Creates a container element with an image that can be clicked to
+   * expand/collapse.
+   * @param {string} url The image URL.
+   * @param {string} title The image title/alt text.
+   * @return {!Element} The container element.
+   * @private
+   */
+  createImageTranslationContainer_(url, title) {
+    const container = googdom.createDom(
+        'div', 'anthea-image-translation-inline-container');
+    const img = googdom.createDom('img', {
+      src: url,
+      title: title,
+      alt: title,
+      class: 'anthea-image-translation-inline',
+    });
+    img.addEventListener('click', () => {
+      img.classList.toggle('anthea-image-translation-inline-expanded');
+    });
+    container.appendChild(img);
+    return container;
+  }
+
+  /**
+   * If the current document has available page context, source media, or
+   * image translation, then display them.
    */
   showContextAndMediaIfPresent() {
     this.showPageContextIfPresent();
     this.showSourceMediaIfPresent();
+    this.showImageTranslationIfPresent();
   }
 
   /**
@@ -5192,6 +5325,10 @@ class AntheaEval {
                                   null, docTextSrcRow,
                                   ...tgtRows,
                                   googdom.createDom('td', 'anthea-document-eval-cell', doc.eval));
+      // Store cell references for image translation insertion.
+      doc.srcCell = docTextSrcRow;
+      doc.tgtCell = docTextTgtRow;
+      doc.tgtCell2 = docTextTgtRow2;
       if (config.TARGET_SIDE_ONLY) {
         docTextSrcRow.style.display = 'none';
       }
@@ -5563,6 +5700,9 @@ class AntheaEval {
     }
     if (config.USE_SOURCE_MEDIA) {
       this.extractSourceMedia();
+    }
+    if (config.USE_IMAGE_TRANSLATION) {
+      this.extractImageTranslation();
     }
     this.showContextAndMediaIfPresent();
 

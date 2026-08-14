@@ -579,3 +579,20 @@ body, p, div, span, table, tr, td, th, ul, ol, li {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.anthea-image-translation-inline {
+  cursor: pointer;
+  display: block;
+  max-height: 400px;
+  max-width: 100%;
+  object-fit: contain;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+}
+.anthea-image-translation-inline-expanded {
+  max-height: none;
+}
+.anthea-image-translation-inline-container {
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+}
