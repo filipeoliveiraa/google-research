@@ -220,8 +220,25 @@ class DetectionTrainer(trainers_base.TrainerStrategy):
 
       start_time = time.monotonic()
       if not cfg.eval.get("run_eval_only", False):
-        logging.info("Starting training...")
-        custom_trainer.train(resume_from_checkpoint=False)
+        resume_setting = cfg.training.get("resume_from_checkpoint", "auto")
+        resume_setting_str = str(resume_setting).lower()
+        if resume_setting_str == "auto" or resume_setting_str == "true":
+          existing_checkpoints = list(resolved_output_path.glob("checkpoint-*"))
+          resume_from_checkpoint = True if existing_checkpoints else False
+        elif isinstance(resume_setting, str) and resume_setting not in (
+            "auto",
+            "false",
+            "False",
+        ):
+          resume_from_checkpoint = resume_setting
+        else:
+          resume_from_checkpoint = False
+
+        logging.info(
+            "Starting training (resume_from_checkpoint=%s)...",
+            resume_from_checkpoint,
+        )
+        custom_trainer.train(resume_from_checkpoint=resume_from_checkpoint)
 
       else:
         logging.info("Skipping training as run_eval_only is set to True.")
