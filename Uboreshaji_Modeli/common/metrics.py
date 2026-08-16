@@ -46,6 +46,7 @@ def create_compute_metrics_fn(
       box_format="xyxy",
       max_detection_thresholds=[10, 100, 1000],
       class_metrics=True,
+      sync_on_compute=False,
   )
 
   def compute_metrics(eval_pred):

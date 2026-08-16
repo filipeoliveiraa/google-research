@@ -43,7 +43,8 @@ class Owlv2EngineTest(parameterized.TestCase):
     torch.testing.assert_close(norm_boxes, expected)
 
   @parameterized.named_parameters(
-      ("fp32", None, torch.float32),
+      ("fp32_default", None, torch.float32),
+      ("fp32_explicit", config.Precision.FP32, torch.float32),
       ("bf16", config.Precision.BF16, torch.bfloat16),
   )
   def test_collate_fn(self, precision, expected_dtype):

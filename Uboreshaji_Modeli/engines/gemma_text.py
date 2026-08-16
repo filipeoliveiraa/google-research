@@ -29,6 +29,143 @@ from . import base
 from . import decoders
 
 
+class GemmaTextTransform:
+  """Picklable transform callable for Gemma Text data loader workers."""
+
+  def __init__(
+      self,
+      processor,
+      max_length,
+      cfg,
+  ):
+    self.processor = processor
+    self.max_length = max_length
+    self.cfg = cfg
+
+  def __call__(
+      self,
+      batch,
+  ):
+    all_input_ids = []
+    all_attention_masks = []
+    all_labels = []
+
+    if (
+        isinstance(batch["messages"], list)
+        and batch["messages"]
+        and isinstance(batch["messages"][0], dict)
+    ):
+      messages_list = [batch["messages"]]
+    else:
+      messages_list = batch["messages"]
+
+    for messages in messages_list:
+      text = self.processor.apply_chat_template(
+          messages, tokenize=False, add_generation_prompt=False
+      )
+      encoded = self.processor(
+          text,
+          truncation=True,
+          max_length=self.max_length,
+          padding=False,
+          return_tensors=None,
+      )
+      input_ids = encoded["input_ids"]
+      attention_mask = encoded["attention_mask"]
+
+      labels = [-100] * len(input_ids)
+
+      if self.cfg and self.cfg.model_flavor == config.ModelFlavor.GEMMA_4_TEXT:
+        assistant_marker_str = "<|turn>model\n"
+        end_marker_str = "<turn|>\n"
+      else:
+        assistant_marker_str = "<start_of_turn>model\n"
+        end_marker_str = "<end_of_turn>\n"
+
+      assistant_marker_ids = self.processor.encode(
+          assistant_marker_str, add_special_tokens=False
+      )
+      end_marker_ids = self.processor.encode(
+          end_marker_str, add_special_tokens=False
+      )
+
+      model_turn_starts = []
+      for j in range(len(input_ids) - len(assistant_marker_ids) + 1):
+        if (
+            input_ids[j : j + len(assistant_marker_ids)]
+            == assistant_marker_ids
+        ):
+          model_turn_starts.append(j)
+
+      for start_idx in model_turn_starts:
+        content_start = start_idx + len(assistant_marker_ids)
+        content_end = len(input_ids)
+        for k in range(
+            content_start, len(input_ids) - len(end_marker_ids) + 1
+        ):
+          if input_ids[k : k + len(end_marker_ids)] == end_marker_ids:
+            content_end = k
+            break
+
+        for idx in range(content_start, content_end):
+          if idx < len(input_ids):
+            labels[idx] = input_ids[idx]
+
+      all_input_ids.append(input_ids)
+      all_attention_masks.append(attention_mask)
+      all_labels.append(labels)
+
+    return {
+        "input_ids": all_input_ids,
+        "attention_mask": all_attention_masks,
+        "labels": all_labels,
+    }
+
+
+class GemmaTextCollate:
+  """Picklable collate callable for Gemma Text data loader workers."""
+
+  def __init__(
+      self,
+      is_tpu = False,
+      max_seq_length = 256,
+      pad_token_id = 0,
+  ):
+    self.is_tpu = is_tpu
+    self.max_seq_length = max_seq_length
+    self.pad_token_id = pad_token_id
+
+  def __call__(self, batch):
+    input_ids = [torch.tensor(item["input_ids"]) for item in batch]
+    attention_masks = [torch.tensor(item["attention_mask"]) for item in batch]
+    labels = [torch.tensor(item["labels"]) for item in batch]
+
+    if self.is_tpu:
+      max_len = self.max_seq_length
+    else:
+      max_len = max(ids.shape[0] for ids in input_ids)
+
+    padded_input_ids = torch.full(
+        (len(batch), max_len), self.pad_token_id, dtype=torch.long
+    )
+    padded_attention = torch.zeros((len(batch), max_len), dtype=torch.long)
+    padded_labels = torch.full((len(batch), max_len), -100, dtype=torch.long)
+
+    for i, (ids, att, lab) in enumerate(
+        zip(input_ids, attention_masks, labels)
+    ):
+      seq_len = min(ids.shape[0], max_len)
+      padded_input_ids[i, :seq_len] = ids[:seq_len]
+      padded_attention[i, :seq_len] = att[:seq_len]
+      padded_labels[i, :seq_len] = lab[:seq_len]
+
+    return {
+        "input_ids": padded_input_ids,
+        "attention_mask": padded_attention,
+        "labels": padded_labels,
+    }
+
+
 class GemmaTextPreprocessor(base.DataPreprocessor):
   """Preprocessor for Gemma causal language SFT."""
 
@@ -40,100 +177,15 @@ class GemmaTextPreprocessor(base.DataPreprocessor):
       is_train = False,
       **kwargs,
   ):
-    """Returns a transform function converting batch examples to Gemma text SFT inputs.
-
-    Args:
-      processor: The tokenizing processor.
-      cfg: Optional configuration dictionary with max_seq_length.
-      is_train: Whether processing is for training mode SFT.
-      **kwargs: Additional keyword configuration.
-
-    Returns:
-      A callable transform function mapping raw text messages to token
-      boundaries.
-    """
+    """Returns a transform function converting batch examples to Gemma text SFT inputs."""
     del self  # Unused.
     max_length = cfg.get("max_seq_length", 512) if cfg else 512
 
-    def transform_fn(
-        batch,
-    ):
-      all_input_ids = []
-      all_attention_masks = []
-      all_labels = []
-
-      if (
-          isinstance(batch["messages"], list)
-          and batch["messages"]
-          and isinstance(batch["messages"][0], dict)
-      ):
-        messages_list = [batch["messages"]]
-      else:
-        messages_list = batch["messages"]
-
-      for messages in messages_list:
-        text = processor.apply_chat_template(
-            messages, tokenize=False, add_generation_prompt=False
-        )
-        encoded = processor(
-            text,
-            truncation=True,
-            max_length=max_length,
-            padding=False,
-            return_tensors=None,
-        )
-        input_ids = encoded["input_ids"]
-        attention_mask = encoded["attention_mask"]
-
-        labels = [-100] * len(input_ids)
-
-        if cfg and cfg.model_flavor == config.ModelFlavor.GEMMA_4_TEXT:
-          assistant_marker_str = "<|turn>model\n"
-          end_marker_str = "<turn|>\n"
-        else:  # Default to Gemma 3.
-          assistant_marker_str = "<start_of_turn>model\n"
-          end_marker_str = "<end_of_turn>\n"
-
-        assistant_marker_ids = processor.encode(
-            assistant_marker_str, add_special_tokens=False
-        )
-        end_marker_ids = processor.encode(
-            end_marker_str, add_special_tokens=False
-        )
-
-        model_turn_starts = []
-        for j in range(len(input_ids) - len(assistant_marker_ids) + 1):
-          if (
-              input_ids[j : j + len(assistant_marker_ids)]
-              == assistant_marker_ids
-          ):
-            model_turn_starts.append(j)
-
-        for start_idx in model_turn_starts:
-          content_start = start_idx + len(assistant_marker_ids)
-          content_end = len(input_ids)
-          for k in range(
-              content_start, len(input_ids) - len(end_marker_ids) + 1
-          ):
-            if input_ids[k : k + len(end_marker_ids)] == end_marker_ids:
-              content_end = k
-              break
-
-          for idx in range(content_start, content_end):
-            if idx < len(input_ids):
-              labels[idx] = input_ids[idx]
-
-        all_input_ids.append(input_ids)
-        all_attention_masks.append(attention_mask)
-        all_labels.append(labels)
-
-      return {
-          "input_ids": all_input_ids,
-          "attention_mask": all_attention_masks,
-          "labels": all_labels,
-      }
-
-    return transform_fn
+    return GemmaTextTransform(
+        processor=processor,
+        max_length=max_length,
+        cfg=cfg,
+    )
 
   def get_collate_fn(
       self,
@@ -142,53 +194,17 @@ class GemmaTextPreprocessor(base.DataPreprocessor):
       pad_token_id = 0,
       **kwargs,
   ):
-    """Returns a collation function to dynamically pad causal text datasets.
-
-    Args:
-      cfg: Optional configuration override containing hyper-parameters.
-      pad_token_id: Token ID to pad shorter sequences to match batch length.
-      **kwargs: Additional keyword arguments.
-
-    Returns:
-      A collation callable that takes a sequence of mapping items and returns
-      padded tensors.
-    """
+    """Returns a collation function to dynamically pad causal text datasets."""
     del self
     device_type = cfg.training.get("device", "cpu") if cfg else "cpu"
     is_tpu = device_type == "tpu"
     max_seq_length = cfg.get("max_seq_length", 256) if cfg else 256
 
-    def collate_fn(batch):
-      input_ids = [torch.tensor(item["input_ids"]) for item in batch]
-      attention_masks = [torch.tensor(item["attention_mask"]) for item in batch]
-      labels = [torch.tensor(item["labels"]) for item in batch]
-
-      if is_tpu:
-        max_len = max_seq_length
-      else:
-        max_len = max(ids.shape[0] for ids in input_ids)
-
-      padded_input_ids = torch.full(
-          (len(batch), max_len), pad_token_id, dtype=torch.long
-      )
-      padded_attention = torch.zeros((len(batch), max_len), dtype=torch.long)
-      padded_labels = torch.full((len(batch), max_len), -100, dtype=torch.long)
-
-      for i, (ids, att, lab) in enumerate(
-          zip(input_ids, attention_masks, labels)
-      ):
-        seq_len = min(ids.shape[0], max_len)
-        padded_input_ids[i, :seq_len] = ids[:seq_len]
-        padded_attention[i, :seq_len] = att[:seq_len]
-        padded_labels[i, :seq_len] = lab[:seq_len]
-
-      return {
-          "input_ids": padded_input_ids,
-          "attention_mask": padded_attention,
-          "labels": padded_labels,
-      }
-
-    return collate_fn
+    return GemmaTextCollate(
+        is_tpu=is_tpu,
+        max_seq_length=max_seq_length,
+        pad_token_id=pad_token_id,
+    )
 
   def get_sft_config_overrides(
       self, cfg

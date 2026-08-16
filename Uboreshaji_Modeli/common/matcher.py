@@ -162,59 +162,8 @@ class Matcher(nn.Module):
     bs, num_queries = outputs["logits"].shape[:2]
     device = outputs["logits"].device
 
-    out_prob = (
-        outputs["logits"].flatten(0, 1).sigmoid()
-    )  # [batch_size * num_queries, num_classes]
-    out_bbox = outputs["pred_boxes"].flatten(
-        0, 1
-    )  # [batch_size * num_queries, 4]
-
     if not targets:
       return []
-
-    # Handle tgt_ids
-    num_labels = sum(v["class_labels"].numel() for v in targets)
-    if num_labels == 0:
-      return [
-          (
-              torch.as_tensor([], dtype=torch.int64, device=device),
-              torch.as_tensor([], dtype=torch.int64, device=device),
-          )
-          for _ in range(bs)
-      ]
-
-    first_target = next(
-        (v for v in targets if v["class_labels"].numel() > 0), targets[0]
-    )
-    dtype = first_target["class_labels"].dtype
-
-    tgt_ids = torch.empty(num_labels, dtype=dtype, device=device)
-    current_pos = 0
-    for v in targets:
-      labels = v["class_labels"]
-      if labels.numel() > 0:
-        next_pos = current_pos + labels.numel()
-        tgt_ids[current_pos:next_pos] = labels.flatten()
-        current_pos = next_pos
-    tgt_ids = tgt_ids.int()
-
-    # Handle tgt_bbox
-    num_bboxes = sum(v["boxes"].shape[0] for v in targets)
-    tgt_bbox = torch.empty((num_bboxes, 4), dtype=out_bbox.dtype, device=device)
-    current_pos = 0
-    for v in targets:
-      bboxes = v["boxes"]
-      if bboxes.numel() > 0:
-        next_pos = current_pos + bboxes.shape[0]
-        tgt_bbox[current_pos:next_pos] = bboxes
-        current_pos = next_pos
-
-    cost_class = -out_prob[:, tgt_ids]
-    cost_bbox = torch.cdist(out_bbox, tgt_bbox, p=1)
-    cost_giou = -box_utils.generalized_box_iou(
-        boxes1=box_utils.box_cxcywh_to_xyxy(out_bbox),
-        boxes2=box_utils.box_cxcywh_to_xyxy(tgt_bbox),
-    )
 
     if num_queries == 0:
       return [
@@ -225,31 +174,51 @@ class Matcher(nn.Module):
           for _ in range(bs)
       ]
 
-    cost_matrix = (
-        (
-            self.cost_bbox * cost_bbox
-            + self.cost_class * cost_class
-            + self.cost_giou * cost_giou
-        )
-        .view(bs, num_queries, -1)
-        .cpu()
-    )
+    indices = []
+    for i in range(bs):
+      tgt_labels = targets[i]["class_labels"]
+      tgt_boxes = targets[i]["boxes"]
+      num_targets_i = tgt_labels.shape[0]
 
-    sizes = [len(v["boxes"]) for v in targets]
-    if self.matcher_type == base_config.MatcherType.HUNGARIAN:
-      indices = _hungarian_matcher(cost_matrix, sizes)
-    elif self.matcher_type == base_config.MatcherType.GREEDY:
-      indices = _greedy_matcher(cost_matrix, sizes)
-    else:
-      raise ValueError(f"Unsupported matcher type: {self.matcher_type}")
+      if num_targets_i == 0:
+        indices.append((
+            torch.as_tensor([], dtype=torch.int64, device=device),
+            torch.as_tensor([], dtype=torch.int64, device=device),
+        ))
+        continue
 
-    return [
-        (
-            torch.as_tensor(i, dtype=torch.int64, device=device),
-            torch.as_tensor(j, dtype=torch.int64, device=device),
+      out_prob_i = outputs["logits"][i].sigmoid()  # [num_queries, num_classes]
+      out_bbox_i = outputs["pred_boxes"][i]  # [num_queries, 4]
+
+      cost_class = -out_prob_i[:, tgt_labels.long()]
+      cost_bbox = torch.cdist(out_bbox_i, tgt_boxes, p=1)
+      cost_giou = -box_utils.generalized_box_iou(
+          boxes1=box_utils.box_cxcywh_to_xyxy(out_bbox_i),
+          boxes2=box_utils.box_cxcywh_to_xyxy(tgt_boxes),
+      )
+
+      cost_matrix_i = (
+          self.cost_bbox * cost_bbox
+          + self.cost_class * cost_class
+          + self.cost_giou * cost_giou
+      ).cpu()
+
+      if self.matcher_type == base_config.MatcherType.HUNGARIAN:
+        row_ind, col_ind = scipy.optimize.linear_sum_assignment(
+            cost_matrix_i.numpy()
         )
-        for i, j in indices
-    ]
+      elif self.matcher_type == base_config.MatcherType.GREEDY:
+        res = _greedy_matcher(cost_matrix_i.unsqueeze(0), [num_targets_i])
+        row_ind, col_ind = res[0][0].cpu().numpy(), res[0][1].cpu().numpy()
+      else:
+        raise ValueError(f"Unsupported matcher type: {self.matcher_type}")
+
+      indices.append((
+          torch.as_tensor(row_ind, dtype=torch.int64, device=device),
+          torch.as_tensor(col_ind, dtype=torch.int64, device=device),
+      ))
+
+    return indices
 
 
 class HungarianMatcher(Matcher):

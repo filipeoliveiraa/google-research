@@ -55,6 +55,121 @@ def normalize_annotation_for_owlv2(
   )
 
 
+class Owlv2Transform:
+  """Picklable transform callable for OWL-v2 data loader workers."""
+
+  def __init__(
+      self,
+      processor,
+      dataset_id2label,
+      model_label2id,
+      aug,
+      shared_input_ids,
+      shared_attention_mask,
+  ):
+    self.processor = processor
+    self.dataset_id2label = dataset_id2label
+    self.model_label2id = model_label2id
+    self.aug = aug
+    self.shared_input_ids = shared_input_ids
+    self.shared_attention_mask = shared_attention_mask
+
+  def __call__(
+      self, examples
+  ):
+    from Uboreshaji_Modeli.common import augmentations  # pylint: disable=g-import-not-at-top
+
+    input_ids = []
+    attention_masks = []
+    pixel_values = []
+    labels = []
+    for image_id, image, objects in zip(
+        examples["image_id"], examples["image"], examples["objects"]
+    ):
+      image = np.array(image.convert("RGB")).copy()
+
+      new_labels = []
+      new_bboxes = []
+      for category_id, bbox in zip(objects["category"], objects["bbox"]):
+        category_name = self.dataset_id2label[category_id]
+        if category_name in self.model_label2id:
+          if box_utils.is_valid_box(bbox, box_format="xywh"):
+            new_labels.append(self.model_label2id[category_name])
+            new_bboxes.append(bbox)
+
+      if self.aug:
+        image, new_bboxes, new_labels_aug = augmentations.apply_augmentation(
+            self.aug, image, new_bboxes, new_labels
+        )
+
+        new_labels = new_labels_aug if new_bboxes else []
+
+      h, w = image.shape[:2]
+      labels_dict = {}
+      # Process only the image. Text features are already precomputed.
+      pixel_values_encoded = self.processor(images=image, return_tensors="pt")[
+          "pixel_values"
+      ].squeeze(0)
+
+      if not new_labels:
+        labels_dict["class_labels"] = torch.zeros(0, dtype=torch.long)
+        labels_dict["boxes"] = torch.zeros((0, 4))
+      else:
+        labels_dict["class_labels"] = torch.tensor(new_labels)
+        labels_dict["boxes"] = normalize_annotation_for_owlv2(
+            torch.tensor(new_bboxes), (h, w)
+        )
+      labels_dict["image_id"] = torch.tensor([image_id])
+
+      input_ids.append(self.shared_input_ids)
+      attention_masks.append(self.shared_attention_mask)
+      labels.append(labels_dict)
+      pixel_values.append(pixel_values_encoded)
+
+    return {
+        "input_ids": input_ids,
+        "labels": labels,
+        "pixel_values": pixel_values,
+        "attention_mask": attention_masks,
+    }
+
+
+class Owlv2Collate:
+  """Picklable collate callable for OWL-v2 data loader workers."""
+
+  def __init__(self, cfg = None):
+    self.cfg = cfg
+
+  def __call__(self, batch):
+    input_ids = torch.stack(
+        [torch.as_tensor(item["input_ids"]) for item in batch], dim=0
+    )
+    attention_mask = torch.stack(
+        [torch.as_tensor(item["attention_mask"]) for item in batch], dim=0
+    )
+    input_ids = input_ids.view(-1, input_ids.shape[-1])
+    attention_mask = attention_mask.view(-1, attention_mask.shape[-1])
+    pixel_values = torch.stack(
+        [torch.as_tensor(item["pixel_values"]) for item in batch], dim=0
+    )
+    if self.cfg and self.cfg.training.precision == base_config.Precision.BF16:
+      pixel_values = pixel_values.bfloat16()
+
+    labels = []
+    for item in batch:
+      processed_labels = {}
+      for key, value in item["labels"].items():
+        processed_labels[key] = torch.as_tensor(value)
+      labels.append(processed_labels)
+
+    return {
+        "input_ids": input_ids.long(),
+        "attention_mask": attention_mask.long(),
+        "pixel_values": pixel_values,
+        "labels": labels,
+    }
+
+
 class Owlv2Preprocessor(base.DataPreprocessor):
   """Preprocessor for OWL-v2 object detection."""
 
@@ -98,112 +213,23 @@ class Owlv2Preprocessor(base.DataPreprocessor):
     shared_input_ids = text_encoding["input_ids"].squeeze(0)
     shared_attention_mask = text_encoding["attention_mask"].squeeze(0)
 
-    def transform_fn(
-        examples,
-    ):
-      input_ids = []
-      attention_masks = []
-      pixel_values = []
-      labels = []
-      for image_id, image, objects in zip(
-          examples["image_id"], examples["image"], examples["objects"]
-      ):
-        image = np.array(image.convert("RGB")).copy()
-
-        new_labels = []
-        new_bboxes = []
-        for category_id, bbox in zip(objects["category"], objects["bbox"]):
-          category_name = dataset_id2label[category_id]
-          if category_name in model_label2id:
-            if box_utils.is_valid_box(bbox, box_format="xywh"):
-              new_labels.append(model_label2id[category_name])
-              new_bboxes.append(bbox)
-
-        if aug:
-          image, new_bboxes, new_labels_aug = augmentations.apply_augmentation(
-              aug, image, new_bboxes, new_labels
-          )
-
-          new_labels = new_labels_aug if new_bboxes else []
-
-        h, w = image.shape[:2]
-        labels_dict = {}
-        # Process only the image. Text features are already precomputed.
-        pixel_values_encoded = processor(images=image, return_tensors="pt")[
-            "pixel_values"
-        ].squeeze(0)
-
-        if not new_labels:
-          labels_dict["class_labels"] = torch.zeros(0, dtype=torch.long)
-          labels_dict["boxes"] = torch.zeros((0, 4))
-        else:
-          labels_dict["class_labels"] = torch.tensor(new_labels)
-          labels_dict["boxes"] = normalize_annotation_for_owlv2(
-              torch.tensor(new_bboxes), (h, w)
-          )
-        labels_dict["image_id"] = torch.tensor([image_id])
-
-        input_ids.append(shared_input_ids)
-        attention_masks.append(shared_attention_mask)
-        labels.append(labels_dict)
-        pixel_values.append(pixel_values_encoded)
-
-      return {
-          "input_ids": input_ids,
-          "labels": labels,
-          "pixel_values": pixel_values,
-          "attention_mask": attention_masks,
-      }
-
-    return transform_fn  # pyrefly: ignore[bad-return]
+    return Owlv2Transform(
+        processor=processor,
+        dataset_id2label=dataset_id2label,
+        model_label2id=model_label2id,
+        aug=aug,
+        shared_input_ids=shared_input_ids,
+        shared_attention_mask=shared_attention_mask,
+    )
 
   def get_collate_fn(
       self,
       cfg = None,
       **kwargs,
   ):
-    """Returns a collate function for batching processed examples.
-
-    Args:
-      cfg: Optional configuration dictionary.
-      **kwargs: Additional keyword arguments.
-    Returns:
-      A callable that takes a list of preprocessed examples and
-      returns a collated batch.
-    """
-
+    """Returns a collate function for batching processed examples."""
     del self  # Unused in this method.
-
-    def collate_fn(batch):
-      input_ids = torch.stack(
-          [torch.as_tensor(item["input_ids"]) for item in batch], dim=0
-      )
-      attention_mask = torch.stack(
-          [torch.as_tensor(item["attention_mask"]) for item in batch], dim=0
-      )
-      input_ids = input_ids.view(-1, input_ids.shape[-1])
-      attention_mask = attention_mask.view(-1, attention_mask.shape[-1])
-      pixel_values = torch.stack(
-          [torch.as_tensor(item["pixel_values"]) for item in batch], dim=0
-      )
-      if cfg and cfg.training.precision == base_config.Precision.BF16:
-        pixel_values = pixel_values.bfloat16()
-
-      labels = []
-      for item in batch:
-        processed_labels = {}
-        for key, value in item["labels"].items():
-          processed_labels[key] = torch.as_tensor(value)
-        labels.append(processed_labels)
-
-      return {
-          "input_ids": input_ids.long(),
-          "attention_mask": attention_mask.long(),
-          "pixel_values": pixel_values,
-          "labels": labels,
-      }
-
-    return collate_fn
+    return Owlv2Collate(cfg=cfg)
 
 
 class Owlv2LossHandler(base.LossHandler):

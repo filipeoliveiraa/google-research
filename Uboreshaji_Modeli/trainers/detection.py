@@ -123,6 +123,7 @@ class DetectionTrainer(trainers_base.TrainerStrategy):
         remove_unused_columns=False,
         push_to_hub=False,
         dataloader_pin_memory=(device.type != "tpu"),
+        dataloader_num_workers=cfg.training.get("dataloader_num_workers", 4),
         gradient_accumulation_steps=cfg.training.gradient_accumulation_steps,
         report_to="tensorboard",
         logging_dir=str(resolved_output_path),

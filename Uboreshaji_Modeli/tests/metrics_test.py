@@ -201,6 +201,15 @@ class MetricsTest(absltest.TestCase):
     for _, kwargs in tokenizer.batch_decode.call_args_list:
       self.assertTrue(kwargs.get("skip_special_tokens"))
 
+  def test_create_compute_metrics_fn_sync_on_compute_false(self):
+    fn = metrics.create_compute_metrics_fn(resize_to=100)
+    map_metric = [
+        c.cell_contents
+        for c in fn.__closure__
+        if hasattr(c.cell_contents, "sync_on_compute")
+    ][0]
+    self.assertFalse(map_metric.sync_on_compute)
+
 
 class FormatForPublisherTest(absltest.TestCase):
   """Tests for format_for_publisher."""

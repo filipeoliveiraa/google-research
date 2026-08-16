@@ -30,6 +30,81 @@ from . import base
 from . import decoders
 
 
+class WhisperTransform:
+  """Picklable transform callable for Whisper data loader workers."""
+
+  def __init__(
+      self,
+      processor,
+      cfg,
+  ):
+    self.processor = processor
+    self.cfg = cfg
+
+  def __call__(
+      self,
+      batch,
+  ):
+    batch_dict = dict(batch)
+    audio_column = batch_dict["audio"]
+    if isinstance(audio_column, dict):
+      audio_inputs = [audio_column]
+    else:
+      audio_inputs = audio_column
+
+    sampling_rate = 16000
+    if (
+        self.cfg
+        and "training" in self.cfg
+        and "audio_sample_rate" in self.cfg.training
+    ):
+      sampling_rate = self.cfg.training.audio_sample_rate
+
+    valid_audio_arrays = []
+    valid_indices = []
+    for i, x in enumerate(audio_inputs):
+      arr = audio_utils.get_audio_array(x, target_sr=sampling_rate)
+      if arr is None:
+        logging.warning("Skipping bad audio record at index %d", i)
+        continue
+      valid_audio_arrays.append(arr)
+      valid_indices.append(i)
+
+    if not valid_audio_arrays:
+      return {k: [] for k in batch_dict.keys()}
+
+    if len(valid_indices) < len(audio_inputs):
+      for k, v in batch_dict.items():
+        if isinstance(v, list) and len(v) == len(audio_inputs):
+          batch_dict[k] = [v[i] for i in valid_indices]
+
+    inputs = self.processor(
+        valid_audio_arrays, sampling_rate=sampling_rate, return_tensors="pt"
+    )
+
+    if isinstance(audio_column, dict):
+      batch_dict["input_features"] = inputs.input_features[0]
+    else:
+      batch_dict["input_features"] = inputs.input_features
+
+    if "text" in batch_dict:
+      text_key = "text"
+    elif "transcription" in batch_dict:
+      text_key = "transcription"
+    else:
+      text_key = None
+    if text_key is not None:
+      text_column = batch_dict[text_key]
+      if isinstance(text_column, str):
+        labels = self.processor.tokenizer([text_column]).input_ids
+        batch_dict["labels"] = labels[0]
+      else:
+        labels = self.processor.tokenizer(text_column).input_ids
+        batch_dict["labels"] = labels
+
+    return batch_dict
+
+
 class WhisperPreprocessor(base.DataPreprocessor):
   """Preprocessor for Whisper speech recognition."""
 
@@ -41,80 +116,13 @@ class WhisperPreprocessor(base.DataPreprocessor):
       is_train = False,
       **kwargs,
   ):
-    """Returns a transform function converting examples to Whisper SFT inputs.
-
-    Args:
-      processor: The WhisperProcessor instance.
-      cfg: Optional configuration dictionary with SFT configuration.
-      is_train: Whether dataset processing is set for training.
-      **kwargs: Additional keyword parameters.
-
-    Returns:
-      A transform callable mapping raw audio waves to Whisper feature vectors.
-    """
+    """Returns a transform function converting examples to Whisper SFT inputs."""
     del self  # Unused.
 
-    def transform_fn(
-        batch,
-    ):
-      batch_dict = dict(batch)
-      audio_column = batch_dict["audio"]
-      if isinstance(audio_column, dict):
-        audio_inputs = [audio_column]
-      else:
-        audio_inputs = audio_column
-
-      sampling_rate = 16000
-      if cfg and "training" in cfg and "audio_sample_rate" in cfg.training:
-        sampling_rate = cfg.training.audio_sample_rate
-
-      # Filter out bad samples
-      valid_audio_arrays = []
-      valid_indices = []
-      for i, x in enumerate(audio_inputs):
-        arr = audio_utils.get_audio_array(x, target_sr=sampling_rate)
-        if arr is not None:
-          valid_audio_arrays.append(arr)
-          valid_indices.append(i)
-        else:
-          logging.warning("Skipping bad audio record at index %d", i)
-
-      if not valid_audio_arrays:
-        return {k: [] for k in batch_dict.keys()}
-
-      # Filter other columns in batch if some samples were skipped
-      if len(valid_indices) < len(audio_inputs):
-        for k, v in batch_dict.items():
-          if isinstance(v, list) and len(v) == len(audio_inputs):
-            batch_dict[k] = [v[i] for i in valid_indices]
-
-      inputs = processor(
-          valid_audio_arrays, sampling_rate=sampling_rate, return_tensors="pt"
-      )
-
-      if isinstance(audio_column, dict):
-        batch_dict["input_features"] = inputs.input_features[0]
-      else:
-        batch_dict["input_features"] = inputs.input_features
-
-      if "text" in batch_dict:
-        text_key = "text"
-      elif "transcription" in batch_dict:
-        text_key = "transcription"
-      else:
-        text_key = None
-      if text_key is not None:
-        text_column = batch_dict[text_key]
-        if isinstance(text_column, str):
-          labels = processor.tokenizer([text_column]).input_ids
-          batch_dict["labels"] = labels[0]
-        else:
-          labels = processor.tokenizer(text_column).input_ids
-          batch_dict["labels"] = labels
-
-      return batch_dict
-
-    return transform_fn
+    return WhisperTransform(
+        processor=processor,
+        cfg=cfg,
+    )
 
   def get_collate_fn(
       self,

@@ -110,6 +110,75 @@ def _collate_fn(
   return batch
 
 
+class GemmaAudioTransform:
+  """Picklable transform callable for Gemma Audio data loader workers."""
+
+  def __init__(
+      self,
+      prompt,
+      cfg,
+  ):
+    self.prompt = prompt
+    self.cfg = cfg
+
+  def __call__(
+      self,
+      batch,
+  ):
+    batch_dict = dict(batch)
+    audio_column = batch_dict["audio"]
+    if isinstance(audio_column, dict):
+      audio_inputs = [audio_column]
+    else:
+      audio_inputs = audio_column
+
+    sampling_rate = 16000
+    if (
+        self.cfg
+        and "training" in self.cfg
+        and "audio_sample_rate" in self.cfg.training
+    ):
+      sampling_rate = self.cfg.training.audio_sample_rate
+
+    if "text" in batch_dict:
+      text_key = "text"
+    elif "transcription" in batch_dict:
+      text_key = "transcription"
+    else:
+      text_key = None
+
+    text_column = batch_dict.get(text_key) if text_key else None
+    text_inputs = (
+        ([text_column] if isinstance(text_column, str) else text_column)
+        if text_column is not None
+        else [None] * len(audio_inputs)
+    )
+
+    messages_list = []
+    audio_list = []
+    for i, (audio_input, text) in enumerate(zip(audio_inputs, text_inputs)):
+      arr = audio_utils.get_audio_array(audio_input, target_sr=sampling_rate)
+      if arr is None:
+        logging.warning("Skipping bad audio record at index %d", i)
+        continue
+
+      audio_list.append({"array": arr, "sampling_rate": sampling_rate})
+
+      user_content = [
+          {"type": "audio", "audio": arr},
+          {"type": "text", "text": self.prompt},
+      ]
+      assistant_content = [
+          {"type": "text", "text": text if text else ""},
+      ]
+      messages_list.append([
+          {"role": "user", "content": user_content},
+          {"role": "assistant", "content": assistant_content},
+      ])
+
+    return {"messages": messages_list, "audio": audio_list}
+
+
 class GemmaAudioPreprocessor(base.DataPreprocessor):
   """Preprocessor for Gemma audio-speech SFT tasks."""
 
@@ -121,21 +190,7 @@ class GemmaAudioPreprocessor(base.DataPreprocessor):
       is_train = False,
       **kwargs,
   ):
-    """Returns a transform function that decodes audio and formats chat messages.
-
-    The transform_fn prepares each example with a 'messages' key (chat format)
-    and an 'audio' key (decoded array + sampling rate). The actual tokenization
-    and feature extraction happen later in the collate_fn.
-
-    Args:
-      processor: The AutoProcessor associated with the model.
-      cfg: Optional configuration override.
-      is_train: Whether to process in training mode.
-      **kwargs: Additional keyword options.
-
-    Returns:
-      A callable transform function.
-    """
+    """Returns a transform function for Gemma audio models."""
     del self, processor  # Unused; processor is used at collation time.
     prompt = (
         cfg.prompt
@@ -143,61 +198,10 @@ class GemmaAudioPreprocessor(base.DataPreprocessor):
         else "Transpose the following audio:"
     )
 
-    def transform_fn(
-        batch,
-    ):
-      batch_dict = dict(batch)
-      audio_column = batch_dict["audio"]
-      if isinstance(audio_column, dict):
-        audio_inputs = [audio_column]
-      else:
-        audio_inputs = audio_column
-
-      sampling_rate = 16000
-      if cfg and "training" in cfg and "audio_sample_rate" in cfg.training:
-        sampling_rate = cfg.training.audio_sample_rate
-
-      if "text" in batch_dict:
-        text_key = "text"
-      elif "transcription" in batch_dict:
-        text_key = "transcription"
-      else:
-        text_key = None
-
-      text_column = batch_dict.get(text_key) if text_key else None
-      text_inputs = (
-          ([text_column] if isinstance(text_column, str) else text_column)
-          if text_column is not None
-          else [None] * len(audio_inputs)
-      )
-
-      # Decode audio and filter bad samples, building messages simultaneously
-      messages_list = []
-      audio_list = []
-      for i, (audio_input, text) in enumerate(zip(audio_inputs, text_inputs)):
-        arr = audio_utils.get_audio_array(audio_input, target_sr=sampling_rate)
-        if arr is None:
-          logging.warning("Skipping bad audio record at index %d", i)
-          continue
-
-        audio_list.append({"array": arr, "sampling_rate": sampling_rate})
-
-        # Build chat messages
-        user_content = [
-            {"type": "audio", "audio": arr},
-            {"type": "text", "text": prompt},
-        ]
-        assistant_content = [
-            {"type": "text", "text": text if text else ""},
-        ]
-        messages_list.append([
-            {"role": "user", "content": user_content},
-            {"role": "assistant", "content": assistant_content},
-        ])
-
-      return {"messages": messages_list, "audio": audio_list}
-
-    return transform_fn
+    return GemmaAudioTransform(
+        prompt=prompt,
+        cfg=cfg,
+    )
 
   def get_collate_fn(
       self,

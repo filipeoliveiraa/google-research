@@ -32,6 +32,73 @@ from . import decoders
 
 
 # TODO: b/517531260 - Refactor MMS preprocessor to be for all audio tasks.
+class MmsTransform:
+  """Picklable transform callable for MMS data loader workers."""
+
+  def __init__(self, processor):
+    self.processor = processor
+
+  def __call__(
+      self,
+      batch,
+  ):
+    batch_dict = dict(batch)
+    audio_column = batch_dict["audio"]
+    if isinstance(audio_column, dict):
+      audio_inputs = [audio_column]
+    else:
+      audio_inputs = audio_column
+
+    target_sr = self.processor.feature_extractor.sampling_rate
+
+    valid_audio_arrays = []
+    valid_indices = []
+    for i, x in enumerate(audio_inputs):
+      arr = audio_utils.get_audio_array(x, target_sr=target_sr)
+      if arr is None:
+        logging.warning("Skipping bad audio record at index %d", i)
+        continue
+      valid_audio_arrays.append(arr)
+      valid_indices.append(i)
+
+    if not valid_audio_arrays:
+      return {k: [] for k in batch_dict.keys()}
+
+    if len(valid_indices) < len(audio_inputs):
+      for k, v in batch_dict.items():
+        if isinstance(v, list) and len(v) == len(audio_inputs):
+          batch_dict[k] = [v[i] for i in valid_indices]
+
+    inputs = self.processor(
+        valid_audio_arrays,
+        sampling_rate=self.processor.feature_extractor.sampling_rate,
+        return_tensors="pt",
+        padding=True,
+    )
+
+    if isinstance(audio_column, dict):
+      batch_dict["input_values"] = inputs.input_values[0]
+    else:
+      batch_dict["input_values"] = inputs.input_values
+
+    if "text" in batch_dict:
+      text_key = "text"
+    elif "transcription" in batch_dict:
+      text_key = "transcription"
+    else:
+      text_key = None
+    if text_key is not None:
+      text_column = batch_dict[text_key]
+      if isinstance(text_column, str):
+        labels = self.processor.tokenizer([text_column]).input_ids
+        batch_dict["labels"] = labels[0]
+      else:
+        labels = self.processor.tokenizer(text_column).input_ids
+        batch_dict["labels"] = labels
+
+    return batch_dict
+
+
 class MmsPreprocessor(base.DataPreprocessor):
   """Prepares audio raw wave datasets for massively multilingual speech CTC tasks."""
 
@@ -43,80 +110,10 @@ class MmsPreprocessor(base.DataPreprocessor):
       is_train = False,
       **kwargs,
   ):
-    """Returns a transform function converting audiowave signals to MMS inputs.
-
-    Args:
-      processor: AutoProcessor instance to extract features.
-      cfg: Optional configuration dictionary with preprocessing overrides.
-      is_train: Whether to process datasets in SFT training mode.
-      **kwargs: Additional keyword parameters.
-
-    Returns:
-      A transform callable processing inputs into wav2vec2 feature vectors.
-    """
+    """Returns a transform function converting audiowave signals to MMS inputs."""
     del self  # Unused.
 
-    def transform_fn(
-        batch,
-    ):
-      batch_dict = dict(batch)
-      audio_column = batch_dict["audio"]
-      if isinstance(audio_column, dict):
-        audio_inputs = [audio_column]
-      else:
-        audio_inputs = audio_column
-
-      target_sr = processor.feature_extractor.sampling_rate
-
-      valid_audio_arrays = []
-      valid_indices = []
-      for i, x in enumerate(audio_inputs):
-        arr = audio_utils.get_audio_array(x, target_sr=target_sr)
-        if arr is not None:
-          valid_audio_arrays.append(arr)
-          valid_indices.append(i)
-        else:
-          logging.warning("Skipping bad audio record at index %d", i)
-
-      if not valid_audio_arrays:
-        return {k: [] for k in batch_dict.keys()}
-
-      # Filter other columns in batch if some samples were skipped.
-      if len(valid_indices) < len(audio_inputs):
-        for k, v in batch_dict.items():
-          if isinstance(v, list) and len(v) == len(audio_inputs):
-            batch_dict[k] = [v[i] for i in valid_indices]
-
-      inputs = processor(
-          valid_audio_arrays,
-          sampling_rate=processor.feature_extractor.sampling_rate,
-          return_tensors="pt",
-          padding=True,
-      )
-
-      if isinstance(audio_column, dict):
-        batch_dict["input_values"] = inputs.input_values[0]
-      else:
-        batch_dict["input_values"] = inputs.input_values
-
-      if "text" in batch_dict:
-        text_key = "text"
-      elif "transcription" in batch_dict:
-        text_key = "transcription"
-      else:
-        text_key = None
-      if text_key is not None:
-        text_column = batch_dict[text_key]
-        if isinstance(text_column, str):
-          labels = processor.tokenizer([text_column]).input_ids
-          batch_dict["labels"] = labels[0]
-        else:
-          labels = processor.tokenizer(text_column).input_ids
-          batch_dict["labels"] = labels
-
-      return batch_dict
-
-    return transform_fn
+    return MmsTransform(processor=processor)
 
   def get_collate_fn(
       self,

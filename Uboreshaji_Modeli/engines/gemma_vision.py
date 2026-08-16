@@ -31,6 +31,215 @@ from Uboreshaji_Modeli.common import gemma_box_utils
 from . import base
 
 
+class GemmaVisionTransform:
+  """Picklable transform callable for Gemma Vision data loader workers."""
+
+  def __init__(
+      self,
+      processor,
+      class_names,
+      prompt_text,
+      detection_format,
+      do_pan_and_scan,
+      cfg,
+  ):
+    self.processor = processor
+    self.class_names = class_names
+    self.prompt_text = prompt_text
+    self.detection_format = detection_format
+    self.do_pan_and_scan = do_pan_and_scan
+    self.cfg = cfg
+
+  def __call__(
+      self,
+      examples,
+  ):
+    """Transforms a batch of examples into Gemma VLM inputs."""
+    logging.info(
+        "GemmaVisionTransform called with %d examples", len(examples["image"])
+    )
+    all_input_ids = []
+    all_labels = []
+    all_pixel_values = []
+    all_attention_masks = []
+    all_image_position_ids = []
+
+    for i, (image, objects) in enumerate(
+        zip(examples["image"], examples["objects"])
+    ):
+      logging.info("Processing example %d...", i)
+      image = image.convert("RGB")
+      w, h = image.size
+
+      logging.info("Formatting objects to detection string...")
+      detection_string = gemma_box_utils.format_objects_to_detection_string(
+          objects,
+          self.class_names,
+          image_width=w,
+          image_height=h,
+          detection_format=self.detection_format,
+      )
+      logging.info("Detection string: %s", detection_string)
+
+      if (
+          self.cfg is not None
+          and "dataset" in self.cfg
+          and "image_size" in self.cfg.dataset
+          and self.cfg.dataset.image_size
+      ):
+        logging.info("Resizing image to %d...", self.cfg.dataset.image_size)
+        image = image.resize(
+            (self.cfg.dataset.image_size, self.cfg.dataset.image_size)
+        )
+
+      messages = [
+          {
+              "role": "user",
+              "content": [
+                  {"type": "image", "image": image},
+                  {"type": "text", "text": self.prompt_text},
+              ],
+          },
+          {
+              "role": "assistant",
+              "content": [
+                  {"type": "text", "text": detection_string},
+              ],
+          },
+      ]
+
+      logging.info("Applying chat template...")
+      text = self.processor.apply_chat_template(
+          messages, tokenize=False, add_generation_prompt=False
+      )
+      logging.info("Chat template applied.")
+
+      logging.info(
+          "Calling processor with do_pan_and_scan=%s...", self.do_pan_and_scan
+      )
+      inputs = self.processor(
+          text=text,
+          images=image,
+          return_tensors="pt",
+          padding=False,
+          do_pan_and_scan=self.do_pan_and_scan,
+      )
+      logging.info("Processor finished.")
+
+      input_ids = inputs["input_ids"].squeeze(0)
+      attention_mask = inputs["attention_mask"].squeeze(0)
+      pixel_values = inputs["pixel_values"]
+      if pixel_values.ndim == 5:
+        pixel_values = pixel_values.squeeze(0)
+
+      labels = input_ids.clone()
+      model_flavor = self.cfg.get("model_flavor") if self.cfg else None
+      if model_flavor == common_config.ModelFlavor.GEMMA_4:
+        assistant_token = self.processor.tokenizer.encode(
+            "<|turn>model\n", add_special_tokens=False
+        )
+      else:
+        assistant_token = self.processor.tokenizer.encode(
+            "\nmodel\n", add_special_tokens=False
+        )
+      logging.info("Searching for assistant token...")
+      for j in range(len(input_ids) - len(assistant_token) + 1):
+        if (
+            input_ids[j : j + len(assistant_token)].tolist()
+            == assistant_token
+        ):
+          prompt_len = j + len(assistant_token)
+          break
+      else:
+        prompt_len = 0
+      logging.info("Searched for assistant token. prompt_len: %d", prompt_len)
+
+      if prompt_len > 0:
+        labels[:prompt_len] = -100
+
+      all_input_ids.append(input_ids)
+      all_labels.append(labels)
+      all_pixel_values.append(pixel_values)
+      all_attention_masks.append(attention_mask)
+      if "image_position_ids" in inputs:
+        all_image_position_ids.append(inputs["image_position_ids"].squeeze(0))
+
+    logging.info("GemmaVisionTransform finished processing all examples.")
+    result = {
+        "input_ids": all_input_ids,
+        "labels": all_labels,
+        "pixel_values": all_pixel_values,
+        "attention_mask": all_attention_masks,
+    }
+    if all_image_position_ids:
+      result["image_position_ids"] = all_image_position_ids
+    return result
+
+
+class GemmaVisionCollate:
+  """Picklable collate callable for Gemma Vision data loader workers."""
+
+  def __init__(
+      self,
+      is_tpu = False,
+      static_max_len = None,
+      pad_token_id = 0,
+  ):
+    self.is_tpu = is_tpu
+    self.static_max_len = static_max_len
+    self.pad_token_id = pad_token_id
+
+  def __call__(self, batch):
+    input_ids = [torch.as_tensor(item["input_ids"]) for item in batch]
+    labels = [torch.as_tensor(item["labels"]) for item in batch]
+    attention_masks = [
+        torch.as_tensor(item["attention_mask"]) for item in batch
+    ]
+    pixel_values = torch.cat(
+        [torch.as_tensor(item["pixel_values"]) for item in batch], dim=0
+    )
+
+    image_position_ids = None
+    has_image_position_ids = "image_position_ids" in batch[0]
+    if has_image_position_ids:
+      image_position_ids = torch.stack(
+          [torch.as_tensor(item["image_position_ids"]) for item in batch],
+          dim=0,
+      )
+
+    if self.is_tpu and self.static_max_len:
+      max_len = self.static_max_len
+    else:
+      max_len = max(ids.shape[0] for ids in input_ids)
+    padded_input_ids = torch.full(
+        (len(batch), max_len), self.pad_token_id, dtype=input_ids[0].dtype
+    )
+    padded_labels = torch.full(
+        (len(batch), max_len), -100, dtype=labels[0].dtype
+    )
+    padded_attention = torch.zeros(
+        (len(batch), max_len), dtype=attention_masks[0].dtype
+    )
+
+    for i, (ids, lab, att) in enumerate(
+        zip(input_ids, labels, attention_masks)
+    ):
+      seq_len = min(ids.shape[0], max_len)
+      padded_input_ids[i, :seq_len] = ids[:seq_len]
+      padded_labels[i, :seq_len] = lab[:seq_len]
+      padded_attention[i, :seq_len] = att[:seq_len]
+
+    result = {
+        "input_ids": padded_input_ids,
+        "labels": padded_labels,
+        "pixel_values": pixel_values.float(),
+        "attention_mask": padded_attention,
+    }
+    if has_image_position_ids:
+      result["image_position_ids"] = image_position_ids
+    return result
+
+
 class GemmaVisionPreprocessor(base.DataPreprocessor):
   """Preprocessor for Gemma vision-language detection."""
 
@@ -43,19 +252,7 @@ class GemmaVisionPreprocessor(base.DataPreprocessor):
       dataset_features,
       **kwargs,
   ):
-    """Returns a transform function converting examples to Gemma VLM inputs.
-
-    Args:
-      processor: The model's AutoProcessor instance to process texts & images.
-      cfg: Optional configuration dictionary containing hyper-parameters.
-      is_train: Whether the returned function will be used for training mode.
-      dataset_features: Features schema mapped from the dataset split.
-      **kwargs: Additional keyword arguments.
-
-    Returns:
-      A callable transform function that takes batch examples mapping and
-      formats them into inputs ready to be tokenized and ingested by Gemma.
-    """
+    """Returns a transform function converting examples to Gemma VLM inputs."""
     del self  # Unused.
     class_names = dataset_features["objects"]["category"].feature.names
     prompt_text = (
@@ -66,141 +263,14 @@ class GemmaVisionPreprocessor(base.DataPreprocessor):
     detection_format = cfg.get("detection_format", "loc") if cfg else "loc"
     do_pan_and_scan = cfg.get("do_pan_and_scan", False) if cfg else False
 
-    def transform_fn(
-        examples,
-    ):
-      """Transforms a batch of examples into Gemma VLM inputs.
-
-      Args:
-        examples: A mapping containing batched examples with "image" and
-          "objects" keys.
-
-      Returns:
-        A dictionary containing lists of "input_ids", "labels", "pixel_values",
-        and "attention_mask" ready for tokenization and model ingestion.
-      """
-      logging.info(
-          "transform_fn called with %d examples", len(examples["image"])
-      )
-      all_input_ids = []
-      all_labels = []
-      all_pixel_values = []
-      all_attention_masks = []
-      all_image_position_ids = []
-
-      for i, (image, objects) in enumerate(
-          zip(examples["image"], examples["objects"])
-      ):
-        logging.info("Processing example %d...", i)
-        image = image.convert("RGB")
-        w, h = image.size
-
-        logging.info("Formatting objects to detection string...")
-        detection_string = gemma_box_utils.format_objects_to_detection_string(
-            objects,
-            class_names,
-            image_width=w,
-            image_height=h,
-            detection_format=detection_format,
-        )
-        logging.info("Detection string: %s", detection_string)
-
-        if (
-            cfg is not None
-            and "dataset" in cfg
-            and "image_size" in cfg.dataset
-            and cfg.dataset.image_size
-        ):
-          logging.info("Resizing image to %d...", cfg.dataset.image_size)
-          image = image.resize((cfg.dataset.image_size, cfg.dataset.image_size))
-
-        messages = [
-            {
-                "role": "user",
-                "content": [
-                    {"type": "image", "image": image},
-                    {"type": "text", "text": prompt_text},
-                ],
-            },
-            {
-                "role": "assistant",
-                "content": [
-                    {"type": "text", "text": detection_string},
-                ],
-            },
-        ]
-
-        logging.info("Applying chat template...")
-        text = processor.apply_chat_template(
-            messages, tokenize=False, add_generation_prompt=False
-        )
-        logging.info("Chat template applied.")
-
-        logging.info(
-            "Calling processor with do_pan_and_scan=%s...", do_pan_and_scan
-        )
-        inputs = processor(
-            text=text,
-            images=image,
-            return_tensors="pt",
-            padding=False,
-            do_pan_and_scan=do_pan_and_scan,
-        )
-        logging.info("Processor finished.")
-
-        input_ids = inputs["input_ids"].squeeze(0)
-        attention_mask = inputs["attention_mask"].squeeze(0)
-        # Keep pixel_values as [num_patches, C, H, W] — with Pan-and-Scan,
-        # num_patches = 1 + num_crops (variable per image). The collate_fn
-        # concatenates these into a flat batch for the model.
-        pixel_values = inputs["pixel_values"]
-        if pixel_values.ndim == 5:
-          pixel_values = pixel_values.squeeze(0)
-
-        labels = input_ids.clone()
-        model_flavor = cfg.get("model_flavor") if cfg else None
-        if model_flavor == common_config.ModelFlavor.GEMMA_4:
-          assistant_token = processor.tokenizer.encode(
-              "<|turn>model\n", add_special_tokens=False
-          )
-        else:
-          assistant_token = processor.tokenizer.encode(
-              "\nmodel\n", add_special_tokens=False
-          )
-        logging.info("Searching for assistant token...")
-        for j in range(len(input_ids) - len(assistant_token) + 1):
-          if (
-              input_ids[j : j + len(assistant_token)].tolist()
-              == assistant_token
-          ):
-            prompt_len = j + len(assistant_token)
-            break
-        else:
-          prompt_len = 0
-        logging.info("Searched for assistant token. prompt_len: %d", prompt_len)
-
-        if prompt_len > 0:
-          labels[:prompt_len] = -100
-
-        all_input_ids.append(input_ids)
-        all_labels.append(labels)
-        all_pixel_values.append(pixel_values)
-        all_attention_masks.append(attention_mask)
-        if "image_position_ids" in inputs:
-          all_image_position_ids.append(inputs["image_position_ids"].squeeze(0))
-
-      logging.info("transform_fn finished processing all examples.")
-      result = {
-          "input_ids": all_input_ids,
-          "labels": all_labels,
-          "pixel_values": all_pixel_values,
-          "attention_mask": all_attention_masks,
-      }
-      if all_image_position_ids:
-        result["image_position_ids"] = all_image_position_ids
-      return result  # pyrefly: ignore[bad-return]
-
-    return transform_fn
+    return GemmaVisionTransform(
+        processor=processor,
+        class_names=class_names,
+        prompt_text=prompt_text,
+        detection_format=detection_format,
+        do_pan_and_scan=do_pan_and_scan,
+        cfg=cfg,
+    )
 
   def get_collate_fn(
       self,
@@ -209,90 +279,17 @@ class GemmaVisionPreprocessor(base.DataPreprocessor):
       pad_token_id = 0,
       **kwargs,
   ):
-    """Returns a collation function to pad batch components in PyTorch loaders.
-
-    Args:
-      cfg: Optional configuration dictionary containing hyper-parameters.
-      pad_token_id: The token ID used for padding the input sequences.
-      **kwargs: Additional keyword arguments.
-
-    Returns:
-      A collation callable that processes batch inputs, padding sequence
-      length dynamically.
-    """
+    """Returns a collation function to pad batch components in PyTorch loaders."""
     del self  # Unused.
     device_type = cfg.training.get("device", "cuda") if cfg else "cuda"
     is_tpu = device_type == "tpu"
     static_max_len = cfg.get("max_seq_length") if cfg else None
 
-    def collate_fn(batch):
-      """Pads and collates a batch of processed examples.
-
-      Args:
-        batch: A sequence of mappings, where each mapping contains "input_ids",
-          "labels", "attention_mask", and "pixel_values" for a single example.
-
-      Returns:
-        A dictionary containing the padded tensors for "input_ids", "labels",
-        "pixel_values", and "attention_mask".
-      """
-      input_ids = [torch.as_tensor(item["input_ids"]) for item in batch]
-      labels = [torch.as_tensor(item["labels"]) for item in batch]
-      attention_masks = [
-          torch.as_tensor(item["attention_mask"]) for item in batch
-      ]
-      # Use cat (not stack) because Pan-and-Scan produces a variable number
-      # of image patches per sample. Each item's pixel_values has shape
-      # [num_patches_i, C, H, W]; cat flattens them to
-      # [total_patches, C, H, W]. Without PnS, num_patches_i == 1 for all
-      # items, so this is equivalent to the old torch.stack behavior.
-      pixel_values = torch.cat(
-          [torch.as_tensor(item["pixel_values"]) for item in batch], dim=0
-      )
-
-      image_position_ids = None
-      has_image_position_ids = "image_position_ids" in batch[0]
-      if has_image_position_ids:
-        image_position_ids = torch.stack(
-            [torch.as_tensor(item["image_position_ids"]) for item in batch],
-            dim=0,
-        )
-
-      # On TPU, pad to a fixed max_seq_length to prevent XLA
-      # recompilation from variable sequence lengths across batches.
-      if is_tpu and static_max_len:
-        max_len = static_max_len
-      else:
-        max_len = max(ids.shape[0] for ids in input_ids)
-      padded_input_ids = torch.full(
-          (len(batch), max_len), pad_token_id, dtype=input_ids[0].dtype
-      )
-      padded_labels = torch.full(
-          (len(batch), max_len), -100, dtype=labels[0].dtype
-      )
-      padded_attention = torch.zeros(
-          (len(batch), max_len), dtype=attention_masks[0].dtype
-      )
-
-      for i, (ids, lab, att) in enumerate(
-          zip(input_ids, labels, attention_masks)
-      ):
-        seq_len = min(ids.shape[0], max_len)
-        padded_input_ids[i, :seq_len] = ids[:seq_len]
-        padded_labels[i, :seq_len] = lab[:seq_len]
-        padded_attention[i, :seq_len] = att[:seq_len]
-
-      result = {
-          "input_ids": padded_input_ids,
-          "labels": padded_labels,
-          "pixel_values": pixel_values.float(),
-          "attention_mask": padded_attention,
-      }
-      if has_image_position_ids:
-        result["image_position_ids"] = image_position_ids
-      return result
-
-    return collate_fn
+    return GemmaVisionCollate(
+        is_tpu=is_tpu,
+        static_max_len=static_max_len,
+        pad_token_id=pad_token_id,
+    )
 
   def get_sft_config_overrides(
       self, cfg

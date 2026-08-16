@@ -126,6 +126,12 @@ class GemmaTextEngineTest(absltest.TestCase):
       self.assertEqual(collated["input_ids"][1, 2].item(), 0)
     with self.subTest(name="Verify padding mask labels"):
       self.assertEqual(collated["labels"][1, 2].item(), -100)
+    with self.subTest(name="Verify collated input_ids content"):
+      self.assertEqual(collated["input_ids"][0, 0].item(), 1)
+      self.assertEqual(collated["input_ids"][0, 1].item(), 2)
+      self.assertEqual(collated["input_ids"][0, 2].item(), 3)
+      self.assertEqual(collated["input_ids"][1, 0].item(), 4)
+      self.assertEqual(collated["input_ids"][1, 1].item(), 5)
 
   def test_get_transform_fn_masking(self):
     mock_tok = mock.create_autospec(
