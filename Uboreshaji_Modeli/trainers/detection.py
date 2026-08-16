@@ -112,6 +112,9 @@ class DetectionTrainer(trainers_base.TrainerStrategy):
 
     training_args = transformers.Seq2SeqTrainingArguments(
         output_dir=str(resolved_output_path),
+        ddp_find_unused_parameters=cfg.training.get(
+            "ddp_find_unused_parameters", True
+        ),
         per_device_train_batch_size=cfg.training.batch_size,
         per_device_eval_batch_size=cfg.eval.eval_batch_size,
         num_train_epochs=cfg.training.num_train_epochs,

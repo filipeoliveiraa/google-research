@@ -318,6 +318,8 @@ class Owlv2Engine(base.ModelEngine):
       Owlv2Processor instance.
     """
     processor = Owlv2Processor.from_pretrained(model_id)
-    model = Owlv2ForObjectDetection.from_pretrained(model_id)
+    model = Owlv2ForObjectDetection.from_pretrained(
+        model_id, use_safetensors=False
+    )
     model.to(device)
     return model, processor
