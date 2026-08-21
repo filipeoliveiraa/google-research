@@ -15,6 +15,7 @@
 // Experiments for fair submodular maximization.
 
 #include <algorithm>
+#include <cmath>
 #include <fstream>
 #include <functional>
 #include <iostream>
