@@ -21,6 +21,7 @@ namespace asymmetric_hashing_internal {
 template class LUT16Avx2<{BATCH_SIZE}, PrefetchStrategy::kOff>;
 template class LUT16Avx2<{BATCH_SIZE}, PrefetchStrategy::kSeq>;
 template class LUT16Avx2<{BATCH_SIZE}, PrefetchStrategy::kSmart>;
+template class LUT16Avx2<{BATCH_SIZE}, PrefetchStrategy::kSmartT0>;
 
 }  // namespace asymmetric_hashing_internal
 }  // namespace research_scann

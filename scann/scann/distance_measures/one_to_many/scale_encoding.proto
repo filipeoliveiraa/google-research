@@ -21,5 +21,7 @@ enum ScaleEncoding {
 
   FLOAT32_SCALE_SUFFIX = 1;
 
-  FLOAT32_SCALE_BOTTOM_BITS = 2;
+  FLOAT32_SCALE_BOTTOM_BITS = 2 [deprecated = true];
+
+  FLOAT32_SCALE_AUTO_BOTTOM_BITS = 3;
 }

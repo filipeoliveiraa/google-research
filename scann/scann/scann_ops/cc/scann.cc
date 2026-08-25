@@ -259,8 +259,8 @@ ScannInterface::CreateSearcher(ScannArtifacts artifacts) {
   return searcher;
 }
 
-Status ScannInterface::Initialize(const std::string& config_pbtxt,
-                                  const std::string& scann_assets_pbtxt) {
+Status ScannInterface::Initialize(absl::string_view config_pbtxt,
+                                  absl::string_view scann_assets_pbtxt) {
   SCANN_RETURN_IF_ERROR(ParseTextProto(&config_, config_pbtxt));
   ScannAssets assets;
   SCANN_RETURN_IF_ERROR(ParseTextProto(&assets, scann_assets_pbtxt));
@@ -309,7 +309,7 @@ Status ScannInterface::Initialize(
 
 Status ScannInterface::Initialize(ConstSpan<float> dataset,
                                   DatapointIndex n_points,
-                                  const std::string& config,
+                                  absl::string_view config,
                                   int training_threads) {
   SCANN_RETURN_IF_ERROR(ParseTextProto(&config_, config));
   if (training_threads < 0)
@@ -474,7 +474,7 @@ StatusOr<ScannAssets> ScannInterface::Serialize(std::string path,
   SCANN_ASSIGN_OR_RETURN(auto opts,
                          scann_->ExtractSingleMachineFactoryOptions());
   ScannAssets assets;
-  const auto add_asset = [&assets](const std::string& fpath,
+  const auto add_asset = [&assets](absl::string_view fpath,
                                    ScannAsset::AssetType type) {
     ScannAsset* asset = assets.add_assets();
     asset->set_asset_type(type);

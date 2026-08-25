@@ -36,6 +36,7 @@
 #include "scann/utils/bits.h"
 #include "scann/utils/common.h"
 #include "scann/utils/types.h"
+#include "scann/utils/vector_no_resize.h"
 
 namespace research_scann {
 
@@ -48,7 +49,7 @@ class RestrictAllowlist {
   RestrictAllowlist() : RestrictAllowlist(0, false) {}
   ~RestrictAllowlist();
 
-  RestrictAllowlist(std::vector<size_t>&& allowlist_array,
+  RestrictAllowlist(VectorNoResize<size_t>&& allowlist_array,
                     DatapointIndex num_points, bool default_allowlisted);
 
   RestrictAllowlist(const RestrictAllowlist& rhs);
@@ -56,17 +57,21 @@ class RestrictAllowlist {
   RestrictAllowlist& operator=(const RestrictAllowlist& rhs);
   RestrictAllowlist& operator=(RestrictAllowlist&& rhs) = default;
 
+  static RestrictAllowlist Intersection(
+      const RestrictAllowlistConstView& view1,
+      const RestrictAllowlistConstView& view2);
+
   explicit RestrictAllowlist(const RestrictAllowlistConstView& view);
 
   void Initialize(DatapointIndex num_points, bool default_allowlisted);
 
-  RestrictAllowlist CopyWithCapacity(
-      DatapointIndex capacity,
-      vector<size_t>&& backing_storage = vector<size_t>()) const;
+  RestrictAllowlist CopyWithCapacity(DatapointIndex capacity,
+                                     VectorNoResize<size_t>&& backing_storage =
+                                         VectorNoResize<size_t>()) const;
 
-  RestrictAllowlist CopyWithSize(
-      DatapointIndex size, bool default_allowlisted,
-      vector<size_t>&& backing_storage = vector<size_t>()) const;
+  RestrictAllowlist CopyWithSize(DatapointIndex size, bool default_allowlisted,
+                                 VectorNoResize<size_t>&& backing_storage =
+                                     VectorNoResize<size_t>()) const;
 
   void Append(bool is_allowlisted);
 
@@ -75,6 +80,18 @@ class RestrictAllowlist {
   bool CapacityAvailableForAppend(DatapointIndex dp_index) const;
   bool CapacityAvailableForAppend() const {
     return CapacityAvailableForAppend(num_points_);
+  }
+
+  void AddToAllowlist(DatapointIndex dp_index) {
+    DCHECK_LT(dp_index, num_points_);
+    allowlist_array_[dp_index / kBitsPerWord] |= kOne
+                                                 << (dp_index % kBitsPerWord);
+  }
+
+  void RemoveFromAllowlist(DatapointIndex dp_index) {
+    DCHECK_LT(dp_index, num_points_);
+    allowlist_array_[dp_index / kBitsPerWord] &=
+        ~(kOne << (dp_index % kBitsPerWord));
   }
 
   bool IsAllowlisted(DatapointIndex dp_index) const {
@@ -89,7 +106,7 @@ class RestrictAllowlist {
   }
 
   void set_allowlist_recycling_fn(
-      std::function<void(std::vector<size_t>&&)> f) {
+      std::function<void(VectorNoResize<size_t>&&)> f) {
     allowlist_recycling_fn_ = std::move(f);
   }
 
@@ -97,6 +114,7 @@ class RestrictAllowlist {
 
   DatapointIndex num_points() const { return num_points_; }
   DatapointIndex size() const { return num_points_; }
+  bool empty() const { return num_points_ == 0; }
 
   using Iterator = BitIterator<ConstSpan<size_t>, DatapointIndex>;
 
@@ -133,11 +151,11 @@ class RestrictAllowlist {
            (kOne << (dp_index % kBitsPerWord));
   }
 
-  std::vector<size_t> allowlist_array_;
+  VectorNoResize<size_t> allowlist_array_;
 
   DatapointIndex num_points_;
 
-  std::function<void(std::vector<size_t>&&)> allowlist_recycling_fn_;
+  std::function<void(VectorNoResize<size_t>&&)> allowlist_recycling_fn_;
 
   friend class RestrictTokenMap;
 
@@ -332,17 +350,17 @@ inline RestrictAllowlistMutableView MakeMutableView(
 
 class RestrictAllowlistRecycler {
  public:
-  void AddToFreelist(std::vector<size_t>&& v) {
+  void AddToFreelist(VectorNoResize<size_t>&& v) {
     absl::MutexLock lock(&mutex_);
     freelist_.push(std::move(v));
     VLOG(2) << "Received recyclable at " << freelist_.top().data();
   }
 
-  std::function<void(std::vector<size_t>&&)> AddToFreelistFunctor() {
-    return [this](std::vector<size_t>&& v) { AddToFreelist(std::move(v)); };
+  std::function<void(VectorNoResize<size_t>&&)> AddToFreelistFunctor() {
+    return [this](VectorNoResize<size_t>&& v) { AddToFreelist(std::move(v)); };
   }
 
-  std::vector<size_t> MaybeRemoveFromFreelist() {
+  VectorNoResize<size_t> MaybeRemoveFromFreelist() {
     absl::MutexLock lock(&mutex_);
     if (freelist_.empty()) return {};
     VLOG(2) << "Available for recycling at " << freelist_.top().data();
@@ -353,14 +371,14 @@ class RestrictAllowlistRecycler {
 
  private:
   absl::Mutex mutex_;
-  std::stack<std::vector<size_t>> freelist_ ABSL_GUARDED_BY(mutex_);
+  std::stack<VectorNoResize<size_t>> freelist_ ABSL_GUARDED_BY(mutex_);
 };
 
 RestrictAllowlist CreateAllowlist(RestrictAllowlistRecycler* recycler,
                                   DatapointIndex num_datapoints,
                                   bool default_allowed);
 
-inline vector<size_t> MaybeRecycleAllowlist(
+inline VectorNoResize<size_t> MaybeRecycleAllowlist(
     RestrictAllowlistRecycler* recycler) {
   if (!recycler) {
     return {};

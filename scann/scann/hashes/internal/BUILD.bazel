@@ -169,18 +169,13 @@ cc_library(
     textual_hdrs = ["lut16_avx512.inc"],
     deps = [
         ":lut16_args",
-        "//scann/oss_wrappers:scann_aligned_malloc",
         "//scann/oss_wrappers:scann_bits",
-        "//scann/oss_wrappers:scann_down_cast",
         "//scann/utils:bits",
         "//scann/utils:common",
         "//scann/utils:types",
         "//scann/utils/intrinsics:attributes",
         "//scann/utils/intrinsics:avx512",
-        "@com_google_absl//absl/base",
         "@com_google_absl//absl/base:prefetch",
-        "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/log",
     ],
 )
 
@@ -208,7 +203,6 @@ cc_library(
         "//scann/utils:bits",
         "//scann/utils:common",
         "//scann/utils/intrinsics:attributes",
-        "//scann/utils/intrinsics:highway",
         "@com_google_absl//absl/base:prefetch",
         "@com_google_highway//:hwy",
     ],
@@ -225,7 +219,6 @@ cc_library(
         "//scann/utils:common",
         "//scann/utils:top_n_amortized_constant",
         "//scann/utils:types",
-        "//scann/utils/intrinsics:sse4",
         "@com_google_absl//absl/log:check",
     ],
 )
@@ -249,11 +242,7 @@ cc_library(
     hdrs = ["asymmetric_hashing_postprocess.h"],
     deps = [
         "//scann/oss_wrappers:scann_aligned_malloc",
-        "//scann/oss_wrappers:scann_down_cast",
         "//scann/utils:types",
-        "@com_google_absl//absl/base",
-        "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/log",
     ],
 )
 
@@ -264,6 +253,7 @@ cc_library(
         "//scann/base:restrict_allowlist",
         "//scann/utils:fast_top_neighbors",
         "//scann/utils:types",
+        "@com_google_absl//absl/base:prefetch",
     ],
 )
 

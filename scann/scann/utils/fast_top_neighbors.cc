@@ -153,22 +153,31 @@ SCANN_INLINE DistT FastMedianOf3(DistT v0, DistT v1, DistT v2) {
 namespace avx2 {
 #define SCANN_SIMD_ATTRIBUTE SCANN_AVX2
 
-#define SCANN_TOPN_AVX2_ENABLED
+#define SCANN_TOPN_HWY_COMPACT_ENABLED
 #include "scann/utils/fast_top_neighbors_impl.inc"
 #undef SCANN_SIMD_ATTRIBUTE
-#undef SCANN_TOPN_AVX2_ENABLED
+#undef SCANN_TOPN_HWY_COMPACT_ENABLED
 }  // namespace avx2
 
 #endif
 
 #if HWY_HAVE_CONSTEXPR_LANES
 HWY_BEFORE_NAMESPACE();
-namespace highway {
+namespace HWY_NAMESPACE {
 #define SCANN_SIMD_ATTRIBUTE
 
+#if defined(__aarch64__)
+#define SCANN_TOPN_HWY_COMPACT_ENABLED
+#endif
+
 #include "scann/utils/fast_top_neighbors_impl.inc"
+
+#if defined(__aarch64__)
+#undef SCANN_TOPN_HWY_COMPACT_ENABLED
+#endif
+
 #undef SCANN_SIMD_ATTRIBUTE
-}  // namespace highway
+}  // namespace HWY_NAMESPACE
 HWY_AFTER_NAMESPACE();
 #else
 namespace fallback {
@@ -188,7 +197,8 @@ size_t ApproxNthElement(size_t keep_min, size_t keep_max, size_t sz,
   }
 #endif
 
-  return highway::ApproxNthElementImpl(keep_min, keep_max, sz, ii, dd, mm);
+  return HWY_NAMESPACE::ApproxNthElementImpl(keep_min, keep_max, sz, ii, dd,
+                                             mm);
 }
 
 SCANN_INSTANTIATE_FAST_TOP_NEIGHBORS(, int16_t, uint32_t);

@@ -29,7 +29,7 @@ class MallocExtension {
     return false;
   }
   static absl::optional<size_t> GetNumericProperty(absl::string_view property) {
-    return absl::nullopt;
+    return std::nullopt;
   }
   static void ReleaseMemoryToSystem(size_t num_bytes) {}
   static size_t GetAllocatedSize(const void* p) { return 0; }

@@ -32,7 +32,7 @@ namespace research_scann {
 namespace {
 
 template <typename Matrix>
-void BuildCenteredMatrix(const Dataset& data, Matrix* centered_data) {
+void BuildCenteredMatrix(const DatasetView& data, Matrix* centered_data) {
   Datapoint<double> mean_vec;
   CHECK_OK(data.MeanByDimension(&mean_vec));
   DimensionIndex dims = data.dimensionality();
@@ -49,12 +49,19 @@ void BuildCenteredMatrix(const Dataset& data, Matrix* centered_data) {
 }
 
 template <typename T>
-void ComputePcaDenseWrapper(const Dataset& data, const int32_t num_eigenvectors,
+void ComputePcaDenseWrapper(const DatasetView& data,
+                            const int32_t num_eigenvectors,
                             vector<Datapoint<float>>* eigenvectors,
                             vector<float>* eigenvalues, ThreadPool* pool) {
-  auto view =
-      DefaultDenseDatasetView<T>(*dynamic_cast<const DenseDataset<T>*>(&data));
-  ComputePcaDense(view, num_eigenvectors, eigenvectors, eigenvalues, pool);
+  auto* view = dynamic_cast<const DenseDatasetView<T>*>(&data);
+  if (view) {
+    ComputePcaDense(*view, num_eigenvectors, eigenvectors, eigenvalues, pool);
+  } else {
+    auto* dense = dynamic_cast<const DenseDataset<T>*>(&data);
+    CHECK(dense);
+    ComputePcaDense(DefaultDenseDatasetView<T>(*dense), num_eigenvectors,
+                    eigenvectors, eigenvalues, pool);
+  }
 }
 
 }  // namespace
@@ -88,7 +95,8 @@ void PostprocessPcaToSignificance(const float significance_threshold,
   }
 }
 
-void PcaUtils::ComputePca(bool use_propack_if_available, const Dataset& data,
+void PcaUtils::ComputePca(bool use_propack_if_available,
+                          const DatasetView& data,
                           const int32_t num_eigenvectors,
                           const bool build_covariance,
                           vector<Datapoint<float>>* eigenvectors,
@@ -103,7 +111,7 @@ void PcaUtils::ComputePca(bool use_propack_if_available, const Dataset& data,
 }
 
 void PcaUtils::ComputePcaWithSignificanceThreshold(
-    bool use_propack_if_available, const Dataset& data,
+    bool use_propack_if_available, const DatasetView& data,
     const float significance_threshold, const float truncation_threshold,
     const bool build_covariance, vector<Datapoint<float>>* eigenvectors,
     vector<float>* eigenvalues, ThreadPool* pool) {

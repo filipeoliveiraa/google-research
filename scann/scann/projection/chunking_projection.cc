@@ -57,7 +57,8 @@ StatusOr<unique_ptr<ChunkingProjection<T>>> BuildFromConfigImpl(
                               vblock.num_dims_per_block());
         num_blocks += vblock.num_blocks();
       }
-      return make_unique<ChunkingProjection<T>>(num_blocks, dims_per_block);
+      return std::make_unique<ChunkingProjection<T>>(num_blocks,
+                                                     dims_per_block);
     }
 
     case ProjectionConfig::IDENTITY_CHUNK:
@@ -65,7 +66,7 @@ StatusOr<unique_ptr<ChunkingProjection<T>>> BuildFromConfigImpl(
         return InvalidArgumentError(
             "Must specify num_blocks for IDENTITY_CHUNK projection");
       }
-      return make_unique<ChunkingProjection<T>>(config.num_blocks());
+      return std::make_unique<ChunkingProjection<T>>(config.num_blocks());
 
     case ProjectionConfig::CHUNK:
     case ProjectionConfig::PCA:
@@ -96,7 +97,8 @@ StatusOr<unique_ptr<ChunkingProjection<T>>> BuildFromConfigImpl(
       if (num_blocks < 0) {
         return InvalidArgumentError("num_blocks mustn't be negative");
       }
-      return make_unique<ChunkingProjection<T>>(num_blocks, dims_per_block);
+      return std::make_unique<ChunkingProjection<T>>(num_blocks,
+                                                     dims_per_block);
     }
   }
 }

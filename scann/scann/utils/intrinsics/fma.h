@@ -58,11 +58,11 @@ namespace fallback {
 
 #if HWY_HAVE_CONSTEXPR_LANES
 HWY_BEFORE_NAMESPACE();
-namespace highway {
+namespace HWY_NAMESPACE {
 #define SCANN_SIMD_ATTRIBUTE
 #include "scann/utils/intrinsics/fma.inc"
 #undef SCANN_SIMD_ATTRIBUTE
-}  // namespace highway
+}  // namespace HWY_NAMESPACE
 HWY_AFTER_NAMESPACE();
 #endif
 

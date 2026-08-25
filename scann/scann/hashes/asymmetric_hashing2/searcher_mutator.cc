@@ -76,7 +76,7 @@ Searcher<T>::Mutator::ComputePrecomputedMutationArtifacts(
     const DatapointPtr<T>& original) const {
   Datapoint<uint8_t> hashed;
   if (!Hash(maybe_residual, original, &hashed).ok()) return nullptr;
-  return make_unique<AHPrecomputedMutationArtifacts>(std::move(hashed));
+  return std::make_unique<AHPrecomputedMutationArtifacts>(std::move(hashed));
 }
 
 template <typename T>
@@ -176,8 +176,17 @@ Status Searcher<T>::Mutator::RemoveDatapoint(DatapointIndex index) {
     }
     call_on_datapont_index_rename(new_size, index);
   }
+
+  if (packed_dataset_) {
+    ++packed_dataset_->num_datapoints;
+  }
+
   SCANN_ASSIGN_OR_RETURN(const DatapointIndex swapped_in,
                          this->RemoveDatapointFromBase(index));
+
+  if (packed_dataset_) {
+    --packed_dataset_->num_datapoints;
+  }
   call_on_datapont_index_rename(swapped_in, index);
   SCANN_RET_CHECK(on_datapoint_index_rename_called);
   return OkStatus();

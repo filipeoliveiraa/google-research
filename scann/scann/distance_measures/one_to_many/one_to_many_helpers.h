@@ -20,6 +20,7 @@
 #include <atomic>
 #include <type_traits>
 
+#include "scann/distance_measures/one_to_many/resolved_scale_encoding.h"
 #include "scann/distance_measures/one_to_many/scale_encoding.pb.h"
 #include "scann/utils/common.h"
 #include "scann/utils/scalar_quantization_helpers.h"
@@ -147,7 +148,7 @@ SCANN_INLINE DequantizeFunctor<Delegate> MakeDequantizeFunctor(
   return DequantizeFunctor<Delegate>(multiplier, offset, std::move(delegate));
 }
 
-template <ScaleEncoding scale_encoding, typename Delegate>
+template <ResolvedScaleEncoding scale_encoding, typename Delegate>
 class ScaleFunctor {
  public:
   explicit ScaleFunctor(Delegate delegate) : delegate_(std::move(delegate)) {}
@@ -161,29 +162,32 @@ class ScaleFunctor {
   Delegate delegate_;
 };
 
-template <ScaleEncoding scale_encoding, typename Delegate>
+template <ResolvedScaleEncoding scale_encoding, typename Delegate>
 SCANN_INLINE ScaleFunctor<scale_encoding, Delegate> MakeScaleFunctor(
     Delegate delegate) {
   return ScaleFunctor<scale_encoding, Delegate>(delegate);
 }
 
 template <typename CallbackT, typename F>
-SCANN_INLINE void WithScaleFunctor(ScaleEncoding scale_encoding,
+SCANN_INLINE void WithScaleFunctor(ResolvedScaleEncoding scale_encoding,
                                    CallbackT callback, F f) {
   switch (scale_encoding) {
-    case UNSPECIFIED_SCALE_ENCODING:
+    case ResolvedScaleEncoding::kNone:
       return f(callback);
-    case FLOAT32_SCALE_SUFFIX:
-      return f(MakeScaleFunctor<FLOAT32_SCALE_SUFFIX>(callback));
-    case FLOAT32_SCALE_BOTTOM_BITS:
-      return f(MakeScaleFunctor<FLOAT32_SCALE_BOTTOM_BITS>(callback));
+    case ResolvedScaleEncoding::kFloat32ScaleSuffix:
+      return f(MakeScaleFunctor<ResolvedScaleEncoding::kFloat32ScaleSuffix>(
+          callback));
+    case ResolvedScaleEncoding::kFloat32ScaleBottomBits:
+      return f(MakeScaleFunctor<ResolvedScaleEncoding::kFloat32ScaleBottomBits>(
+          callback));
   }
 }
 
 template <typename T>
 struct NeedsSuffixSideData : std::false_type {};
 template <typename D>
-struct NeedsSuffixSideData<ScaleFunctor<FLOAT32_SCALE_SUFFIX, D>>
+struct NeedsSuffixSideData<
+    ScaleFunctor<ResolvedScaleEncoding::kFloat32ScaleSuffix, D>>
     : std::true_type {};
 template <typename D>
 struct NeedsSuffixSideData<DequantizeFunctor<D>> : NeedsSuffixSideData<D> {};
@@ -191,7 +195,8 @@ struct NeedsSuffixSideData<DequantizeFunctor<D>> : NeedsSuffixSideData<D> {};
 template <typename T>
 struct NeedsBottomBitsSideData : std::false_type {};
 template <typename D>
-struct NeedsBottomBitsSideData<ScaleFunctor<FLOAT32_SCALE_BOTTOM_BITS, D>>
+struct NeedsBottomBitsSideData<
+    ScaleFunctor<ResolvedScaleEncoding::kFloat32ScaleBottomBits, D>>
     : std::true_type {};
 template <typename D>
 struct NeedsBottomBitsSideData<DequantizeFunctor<D>>
@@ -227,7 +232,9 @@ SCANN_INLINE size_t DatapointBytes(size_t dims, ScaleEncoding scale_encoding) {
     static_assert(std::is_same_v<T, uint8_t>);
     result = DivRoundUp(dims, 2);
   }
-  if (scale_encoding == FLOAT32_SCALE_SUFFIX) {
+  const int bits = std::is_same_v<T, uint8_t> ? 4 : 8;
+  if (ResolveScaleEncoding(bits, scale_encoding, dims) ==
+      ResolvedScaleEncoding::kFloat32ScaleSuffix) {
     result += sizeof(float);
   }
   return result;

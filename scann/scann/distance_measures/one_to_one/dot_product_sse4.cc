@@ -36,7 +36,8 @@ SCANN_SSE4_INLINE double DenseDotProductByteImpl(const Byte* aptr,
     return reinterpret_cast<__m128i*>(const_cast<Byte*>(x));
   };
 
-  conditional_t<IsSignedType<Byte>(), int32_t, uint32_t> scalar_accumulator = 0;
+  std::conditional_t<IsSignedType<Byte>(), int32_t, uint32_t>
+      scalar_accumulator = 0;
   if (aptr + 4 <= aend) {
     __m128i accumulator0 = _mm_setzero_si128();
     __m128i accumulator1 = _mm_setzero_si128();

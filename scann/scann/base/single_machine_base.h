@@ -160,7 +160,7 @@ class UntypedSingleMachineSearcherBase {
     crowding_dimension_names_ = nullptr;
   }
 
-  StatusOr<DatapointIndex> DatasetSize() const;
+  virtual StatusOr<DatapointIndex> DatasetSize() const;
 
   virtual int64_t num_active_dimensions() const {
     return (dataset() == nullptr) ? -1 : (dataset()->NumActiveDimensions());
@@ -259,7 +259,7 @@ class UntypedSingleMachineSearcherBase {
   UntypedSingleMachineSearcherBase() = default;
 
   template <typename ResultElem>
-  Status ValidateFindNeighborsBatched(const Dataset& queries,
+  Status ValidateFindNeighborsBatched(const DatasetView& queries,
                                       ConstSpan<SearchParameters> params,
                                       MutableSpan<ResultElem> results) const;
 
@@ -343,9 +343,22 @@ class SingleMachineSearcherBase : public UntypedSingleMachineSearcherBase {
   StatusOr<SingleMachineFactoryOptions> ExtractSingleMachineFactoryOptions()
       override;
 
-  virtual Status FindNeighbors(const DatapointPtr<T>& query,
-                               const SearchParameters& params,
-                               NNResultsVector* result) const;
+  struct FindNeighborsOptionalParams {
+    int* num_non_random_neighbors = nullptr;
+    int* num_random_neighbors = nullptr;
+  };
+
+  virtual Status FindNeighbors(
+      const DatapointPtr<T>& query, const SearchParameters& params,
+      NNResultsVector* result,
+      FindNeighborsOptionalParams& optional_params) const;
+
+  Status FindNeighbors(const DatapointPtr<T>& query,
+                       const SearchParameters& params,
+                       NNResultsVector* result) const {
+    FindNeighborsOptionalParams optional_params;
+    return FindNeighbors(query, params, result, optional_params);
+  }
 
   Status FindNeighbors(const DatapointPtr<T>& query,
                        NNResultsVector* result) const {
@@ -356,16 +369,20 @@ class SingleMachineSearcherBase : public UntypedSingleMachineSearcherBase {
                                            const SearchParameters& params,
                                            NNResultsVector* result) const;
 
-  Status FindNeighborsBatched(const TypedDataset<T>& queries,
+  Status FindNeighborsBatched(const TypedDatasetView<T>& queries,
                               MutableSpan<NNResultsVector> results) const;
-  Status FindNeighborsBatched(const TypedDataset<T>& queries,
+  Status FindNeighborsBatched(const TypedDatasetView<T>& queries,
                               ConstSpan<SearchParameters> params,
                               MutableSpan<NNResultsVector> results) const;
+  Status FindNeighborsBatched(
+      const TypedDatasetView<T>& queries, ConstSpan<SearchParameters> params,
+      MutableSpan<NNResultsVector> results,
+      MutableSpan<FindNeighborsOptionalParams> optional_params) const;
   Status FindNeighborsBatchedNoSortNoExactReorder(
-      const TypedDataset<T>& queries, ConstSpan<SearchParameters> params,
+      const TypedDatasetView<T>& queries, ConstSpan<SearchParameters> params,
       MutableSpan<NNResultsVector> results) const;
   Status FindNeighborsBatchedNoSortNoExactReorder(
-      const TypedDataset<T>& queries, ConstSpan<SearchParameters> params,
+      const TypedDatasetView<T>& queries, ConstSpan<SearchParameters> params,
       MutableSpan<FastTopNeighbors<float>*> results,
       ConstSpan<DatapointIndex> datapoint_index_lookup) const;
 
@@ -611,11 +628,11 @@ class SingleMachineSearcherBase : public UntypedSingleMachineSearcherBase {
                                    NNResultsVector* result) const = 0;
 
   virtual Status FindNeighborsBatchedImpl(
-      const TypedDataset<T>& queries, ConstSpan<SearchParameters> params,
+      const TypedDatasetView<T>& queries, ConstSpan<SearchParameters> params,
       MutableSpan<NNResultsVector> results) const;
 
   virtual Status FindNeighborsBatchedImpl(
-      const TypedDataset<T>& queries, ConstSpan<SearchParameters> params,
+      const TypedDatasetView<T>& queries, ConstSpan<SearchParameters> params,
       MutableSpan<FastTopNeighbors<float>*> results,
       ConstSpan<DatapointIndex> datapoint_index_mapping) const;
 

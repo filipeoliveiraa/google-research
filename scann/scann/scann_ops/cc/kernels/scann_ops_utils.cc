@@ -25,7 +25,7 @@ absl::Status TensorFromProto(OpKernelContext* context, absl::string_view name,
   TF_RETURN_IF_ERROR(context->allocate_output(name, TensorShape({1}), &tensor));
 
   if (!SerializeToTString(*proto, &tensor->scalar<tstring>()()))
-    return errors::Internal(
+    return absl::InternalError(
         absl::StrCat("Failed to create string tensor ", name));
   return OkStatus();
 }

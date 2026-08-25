@@ -20,6 +20,7 @@
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "scann/data_format/datapoint.h"
+#include "scann/distance_measures/one_to_many/resolved_scale_encoding.h"
 #include "scann/distance_measures/one_to_many/scale_encoding.pb.h"
 #include "scann/utils/common.h"
 
@@ -39,14 +40,15 @@ absl::StatusOr<size_t> ScaledDatapointEncodedBytes(int bits,
                                                    ScaleEncoding scale_encoding,
                                                    size_t dimension);
 
-absl::Status DecodeScaledDatapoint(int bits, ScaleEncoding scale_encoding,
-                                   absl::string_view encoded, float& scale,
-                                   absl::string_view& data);
+absl::Status DecodeScaledDatapoint(int bits,
+                                   ResolvedScaleEncoding scale_encoding,
+                                   ConstSpan<uint8_t> encoded, float& scale,
+                                   ConstSpan<uint8_t>& data);
 
 absl::Status ReconstructScaledDatapoint(
     int bits, ConstSpan<float> inverse_fixed8_multipliers,
-    ScaleEncoding scale_encoding, absl::string_view encoded,
-    MutableSpan<float>& dp);
+    ScaleEncoding scale_encoding, ConstSpan<uint8_t> encoded,
+    MutableSpan<float> dp);
 
 }  // namespace research_scann
 

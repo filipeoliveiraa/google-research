@@ -38,7 +38,7 @@ uint8_t SimdBlockSize() {
 #endif
 #if HWY_HAVE_CONSTEXPR_LANES
 
-  return Highway<float>::kElementsPerRegister;
+  return HWY_NAMESPACE::Simd<float>::kElementsPerRegister;
 #else
   return fallback::Simd<float>::kElementsPerRegister;
 #endif

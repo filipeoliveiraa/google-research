@@ -25,7 +25,7 @@ namespace research_scann {
 template <typename T>
 StatusOr<unique_ptr<Partitioner<T>>>
 KMeansTreePartitionerFactoryPreSampledAndProjected(
-    const TypedDataset<T>* dataset, const PartitioningConfig& config,
+    const TypedDatasetView<T>* dataset, const PartitioningConfig& config,
     shared_ptr<ThreadPool> training_parallelization_pool) {
   DCHECK(dataset);
   const absl::Time start = absl::Now();
@@ -60,7 +60,7 @@ KMeansTreePartitionerFactoryPreSampledAndProjected(
         "normalization but generic, not spherical, partitioning was selected.");
   }
 
-  auto result = make_unique<KMeansTreePartitioner<T>>(
+  auto result = std::make_unique<KMeansTreePartitioner<T>>(
       database_tokenization_dist, query_tokenization_dist);
   KMeansTreeTrainingOptions opts(config);
   opts.training_parallelization_pool = training_parallelization_pool;

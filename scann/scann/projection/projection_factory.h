@@ -32,7 +32,7 @@ namespace research_scann {
 
 template <typename T>
 using MaybeDatasetOrSerializedProjection =
-    std::variant<std::nullopt_t, const TypedDataset<T>*,
+    std::variant<std::nullopt_t, const TypedDatasetView<T>*,
                  const SerializedProjection*>;
 
 template <typename T>
@@ -96,7 +96,7 @@ StatusOr<unique_ptr<ChunkingProjection<T>>> ChunkingProjectionFactory(
       ProjectionConfig::EIGENVALUE_OPQ) {
     auto evopq =
         down_cast<const EigenvalueOpqProjection<T>*>(initial_projection.get());
-    auto result = make_unique<ChunkingProjection<T>>(
+    auto result = std::make_unique<ChunkingProjection<T>>(
         canonicalized_config.num_blocks(), evopq->variable_dims_per_block());
     result->set_initial_projection(std::move(initial_projection));
     return result;

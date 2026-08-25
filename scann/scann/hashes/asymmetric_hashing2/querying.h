@@ -96,6 +96,9 @@ struct PackedDatasetMutableView {
 
 DenseDataset<uint8_t> UnpackDataset(const PackedDatasetView& packed);
 
+absl::Status UnpackDataset(const PackedDatasetView& packed,
+                           DenseDataset<uint8_t>& unpacked);
+
 PackedDatasetView CreatePackedDatasetView(const PackedDataset& packed_dataset);
 
 template <typename Dataset>

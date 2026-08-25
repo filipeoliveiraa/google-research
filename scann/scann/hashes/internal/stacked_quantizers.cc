@@ -54,14 +54,14 @@ DenseDataset<O> CopyDenseDatasetIntoNewType(const DenseDataset<T>& input) {
 }
 
 template <typename O, typename T>
-enable_if_t<std::is_same<O, T>::value, const DenseDataset<O>&>
+std::enable_if_t<std::is_same<O, T>::value, const DenseDataset<O>&>
 ConvertDenseDatasetIntoNewType(const DenseDataset<T>& input,
                                DenseDataset<O>* buffer) {
   return input;
 }
 
 template <typename O, typename T>
-enable_if_t<!std::is_same<O, T>::value, const DenseDataset<O>&>
+std::enable_if_t<!std::is_same<O, T>::value, const DenseDataset<O>&>
 ConvertDenseDatasetIntoNewType(const DenseDataset<T>& input,
                                DenseDataset<O>* buffer) {
   *buffer = CopyDenseDatasetIntoNewType<O>(input);
@@ -69,14 +69,14 @@ ConvertDenseDatasetIntoNewType(const DenseDataset<T>& input,
 }
 
 template <typename O, typename T>
-enable_if_t<std::is_same<O, T>::value, DenseDataset<O>*>
+std::enable_if_t<std::is_same<O, T>::value, DenseDataset<O>*>
 ConvertMutableDenseDatasetIntoNewType(DenseDataset<T>* input,
                                       DenseDataset<O>* buffer) {
   return input;
 }
 
 template <typename O, typename T>
-enable_if_t<!std::is_same<O, T>::value, DenseDataset<O>*>
+std::enable_if_t<!std::is_same<O, T>::value, DenseDataset<O>*>
 ConvertMutableDenseDatasetIntoNewType(DenseDataset<T>* input,
                                       DenseDataset<O>* buffer) {
   *buffer = CopyDenseDatasetIntoNewType<O>(*input);

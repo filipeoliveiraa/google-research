@@ -55,7 +55,7 @@ class KMeansTreeTrainerInterface {
  public:
   virtual ~KMeansTreeTrainerInterface() {}
 
-  virtual Status Train(const Dataset& training_data,
+  virtual Status Train(const DatasetView& training_data,
                        const DistanceMeasure& training_distance,
                        int32_t k_per_level,
                        KMeansTreeTrainingOptions* training_options) = 0;
@@ -94,12 +94,12 @@ class KMeansTree final : public KMeansTreeTrainerInterface,
   KMeansTree(KMeansTree&& rhs) = default;
   KMeansTree& operator=(KMeansTree&& rhs) = default;
 
-  Status Train(const Dataset& training_data,
+  Status Train(const DatasetView& training_data,
                const DistanceMeasure& training_distance, int32_t k_per_level,
                KMeansTreeTrainingOptions* training_options) override;
 
   template <typename T>
-  Status ApplyAvq(const DenseDataset<T>& dataset,
+  Status ApplyAvq(const DefaultDenseDatasetView<T>& dataset,
                   ConstSpan<std::vector<DatapointIndex>> datapoints_by_token,
                   float avq_eta, ThreadPool* pool_or_null = nullptr);
 
@@ -536,7 +536,7 @@ Status KMeansTree::TokenizeWithSpillingImpl(
 
 template <typename T>
 Status KMeansTree::ApplyAvq(
-    const DenseDataset<T>& dataset,
+    const DefaultDenseDatasetView<T>& dataset,
     ConstSpan<std::vector<DatapointIndex>> datapoints_by_token, float avq_eta,
     ThreadPool* pool_or_null) {
   const bool need_reenable_fixed8 = !root_.fixed_point_centers_.empty();

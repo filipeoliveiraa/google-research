@@ -19,20 +19,14 @@
 #include <atomic>
 #include <cstdint>
 #include <cstdlib>
-#include <functional>
-#include <limits>
 #include <optional>
-#include <type_traits>
 #include <utility>
 
-#include "absl/base/thread_annotations.h"
-#include "absl/functional/function_ref.h"
+#include "absl/base/optimization.h"
 #include "absl/status/status.h"
 #include "absl/synchronization/mutex.h"
-#include "scann/oss_wrappers/scann_threadpool.h"
 #include "scann/utils/common.h"
 #include "scann/utils/threads.h"
-#include "scann/utils/types.h"
 
 namespace research_scann {
 
@@ -82,10 +76,7 @@ class ParallelForClosure : public std::function<void()> {
  public:
   static constexpr bool kIsDynamicBatch = (kItersPerBatch == kDynamicBatchSize);
   ParallelForClosure(SeqT seq, Function func)
-      : func_(func),
-        index_(*seq.begin()),
-        range_end_(*seq.end()),
-        reference_count_(1) {}
+      : func_(func), index_(*seq.begin()), range_end_(*seq.end()) {}
 
   SCANN_INLINE void RunParallel(ThreadPoolInterface pool,
                                 size_t desired_threads) {
@@ -102,10 +93,10 @@ class ParallelForClosure : public std::function<void()> {
           SeqT::Stride() * std::max(1ul, desired_threads / 4 / n_threads);
     }
 
-    reference_count_ += n_threads;
+    reference_count_.store(n_threads + 1, std::memory_order_relaxed);
     while (n_threads--) {
       if (!pool.TrySchedule([this]() { this->Run(); })) {
-        --reference_count_;
+        reference_count_.fetch_sub(1, std::memory_order_relaxed);
       }
     }
 
@@ -114,7 +105,9 @@ class ParallelForClosure : public std::function<void()> {
     termination_mutex_.WriterLock();
     termination_mutex_.WriterUnlock();
 
-    if (--reference_count_ == 0) delete this;
+    if (reference_count_.fetch_sub(1, std::memory_order_acq_rel) == 1) {
+      delete this;
+    }
   }
 
   void Run() {
@@ -122,7 +115,9 @@ class ParallelForClosure : public std::function<void()> {
     DoWork();
     termination_mutex_.ReaderUnlock();
 
-    if (--reference_count_ == 0) delete this;
+    if (reference_count_.fetch_sub(1, std::memory_order_acq_rel) == 1) {
+      delete this;
+    }
   }
 
   SCANN_INLINE void DoWork() {

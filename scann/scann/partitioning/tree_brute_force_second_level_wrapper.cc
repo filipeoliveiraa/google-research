@@ -22,6 +22,7 @@
 #include "scann/data_format/datapoint.h"
 #include "scann/oss_wrappers/scann_status.h"
 #include "scann/partitioning/kmeans_tree_partitioner.pb.h"
+#include "scann/tree_x_hybrid/tree_x_params.h"
 #include "scann/trees/kmeans_tree/kmeans_tree.h"
 #include "scann/utils/common.h"
 #include "scann/utils/datapoint_utils.h"
@@ -45,22 +46,37 @@ Status TreeBruteForceSecondLevelWrapper<T>::CreatePartitioning(
 
 template <typename T>
 Status TreeBruteForceSecondLevelWrapper<T>::TokensForDatapointWithSpilling(
-    const DatapointPtr<T>& dptr, int32_t max_centers_override,
+    const DatapointPtr<T>& dptr, ConstSpan<int32_t> max_centers_override,
     vector<pair<DatapointIndex, float>>* result) const {
+  if (max_centers_override.size() > this->bottom_up_depth()) {
+    return InvalidArgumentError(
+        "max_centers_override must have at most bottom_up_depth() elements.  "
+        "(Got %d vs %d)",
+        max_centers_override.size(), this->bottom_up_depth());
+  }
   if (this->tokenization_mode() == UntypedPartitioner::DATABASE) {
-    return base_->TokensForDatapointWithSpilling(dptr, max_centers_override,
+    const int32_t leaf_max_centers =
+        max_centers_override.empty() ? 0 : max_centers_override.back();
+    return base_->TokensForDatapointWithSpilling(dptr, {leaf_max_centers},
                                                  result);
   } else {
-    const auto max_centers = max_centers_override > 0
-                                 ? max_centers_override
-                                 : base_->query_spilling_max_centers();
+    const int32_t bottom_max_centers =
+        (max_centers_override.empty() || max_centers_override.back() <= 0)
+            ? base_->query_spilling_max_centers()
+            : max_centers_override.back();
     SearchParameters params;
-    params.set_pre_reordering_num_neighbors(max_centers);
+    params.set_pre_reordering_num_neighbors(bottom_max_centers);
     if (base_->query_spilling_type() ==
         QuerySpillingConfig::ABSOLUTE_DISTANCE) {
       params.set_pre_reordering_epsilon(base_->query_spilling_threshold());
     } else {
       params.set_pre_reordering_epsilon(numeric_limits<float>::infinity());
+    }
+    if (max_centers_override.size() > 1) {
+      auto tree_x_params = make_shared<TreeXOptionalParameters>();
+      tree_x_params->set_num_partitions_to_search_override(
+          {max_centers_override.begin(), max_centers_override.end() - 1});
+      params.set_searcher_specific_optional_parameters(tree_x_params);
     }
 
     auto try_ensure_one_center = [&](DatapointPtr<float> dptr,
@@ -96,7 +112,7 @@ StatusOrPtr<TreeXHybridSMMD<float>> CreateTopLevelSearcher(
     const KMeansTreeLikePartitioner<T>& base,
     const BottomUpTopLevelPartitioner& config,
     vector<std::vector<DatapointIndex>> token_to_datapoints) {
-  auto result = make_unique<TreeXHybridSMMD<float>>(
+  auto result = std::make_unique<TreeXHybridSMMD<float>>(
       MakeDummyShared(&base.LeafCenters()), nullptr, config.num_centroids(),
       numeric_limits<float>::infinity());
   SCANN_RETURN_IF_ERROR(result->BuildLeafSearchers(
@@ -113,19 +129,19 @@ StatusOrPtr<TreeXHybridSMMD<float>> CreateTopLevelSearcher(
         const int num_neighbors =
             std::max<int>(1, base.query_spilling_max_centers());
         if (config.quantization() == BottomUpTopLevelPartitioner::FIXED8) {
-          return make_unique<ScalarQuantizedBruteForceSearcher>(
+          return std::make_unique<ScalarQuantizedBruteForceSearcher>(
               base.query_tokenization_distance(), dataset_dense, num_neighbors,
               numeric_limits<float>::infinity(),
               ScalarQuantizedBruteForceSearcher::Options{
                   .noise_shaping_threshold = config.noise_shaping_threshold()});
         } else if (config.quantization() ==
                    BottomUpTopLevelPartitioner::BFLOAT16) {
-          return make_unique<Bfloat16BruteForceSearcher>(
+          return std::make_unique<Bfloat16BruteForceSearcher>(
               base.query_tokenization_distance(), dataset_dense, num_neighbors,
               numeric_limits<float>::infinity(),
               config.noise_shaping_threshold());
         } else {
-          return make_unique<BruteForceSearcher<float>>(
+          return std::make_unique<BruteForceSearcher<float>>(
               base.query_tokenization_distance(), dataset_dense, num_neighbors,
               numeric_limits<float>::infinity());
         }
@@ -152,8 +168,8 @@ unique_ptr<Partitioner<T>> TreeBruteForceSecondLevelWrapper<T>::Clone() const {
                               top_level_->datapoints_by_token().end()})
           .value();
   top_level_clone->set_query_tokenizer(std::move(cloned_query_tokenizer));
-  auto result =
-      make_unique<TreeBruteForceSecondLevelWrapper<T>>(std::move(cloned_base));
+  auto result = std::make_unique<TreeBruteForceSecondLevelWrapper<T>>(
+      std::move(cloned_base));
   result->top_level_ = std::move(top_level_clone);
   result->config_ = config_;
   result->set_tokenization_mode(this->tokenization_mode());
@@ -163,9 +179,23 @@ unique_ptr<Partitioner<T>> TreeBruteForceSecondLevelWrapper<T>::Clone() const {
 template <typename T>
 Status
 TreeBruteForceSecondLevelWrapper<T>::TokensForDatapointWithSpillingBatched(
-    const TypedDataset<T>& queries, ConstSpan<int32_t> max_centers_override,
+    const TypedDatasetView<T>& queries,
+    ConstSpan<std::vector<int32_t>> max_centers_override,
     MutableSpan<std::vector<pair<DatapointIndex, float>>> results,
     ThreadPool* pool) const {
+  if (!max_centers_override.empty() &&
+      max_centers_override.size() != queries.size()) {
+    return InvalidArgumentError(
+        "max_centers_override must be empty or have the same size as queries.");
+  }
+  for (size_t i : IndicesOf(max_centers_override)) {
+    if (max_centers_override[i].size() > this->bottom_up_depth()) {
+      return InvalidArgumentError(
+          "max_centers_override must have at most bottom_up_depth() elements.  "
+          "(Got %d vs %d)",
+          max_centers_override[i].size(), this->bottom_up_depth());
+    }
+  }
   if (this->tokenization_mode() == UntypedPartitioner::DATABASE) {
     return base_->TokensForDatapointWithSpillingBatched(
         queries, max_centers_override, results, pool);
@@ -175,26 +205,36 @@ TreeBruteForceSecondLevelWrapper<T>::TokensForDatapointWithSpillingBatched(
     for (size_t i : IndicesOf(queries)) {
       SCANN_RETURN_IF_ERROR(TokensForDatapointWithSpilling(
           queries[i],
-          max_centers_override.empty() ? 0 : max_centers_override[i],
+          max_centers_override.empty()
+              ? ConstSpan<int32_t>()
+              : ConstSpan<int32_t>(max_centers_override[i]),
           &results[i]));
     }
   }
 
   vector<SearchParameters> params(queries.size());
   for (size_t i : IndicesOf(params)) {
-    const auto max_centers = max_centers_override.empty()
-                                 ? base_->query_spilling_max_centers()
-                                 : max_centers_override[i];
-    params[i].set_pre_reordering_num_neighbors(max_centers);
+    const int32_t bottom_max_centers =
+        (max_centers_override.empty() || max_centers_override[i].empty() ||
+         max_centers_override[i].back() <= 0)
+            ? base_->query_spilling_max_centers()
+            : max_centers_override[i].back();
+    params[i].set_pre_reordering_num_neighbors(bottom_max_centers);
     if (base_->query_spilling_type() ==
         QuerySpillingConfig::ABSOLUTE_DISTANCE) {
       params[i].set_pre_reordering_epsilon(base_->query_spilling_threshold());
     } else {
       params[i].set_pre_reordering_epsilon(numeric_limits<float>::infinity());
     }
+    if (!max_centers_override.empty() && !max_centers_override[i].empty()) {
+      auto tree_x_params = make_shared<TreeXOptionalParameters>();
+      tree_x_params->set_num_partitions_to_search_override(
+          {max_centers_override[i].begin(), max_centers_override[i].end() - 1});
+      params[i].set_searcher_specific_optional_parameters(tree_x_params);
+    }
   }
 
-  auto try_ensure_one_center = [&](const TypedDataset<float>& queries,
+  auto try_ensure_one_center = [&](const TypedDatasetView<float>& queries,
                                    absl::Status orig_status) -> absl::Status {
     bool at_least_one_center =
         base_->query_spilling_type() == QuerySpillingConfig::ABSOLUTE_DISTANCE;
@@ -215,14 +255,23 @@ TreeBruteForceSecondLevelWrapper<T>::TokensForDatapointWithSpillingBatched(
   };
 
   if constexpr (std::is_same_v<T, float>) {
-    auto st = top_level_->FindNeighborsBatchedNoSortNoExactReorder(
-        queries, params, results);
+    auto st = top_level_->FindNeighborsBatched(queries, params, results);
     return try_ensure_one_center(queries, st);
   } else {
     DenseDataset<float> float_queries;
-    down_cast<const DenseDataset<T>*>(&queries)->ConvertType(&float_queries);
-    auto st = top_level_->FindNeighborsBatchedNoSortNoExactReorder(
-        float_queries, params, results);
+    auto dense_ds = dynamic_cast<const DenseDataset<T>*>(&queries);
+    if (dense_ds) {
+      dense_ds->ConvertType(&float_queries);
+    } else {
+      float_queries.set_dimensionality(queries.dimensionality());
+      float_queries.Reserve(queries.size());
+      for (size_t i = 0; i < queries.size(); ++i) {
+        Datapoint<float> float_dp;
+        queries.GetDatapoint(i, &float_dp);
+        float_queries.AppendOrDie(float_dp.ToPtr(), "");
+      }
+    }
+    auto st = top_level_->FindNeighborsBatched(float_queries, params, results);
     return try_ensure_one_center(float_queries, st);
   }
 }
@@ -231,7 +280,8 @@ template <typename T>
 Status TreeBruteForceSecondLevelWrapper<T>::TokensForDatapointWithSpilling(
     const DatapointPtr<T>& query, std::vector<int32_t>* result) const {
   vector<pair<DatapointIndex, float>> with_dists;
-  SCANN_RETURN_IF_ERROR(TokensForDatapointWithSpilling(query, 0, &with_dists));
+  SCANN_RETURN_IF_ERROR(
+      TokensForDatapointWithSpilling(query, ConstSpan<int32_t>(), &with_dists));
   result->clear();
   result->reserve(with_dists.size());
   for (const auto& with_dist : with_dists) {
@@ -290,7 +340,7 @@ TreeBruteForceSecondLevelWrapper<T>::CreateTopLevel(
   unique_ptr<KMeansTreePartitioner<float>> top_partitioner;
   vector<std::vector<DatapointIndex>> token_to_datapoints;
   if (serialized) {
-    top_partitioner = make_unique<KMeansTreePartitioner<float>>(
+    top_partitioner = std::make_unique<KMeansTreePartitioner<float>>(
         make_unique<SquaredL2Distance>(), base.query_tokenization_distance(),
         *serialized);
     token_to_datapoints.resize(top_partitioner->n_tokens());
@@ -301,7 +351,7 @@ TreeBruteForceSecondLevelWrapper<T>::CreateTopLevel(
                                                   child.indices().end());
     }
   } else {
-    top_partitioner = make_unique<KMeansTreePartitioner<float>>(
+    top_partitioner = std::make_unique<KMeansTreePartitioner<float>>(
         make_unique<SquaredL2Distance>(), base.query_tokenization_distance());
     KMeansTreeTrainingOptions opts;
     opts.center_initialization_type = GmmUtils::Options::RANDOM_INITIALIZATION;
@@ -333,7 +383,7 @@ TreeBruteForceSecondLevelWrapper<T>::CreateTopLevel(
   unique_ptr<KMeansTreeLikePartitioner<float>> maybe_recursed_partitioner;
   if constexpr (std::is_same_v<T, float>) {
     if (config.next_higher_level().enabled()) {
-      auto next_level = make_unique<TreeBruteForceSecondLevelWrapper<T>>(
+      auto next_level = std::make_unique<TreeBruteForceSecondLevelWrapper<T>>(
           std::move(top_partitioner));
       SCANN_RETURN_IF_ERROR(
           next_level->CreatePartitioning(config.next_higher_level()));

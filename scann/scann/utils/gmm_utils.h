@@ -30,6 +30,7 @@
 #include "scann/oss_wrappers/scann_random.h"
 #include "scann/oss_wrappers/scann_threadpool.h"
 #include "scann/proto/partitioning.pb.h"
+#include "scann/utils/heap_topn.h"
 #include "scann/utils/types.h"
 #include "scann/utils/util_functions.h"
 
@@ -65,9 +66,15 @@ class GmmUtils {
       MIN_COST_MAX_FLOW,
 
       UNBALANCED_FLOAT32,
+
+      SINGLE_PASS_UNBALANCED_FLOAT32,
+
+      SINGLE_PASS_GREEDY_BALANCED,
     };
 
     PartitionAssignmentType partition_assignment_type = UNBALANCED_FLOAT32;
+
+    int32_t balancing_num_nearest_centroids = -1;
 
     enum CenterReassignmentType {
 
@@ -112,7 +119,7 @@ class GmmUtils {
   };
 
   Status ComputeKmeansClustering(
-      const Dataset& dataset, int32_t num_clusters,
+      const DatasetView& dataset, int32_t num_clusters,
       DenseDataset<double>* final_centers,
       const ComputeKmeansClusteringOptions& kmeans_opts);
 
@@ -122,10 +129,25 @@ class GmmUtils {
       const ComputeKmeansClusteringOptions& kmeans_opts);
 
   StatusOr<double> ComputeSpillingThreshold(
-      const Dataset& dataset, ConstSpan<DatapointIndex> subset,
+      const DatasetView& dataset, ConstSpan<DatapointIndex> subset,
       const DenseDataset<double>& centers,
       DatabaseSpillingConfig::SpillingType spilling_type,
       float total_spill_factor, DatapointIndex max_centers);
+
+  using CenterCandidate =
+      HeapTopN<pair<DatapointIndex, float>, DistanceComparator>;
+
+  template <typename FloatT>
+  vector<pair<DatapointIndex, double>> GreedyBalancedPartitionAssignment(
+      GmmUtilsImplInterface* impl, const DistanceMeasure& distance,
+      MutableSpan<GmmUtils::CenterCandidate> candidates_per_dp,
+      const DenseDatasetView<FloatT>& centers_view);
+
+  Status SinglePassRecomputeCentroids(
+      ConstSpan<pair<DatapointIndex, double>> top1_results,
+      GmmUtilsImplInterface* impl, ConstSpan<uint32_t> partition_sizes,
+      bool spherical, DenseDatasetView<double>* centroids,
+      DenseDataset<double>* tmp_centroids, vector<double>* convergence_means);
 
   template <typename FloatT>
   Status RecomputeCentroidsSimple(
@@ -191,6 +213,10 @@ class GmmUtils {
                                  int32_t num_clusters, ConstSpan<float> weights,
                                  DenseDataset<double>* initial_centers);
 
+  vector<CenterCandidate> ComputeCenterCandidates(
+      const GmmUtilsImplInterface& impl, DenseDataset<double>& centroids,
+      int32_t num_candidates) const;
+
   shared_ptr<const DistanceMeasure> distance_;
   Options opts_;
   MTRandom random_;
@@ -199,7 +225,7 @@ class GmmUtils {
 class GmmUtilsImplInterface : public VirtualDestructor {
  public:
   static unique_ptr<GmmUtilsImplInterface> Create(
-      const DistanceMeasure& distance, const Dataset& dataset,
+      const DistanceMeasure& distance, const DatasetView& dataset,
       ConstSpan<DatapointIndex> subset, ThreadPool* parallelization_pool);
 
   template <typename T>
@@ -247,7 +273,7 @@ class GmmUtilsImplInterface : public VirtualDestructor {
  private:
   template <typename T>
   static unique_ptr<GmmUtilsImplInterface> CreateTyped(
-      const DistanceMeasure& distance, const Dataset& dataset,
+      const DistanceMeasure& distance, const DatasetView& dataset,
       ConstSpan<DatapointIndex> subset, ThreadPool* parallelization_pool);
 
   Normalization normalization_;

@@ -103,9 +103,15 @@ message PartitioningConfig {
     GREEDY_BALANCED = 1;
 
     UNBALANCED_FLOAT32 = 2;
+
+    SINGLE_PASS_UNBALANCED_FLOAT32 = 3;
+
+    SINGLE_PASS_GREEDY_BALANCED = 4;
   }
 
   optional BalancingType balancing_type = 35 [default = UNBALANCED_FLOAT32];
+
+  optional int32 balancing_num_nearest_centroids = 56 [default = -1];
 
   enum SingleMachineCenterInitializationType {
     DEFAULT_KMEANS_PLUS_PLUS = 0;

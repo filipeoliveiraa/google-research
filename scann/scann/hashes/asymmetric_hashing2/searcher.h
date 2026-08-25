@@ -128,6 +128,8 @@ class SearcherBase : public SingleMachineSearcherBase<T> {
 
   ~SearcherBase() override = default;
 
+  StatusOr<DatapointIndex> DatasetSize() const final;
+
   DatapointIndex optimal_batch_size() const final {
     return optimal_low_level_batch_size_;
   }
@@ -255,7 +257,7 @@ class Searcher final : public SearcherBase<T> {
                            NNResultsVector* result) const override;
 
   Status FindNeighborsBatchedImpl(
-      const TypedDataset<T>& queries, ConstSpan<SearchParameters> params,
+      const TypedDatasetView<T>& queries, ConstSpan<SearchParameters> params,
       MutableSpan<NNResultsVector> results) const override;
 
   Status VerifyLimitedInnerProductNormsSize() const;

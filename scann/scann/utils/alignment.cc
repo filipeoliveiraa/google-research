@@ -27,7 +27,7 @@ AlignedBuffer MakeCacheAlignedCopy(ConstSpan<uint8_t> span) {
 
   const size_t padded_size2 = padded_size1 + 63;
 
-  auto padded = make_unique<uint8_t[]>(padded_size2);
+  auto padded = std::make_unique<uint8_t[]>(padded_size2);
   uint8_t* ptr = reinterpret_cast<uint8_t*>(
       NextMultipleOf(reinterpret_cast<uintptr_t>(padded.get()), 64));
   CHECK_LE(ptr + NextMultipleOf(span.size(), 64), padded.get() + padded_size2);

@@ -314,6 +314,17 @@ class FastTopNeighbors<DistT, DatapointIndexT, FixedCapacity>::Mutator {
 
   ~Mutator() { Release(); }
 
+  void RecordPushes(size_t num_pushes) {
+    DCHECK_LE(num_pushes, -pushes_remaining_negated_);
+    pushes_remaining_negated_ += num_pushes;
+  }
+
+  ssize_t pushes_remaining_negated() const { return pushes_remaining_negated_; }
+
+  DatapointIndexT* indices_end() { return indices_end_; }
+
+  DistT* distances_end() { return distances_end_; }
+
   SCANN_INLINE bool Push(DatapointIndexT dp_idx, DistT distance) {
     DCHECK_LE(distance, epsilon());
     return PushNoEpsilonCheck(dp_idx, distance);
@@ -392,8 +403,8 @@ void FastTopNeighbors<DistT, DatapointIndexT, FixedCapacity>::AcquireMutator(
 }
 
 template <typename DistT, typename DocidFn, typename TopN>
-void PushBlockToFastTopNeighbors(ConstSpan<DistT> distances, DocidFn docid_fn,
-                                 TopN* top_n) {
+HWY_ATTR void PushBlockToFastTopNeighbors(ConstSpan<DistT> distances,
+                                          DocidFn docid_fn, TopN* top_n) {
   typename TopN::Mutator mutator;
   top_n->AcquireMutator(&mutator);
   DatapointIndex dist_idx = 0;
@@ -401,8 +412,8 @@ void PushBlockToFastTopNeighbors(ConstSpan<DistT> distances, DocidFn docid_fn,
 #if HWY_HAVE_CONSTEXPR_LANES
 
   if constexpr (std::is_same_v<DistT, float> &&
-                highway::Simd<float>::kElementsPerRegister >= 2) {
-    using Simd = highway::Simd<float>;
+                HWY_NAMESPACE::Simd<float>::kElementsPerRegister >= 2) {
+    using Simd = HWY_NAMESPACE::Simd<float>;
     Simd simd_epsilon = mutator.epsilon();
     constexpr size_t kNumFloatsPerSimdRegister = Simd::kElementsPerRegister;
     const size_t num_simd_registers =

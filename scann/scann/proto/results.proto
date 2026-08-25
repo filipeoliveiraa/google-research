@@ -27,6 +27,14 @@ message NearestNeighbors {
 
   repeated Neighbor neighbor = 2;
 
+  message RandomNeighborsStats {
+    optional int32 num_non_random_neighbors = 1;
+
+    optional int32 num_random_neighbors = 2;
+  }
+
+  optional RandomNeighborsStats random_neighbors_stats = 9;
+
   message Neighbor {
     required bytes docid = 3;
 

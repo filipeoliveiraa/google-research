@@ -19,10 +19,12 @@
 #include <utility>
 
 #include "scann/data_format/dataset.h"
+#include "scann/projection/blockwise_random_orthogonal.h"
 #include "scann/projection/eigenvalue_opq_projection.h"
 #include "scann/projection/identity_projection.h"
 #include "scann/projection/pca_projection.h"
 #include "scann/projection/projection_base.h"
+#include "scann/projection/random_orthogonal_projection.h"
 #include "scann/projection/truncate_projection.h"
 #include "scann/proto/projection.pb.h"
 #include "scann/utils/common.h"
@@ -62,6 +64,7 @@ Status ValidateDimension(ProjectionConfig::ProjectionType projection_type,
   constexpr DimensionIndex kMaxDimensionality = numeric_limits<int32_t>::max();
   if (projected_dim > kMaxDimensionality) {
     if (projection_type == ProjectionConfig::RANDOM_ORTHOGONAL ||
+        projection_type == ProjectionConfig::BLOCKWISE_RANDOM_ORTHOGONAL ||
         projection_type == ProjectionConfig::RANDOM_BINARY ||
         projection_type == ProjectionConfig::RANDOM_BINARY_DYNAMIC ||
         projection_type == ProjectionConfig::RANDOM_SPARSE_BINARY ||
@@ -108,7 +111,7 @@ StatusOr<unique_ptr<Projection<T>>> ProjectionFactoryImpl<T>::Create(
           "A dataset or serialized projection must be provided when "
           "constructing a Eigenvalue OPQ projection");
     }
-    auto result = make_unique<EigenvalueOpqProjection<T>>(input_dim);
+    auto result = std::make_unique<EigenvalueOpqProjection<T>>(input_dim);
     if (dataset_or_serialized_projection.index() == 2) {
       const SerializedProjection& serialized_projection =
           *std::get<2>(dataset_or_serialized_projection);
@@ -164,12 +167,12 @@ StatusOr<unique_ptr<Projection<T>>> ProjectionFactoryImpl<T>::Create(
       if (dataset_or_serialized_projection.index() == 2) {
         const SerializedProjection& serialized_projection =
             *std::get<2>(dataset_or_serialized_projection);
-        result = make_unique<PcaProjection<T>>(
+        result = std::make_unique<PcaProjection<T>>(
             input_dim, serialized_projection.rotation_vec_size());
         SCANN_RETURN_IF_ERROR(result->Create(serialized_projection));
 
       } else if (config.has_num_dims_per_block()) {
-        result = make_unique<PcaProjection<T>>(
+        result = std::make_unique<PcaProjection<T>>(
             input_dim, config.num_dims_per_block() * config.num_blocks());
         result->Create(*std::get<1>(dataset_or_serialized_projection),
                        config.build_covariance(), parallelization_pool);
@@ -178,7 +181,7 @@ StatusOr<unique_ptr<Projection<T>>> ProjectionFactoryImpl<T>::Create(
         }
       } else {
         if (config.has_pca_significance_threshold()) {
-          result = make_unique<PcaProjection<T>>(input_dim, input_dim);
+          result = std::make_unique<PcaProjection<T>>(input_dim, input_dim);
           result->Create(*std::get<1>(dataset_or_serialized_projection),
                          config.pca_significance_threshold(),
                          config.pca_truncation_threshold(), true,
@@ -197,6 +200,28 @@ StatusOr<unique_ptr<Projection<T>>> ProjectionFactoryImpl<T>::Create(
     case ProjectionConfig::TRUNCATE:
       return {make_unique<TruncateProjection<T>>(
           input_dim, config.num_dims_per_block() * config.num_blocks())};
+    case ProjectionConfig::RANDOM_ORTHOGONAL: {
+      SCANN_RETURN_IF_ERROR(fix_remainder_dims());
+
+      auto projection = std::make_unique<RandomOrthogonalProjection<T>>(
+          input_dim, projected_dim, effective_seed);
+      projection->Create();
+      return {std::move(projection)};
+    }
+    case ProjectionConfig::BLOCKWISE_RANDOM_ORTHOGONAL: {
+      SCANN_RETURN_IF_ERROR(fix_remainder_dims());
+      if (input_dim != projected_dim) {
+        return InvalidArgumentError(
+            "Blockwise random orthogonal projection is only supported for "
+            "input_dim == projected_dim.  (Got %d vs %d)",
+            input_dim, projected_dim);
+      }
+      auto result = make_unique<BlockwiseRandomOrthogonalProjection<T>>(
+          input_dim, config.blockwise_random_orthogonal_config().block_size(),
+          effective_seed);
+      result->Create();
+      return {std::move(result)};
+    }
     default:
       return UnimplementedError(
           "The specified projection type is not implemented.");

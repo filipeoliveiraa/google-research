@@ -22,6 +22,15 @@
 #define HWY_DISABLED_TARGETS HWY_ALL_SVE
 #endif
 
+#endif
+
+#if defined(SCANN_UTILS_INTRINSICS_HIGHWAY_TOGGLE) == defined(HWY_TARGET_TOGGLE)
+#ifdef SCANN_UTILS_INTRINSICS_HIGHWAY_TOGGLE
+#undef SCANN_UTILS_INTRINSICS_HIGHWAY_TOGGLE
+#else
+#define SCANN_UTILS_INTRINSICS_HIGHWAY_TOGGLE
+#endif
+
 #include "hwy/highway.h"
 
 #if !HWY_HAVE_CONSTEXPR_LANES
@@ -30,7 +39,7 @@
 
 namespace research_scann {
 
-namespace highway = fallback;
+namespace HWY_NAMESPACE = fallback;
 
 }
 
@@ -49,10 +58,9 @@ namespace highway = fallback;
 
 HWY_BEFORE_NAMESPACE();
 namespace research_scann {
+namespace HWY_NAMESPACE {
 
 namespace hn = hwy::HWY_NAMESPACE;
-
-namespace highway {
 
 static constexpr PlatformGeneration kPlatformGeneration = kHighway;
 
@@ -61,18 +69,16 @@ constexpr size_t InferNumRegisters() {
   return kNumElementsRequired / hn::Lanes(hn::ScalableTag<T>());
 }
 
-}  // namespace highway
-
 template <typename T, size_t kNumRegisters = 1, size_t... kTensorNumRegisters>
-class Highway;
+class Simd;
 
-struct HwyZeros {};
-struct HwyUninitialized {};
+struct Zeros {};
+struct Uninitialized {};
 
 template <typename T, size_t kNumRegistersInferred>
-class Highway<T, kNumRegistersInferred> {
+class Simd<T, kNumRegistersInferred> {
  public:
-  SCANN_DECLARE_COPYABLE_CLASS(Highway);
+  SCANN_DECLARE_COPYABLE_CLASS(Simd);
   static_assert(IsSameAny<T, float, double, int8_t, int16_t, int32_t, int64_t,
                           uint8_t, uint16_t, uint32_t, uint64_t>());
 
@@ -85,46 +91,46 @@ class Highway<T, kNumRegistersInferred> {
 
   using HwyType = decltype(hn::Zero(hn::ScalableTag<T>()));
 
-  Highway(HwyUninitialized) {}
-  Highway() : Highway(HwyUninitialized()) {}
+  Simd(Uninitialized) {}
+  Simd() : Simd(Uninitialized()) {}
 
-  SCANN_HIGHWAY_INLINE Highway(HwyZeros) { Clear(); }
+  SCANN_HIGHWAY_INLINE Simd(Zeros) { Clear(); }
 
-  SCANN_HIGHWAY_INLINE Highway(HwyType val) {
+  SCANN_HIGHWAY_INLINE Simd(HwyType val) {
     static_assert(kNumRegisters == 1);
     *this = val;
   }
 
-  SCANN_HIGHWAY_INLINE Highway(T val) { *this = Broadcast(val); }
+  SCANN_HIGHWAY_INLINE Simd(T val) { *this = Broadcast(val); }
 
   template <typename U, size_t kOther>
-  SCANN_HIGHWAY_INLINE explicit Highway(const Highway<U, kOther>& other) {
-    Highway& me = *this;
+  SCANN_HIGHWAY_INLINE explicit Simd(const Simd<U, kOther>& other) {
+    Simd& me = *this;
     for (size_t j : Seq(kNumRegisters)) {
       if constexpr (kOther == kNumRegisters) {
-        me[j] = *other[j];
+        me[j] = hn::BitCast(hn::ScalableTag<T>(), *other[j]);
       } else if constexpr (kOther == 1) {
-        me[j] = *other[0];
+        me[j] = hn::BitCast(hn::ScalableTag<T>(), *other[0]);
       } else {
         static_assert(kOther == kNumRegisters || kOther == 1);
       }
     }
   }
 
-  SCANN_HIGHWAY_INLINE Highway& operator=(HwyZeros val) {
+  SCANN_HIGHWAY_INLINE Simd& operator=(Zeros val) {
     Clear();
     return *this;
   }
 
-  SCANN_HIGHWAY_INLINE Highway& operator=(HwyType val) {
+  SCANN_HIGHWAY_INLINE Simd& operator=(HwyType val) {
     static_assert(kNumRegisters == 1,
                   "To intentionally perform register-wise broadcast, "
-                  "explicitly cast to an Highway<T>");
+                  "explicitly cast to an Simd<T>");
     registers_[0] = val;
     return *this;
   }
 
-  SCANN_HIGHWAY_INLINE Highway& operator=(T val) {
+  SCANN_HIGHWAY_INLINE Simd& operator=(T val) {
     *this = Broadcast(val);
     return *this;
   }
@@ -134,7 +140,7 @@ class Highway<T, kNumRegistersInferred> {
     return registers_[0];
   }
 
-  SCANN_HIGHWAY_INLINE Highway<T, 1>& operator[](size_t idx) {
+  SCANN_HIGHWAY_INLINE Simd<T, 1>& operator[](size_t idx) {
     if constexpr (kNumRegisters == 1) {
       DCHECK_EQ(idx, 0);
       return *this;
@@ -144,7 +150,7 @@ class Highway<T, kNumRegistersInferred> {
     }
   }
 
-  SCANN_HIGHWAY_INLINE const Highway<T, 1>& operator[](size_t idx) const {
+  SCANN_HIGHWAY_INLINE const Simd<T, 1>& operator[](size_t idx) const {
     if constexpr (kNumRegisters == 1) {
       DCHECK_EQ(idx, 0);
       return *this;
@@ -158,15 +164,15 @@ class Highway<T, kNumRegistersInferred> {
     return hn::Zero(hn::ScalableTag<T>());
   }
 
-  static SCANN_HIGHWAY_INLINE Highway Zeros() {
-    Highway<T, kNumRegisters> ret;
+  static SCANN_HIGHWAY_INLINE Simd Zeros() {
+    Simd<T, kNumRegisters> ret;
     for (size_t j : Seq(kNumRegisters)) {
       ret[j] = ZeroOneRegister();
     }
     return ret;
   }
 
-  SCANN_HIGHWAY_INLINE Highway& Clear() {
+  SCANN_HIGHWAY_INLINE Simd& Clear() {
     for (size_t j : Seq(kNumRegisters)) {
       registers_[j] = ZeroOneRegister();
     }
@@ -177,8 +183,8 @@ class Highway<T, kNumRegistersInferred> {
     return hn::Set(hn::ScalableTag<T>(), x);
   }
 
-  SCANN_HIGHWAY_INLINE static Highway Broadcast(T x) {
-    Highway ret;
+  SCANN_HIGHWAY_INLINE static Simd Broadcast(T x) {
+    Simd ret;
     for (size_t j : Seq(kNumRegisters)) {
       ret[j] = BroadcastOneRegister(x);
     }
@@ -191,8 +197,8 @@ class Highway<T, kNumRegistersInferred> {
   }
 
   template <bool kAligned = false>
-  SCANN_HIGHWAY_INLINE static Highway Load(const T* address) {
-    Highway ret;
+  SCANN_HIGHWAY_INLINE static Simd Load(const T* address) {
+    Simd ret;
     for (size_t j : Seq(kNumRegisters)) {
       ret[j] = LoadOneRegister<kAligned>(address + j * kElementsPerRegister);
     }
@@ -204,7 +210,7 @@ class Highway<T, kNumRegistersInferred> {
   }
 
   SCANN_HIGHWAY_INLINE void Store(T* address) const {
-    const Highway& me = *this;
+    const Simd& me = *this;
     for (size_t j : Seq(kNumRegisters)) {
       StoreOneRegister(address + j * kElementsPerRegister, *me[j]);
     }
@@ -218,10 +224,10 @@ class Highway<T, kNumRegistersInferred> {
 
   template <size_t kOther, typename Op,
             size_t kOutput = std::max(kNumRegisters, kOther)>
-  static SCANN_HIGHWAY_INLINE Highway<T, kOutput> BinaryOperatorImpl(
-      const Highway& me, const Highway<T, kOther>& other, Op fn) {
-    Highway<T, kOutput> ret;
-    for (size_t j : Seq(Highway<T, kOutput>::kNumRegisters)) {
+  static SCANN_HIGHWAY_INLINE Simd<T, kOutput> BinaryOperatorImpl(
+      const Simd& me, const Simd<T, kOther>& other, Op fn) {
+    Simd<T, kOutput> ret;
+    for (size_t j : Seq(Simd<T, kOutput>::kNumRegisters)) {
       if constexpr (kOther == kNumRegisters) {
         ret[j] = fn(*me[j], *other[j]);
       } else if constexpr (kNumRegisters == 1) {
@@ -241,7 +247,7 @@ class Highway<T, kNumRegistersInferred> {
   }
 
   template <size_t kOther>
-  SCANN_HIGHWAY_INLINE auto operator+(const Highway<T, kOther>& other) const {
+  SCANN_HIGHWAY_INLINE auto operator+(const Simd<T, kOther>& other) const {
     return BinaryOperatorImpl(*this, other, &Add);
   }
 
@@ -250,7 +256,7 @@ class Highway<T, kNumRegistersInferred> {
   }
 
   template <size_t kOther>
-  SCANN_HIGHWAY_INLINE auto operator-(const Highway<T, kOther>& other) const {
+  SCANN_HIGHWAY_INLINE auto operator-(const Simd<T, kOther>& other) const {
     return BinaryOperatorImpl(*this, other, &Subtract);
   }
 
@@ -259,7 +265,7 @@ class Highway<T, kNumRegistersInferred> {
   }
 
   template <size_t kOther>
-  SCANN_HIGHWAY_INLINE auto operator*(const Highway<T, kOther>& other) const {
+  SCANN_HIGHWAY_INLINE auto operator*(const Simd<T, kOther>& other) const {
     return BinaryOperatorImpl(*this, other, &Multiply);
   }
 
@@ -268,7 +274,7 @@ class Highway<T, kNumRegistersInferred> {
   }
 
   template <size_t kOther>
-  SCANN_HIGHWAY_INLINE auto operator/(const Highway<T, kOther>& other) const {
+  SCANN_HIGHWAY_INLINE auto operator/(const Simd<T, kOther>& other) const {
     return BinaryOperatorImpl(*this, other, &Divide);
   }
 
@@ -277,7 +283,7 @@ class Highway<T, kNumRegistersInferred> {
   }
 
   template <size_t kOther>
-  SCANN_HIGHWAY_INLINE auto operator&(const Highway<T, kOther>& other) const {
+  SCANN_HIGHWAY_INLINE auto operator&(const Simd<T, kOther>& other) const {
     return BinaryOperatorImpl(*this, other, &BitwiseAnd);
   }
 
@@ -286,7 +292,7 @@ class Highway<T, kNumRegistersInferred> {
   }
 
   template <size_t kOther>
-  SCANN_HIGHWAY_INLINE auto operator|(const Highway<T, kOther>& other) const {
+  SCANN_HIGHWAY_INLINE auto operator|(const Simd<T, kOther>& other) const {
     return BinaryOperatorImpl(*this, other, &BitwiseOr);
   }
 
@@ -294,9 +300,9 @@ class Highway<T, kNumRegistersInferred> {
     return x >> count;
   }
 
-  SCANN_HIGHWAY_INLINE Highway operator>>(int count) const {
-    const Highway& me = *this;
-    Highway ret;
+  SCANN_HIGHWAY_INLINE Simd operator>>(int count) const {
+    const Simd& me = *this;
+    Simd ret;
     for (size_t j : Seq(kNumRegisters)) {
       ret[j] = ShiftRight(*me[j], count);
     }
@@ -307,9 +313,9 @@ class Highway<T, kNumRegistersInferred> {
     return x << count;
   }
 
-  SCANN_HIGHWAY_INLINE Highway operator<<(int count) const {
-    const Highway& me = *this;
-    Highway ret;
+  SCANN_HIGHWAY_INLINE Simd operator<<(int count) const {
+    const Simd& me = *this;
+    Simd ret;
     for (size_t j : Seq(kNumRegisters)) {
       ret[j] = ShiftLeft(*me[j], count);
     }
@@ -317,9 +323,9 @@ class Highway<T, kNumRegistersInferred> {
   }
 
   template <size_t kOther, typename Op>
-  SCANN_HIGHWAY_INLINE Highway& AccumulateOperatorImpl(
-      const Highway<T, kOther>& other, Op fn) {
-    Highway& me = *this;
+  SCANN_HIGHWAY_INLINE Simd& AccumulateOperatorImpl(
+      const Simd<T, kOther>& other, Op fn) {
+    Simd& me = *this;
     for (size_t j : Seq(kNumRegisters)) {
       if constexpr (kOther == kNumRegisters) {
         me[j] = fn(*me[j], *other[j]);
@@ -333,45 +339,45 @@ class Highway<T, kNumRegistersInferred> {
   }
 
   template <size_t kOther>
-  SCANN_HIGHWAY_INLINE Highway& operator+=(const Highway<T, kOther>& other) {
+  SCANN_HIGHWAY_INLINE Simd& operator+=(const Simd<T, kOther>& other) {
     return AccumulateOperatorImpl(other, &Add);
   }
 
   template <size_t kOther>
-  SCANN_HIGHWAY_INLINE Highway& operator-=(const Highway<T, kOther>& other) {
+  SCANN_HIGHWAY_INLINE Simd& operator-=(const Simd<T, kOther>& other) {
     return AccumulateOperatorImpl(other, &Subtract);
   }
 
   template <size_t kOther>
-  SCANN_HIGHWAY_INLINE Highway& operator*=(const Highway<T, kOther>& other) {
+  SCANN_HIGHWAY_INLINE Simd& operator*=(const Simd<T, kOther>& other) {
     return AccumulateOperatorImpl(other, &Multiply);
   }
 
   template <size_t kOther>
-  SCANN_HIGHWAY_INLINE Highway& operator/=(const Highway<T, kOther>& other) {
+  SCANN_HIGHWAY_INLINE Simd& operator/=(const Simd<T, kOther>& other) {
     return AccumulateOperatorImpl(other, &Divide);
   }
 
   template <size_t kOther>
-  SCANN_HIGHWAY_INLINE Highway& operator&=(const Highway<T, kOther>& other) {
+  SCANN_HIGHWAY_INLINE Simd& operator&=(const Simd<T, kOther>& other) {
     return AccumulateOperatorImpl(other, &BitwiseAnd);
   }
 
   template <size_t kOther>
-  SCANN_HIGHWAY_INLINE Highway& operator|=(const Highway<T, kOther>& other) {
+  SCANN_HIGHWAY_INLINE Simd& operator|=(const Simd<T, kOther>& other) {
     return AccumulateOperatorImpl(other, &BitwiseOr);
   }
 
-  SCANN_HIGHWAY_INLINE Highway& operator<<=(int count) {
-    Highway& me = *this;
+  SCANN_HIGHWAY_INLINE Simd& operator<<=(int count) {
+    Simd& me = *this;
     for (size_t j : Seq(kNumRegisters)) {
       me[j] = ShiftLeft(*me[j], count);
     }
     return *this;
   }
 
-  SCANN_HIGHWAY_INLINE Highway& operator>>=(int count) {
-    Highway& me = *this;
+  SCANN_HIGHWAY_INLINE Simd& operator>>=(int count) {
+    Simd& me = *this;
     for (size_t j : Seq(kNumRegisters)) {
       me[j] = ShiftRight(*me[j], count);
     }
@@ -379,9 +385,10 @@ class Highway<T, kNumRegistersInferred> {
   }
 
   template <size_t kOther = kNumRegisters, typename Op>
-  SCANN_HIGHWAY_INLINE auto ComparisonOperatorImpl(
-      const Highway& me, const Highway<T, kOther>& other, Op fn) const {
-    Highway<T, std::max(kNumRegisters, kOther)> masks;
+  SCANN_HIGHWAY_INLINE auto ComparisonOperatorImpl(const Simd& me,
+                                                   const Simd<T, kOther>& other,
+                                                   Op fn) const {
+    Simd<T, std::max(kNumRegisters, kOther)> masks;
     for (size_t j : Seq(std::max(kNumRegisters, kOther))) {
       if constexpr (kOther == kNumRegisters) {
         masks[j] = fn(*me[j], *other[j]);
@@ -402,7 +409,7 @@ class Highway<T, kNumRegistersInferred> {
   }
 
   template <size_t kOther = kNumRegisters>
-  SCANN_HIGHWAY_INLINE auto operator<(const Highway<T, kOther>& other) const {
+  SCANN_HIGHWAY_INLINE auto operator<(const Simd<T, kOther>& other) const {
     return ComparisonOperatorImpl(*this, other, &LessThan);
   }
 
@@ -411,7 +418,7 @@ class Highway<T, kNumRegistersInferred> {
   }
 
   template <size_t kOther = kNumRegisters>
-  SCANN_HIGHWAY_INLINE auto operator<=(const Highway<T, kOther>& other) const {
+  SCANN_HIGHWAY_INLINE auto operator<=(const Simd<T, kOther>& other) const {
     return ComparisonOperatorImpl(*this, other, &LessOrEquals);
   }
 
@@ -420,7 +427,7 @@ class Highway<T, kNumRegistersInferred> {
   }
 
   template <size_t kOther>
-  SCANN_HIGHWAY_INLINE auto operator==(const Highway<T, kOther>& other) const {
+  SCANN_HIGHWAY_INLINE auto operator==(const Simd<T, kOther>& other) const {
     return ComparisonOperatorImpl(*this, other, &Equals);
   }
 
@@ -429,7 +436,7 @@ class Highway<T, kNumRegistersInferred> {
   }
 
   template <size_t kOther = kNumRegisters>
-  SCANN_HIGHWAY_INLINE auto operator>=(const Highway<T, kOther>& other) const {
+  SCANN_HIGHWAY_INLINE auto operator>=(const Simd<T, kOther>& other) const {
     return ComparisonOperatorImpl(*this, other, &GreaterOrEquals);
   }
 
@@ -438,7 +445,7 @@ class Highway<T, kNumRegistersInferred> {
   }
 
   template <size_t kOther = kNumRegisters>
-  SCANN_HIGHWAY_INLINE auto operator>(const Highway<T, kOther>& other) const {
+  SCANN_HIGHWAY_INLINE auto operator>(const Simd<T, kOther>& other) const {
     return ComparisonOperatorImpl(*this, other, &GreaterThan);
   }
 
@@ -453,15 +460,15 @@ class Highway<T, kNumRegistersInferred> {
   }
 
   template <typename U>
-  static SCANN_HIGHWAY_INLINE typename Highway<U>::HwyType ConvertOneRegister(
+  static SCANN_HIGHWAY_INLINE typename Simd<U>::HwyType ConvertOneRegister(
       HwyType x) {
     return hn::ConvertTo(hn::ScalableTag<U>(), x);
   }
 
   template <typename U>
-  SCANN_HIGHWAY_INLINE Highway<U, kNumRegisters> ConvertTo() const {
-    const Highway& me = *this;
-    Highway<U, kNumRegisters> ret;
+  SCANN_HIGHWAY_INLINE Simd<U, kNumRegisters> ConvertTo() const {
+    const Simd& me = *this;
+    Simd<U, kNumRegisters> ret;
     for (size_t j : Seq(kNumRegisters)) {
       ret[j] = ConvertOneRegister<U>(*me[j]);
     }
@@ -503,8 +510,8 @@ class Highway<T, kNumRegistersInferred> {
     }
   }
   using ExpansionType = decltype(InferExpansionType());
-  using ExpansionHwyType = typename Highway<ExpansionType>::HwyType;
-  using ExpandsTo = Highway<ExpansionType, 2 * kNumRegisters>;
+  using ExpansionHwyType = typename Simd<ExpansionType>::HwyType;
+  using ExpandsTo = Simd<ExpansionType, 2 * kNumRegisters>;
 
   static SCANN_HIGHWAY_INLINE pair<ExpansionHwyType, ExpansionHwyType>
   ExpandOneRegister(HwyType x) {
@@ -515,8 +522,8 @@ class Highway<T, kNumRegistersInferred> {
   template <typename ValidateT>
   SCANN_HIGHWAY_INLINE ExpandsTo ExpandTo() const {
     static_assert(IsSame<ValidateT, ExpansionType>());
-    const Highway& me = *this;
-    Highway<ExpansionType, 2 * kNumRegisters> ret;
+    const Simd& me = *this;
+    Simd<ExpansionType, 2 * kNumRegisters> ret;
     for (size_t j : Seq(kNumRegisters)) {
       pair<ExpansionHwyType, ExpansionHwyType> expanded =
           ExpandOneRegister(*me[j]);
@@ -561,25 +568,25 @@ class Highway<T, kNumRegistersInferred> {
   }
 
  private:
-  std::conditional_t<kNumRegisters == 1, HwyType, Highway<T, 1> >
+  std::conditional_t<kNumRegisters == 1, HwyType, Simd<T, 1> >
       registers_[kNumRegisters];
 
   template <typename U, size_t kOther, size_t... kTensorOther>
-  friend class Highway;
+  friend class Simd;
 };
 
 template <typename T, size_t kTensorNumRegisters0,
           size_t... kTensorNumRegisters>
-class Highway {
+class Simd {
  public:
-  using SimdSubArray = Highway<T, kTensorNumRegisters...>;
+  using SimdSubArray = Simd<T, kTensorNumRegisters...>;
 
-  Highway(HwyUninitialized) {}
-  Highway() : Highway(HwyUninitialized()) {}
+  Simd(Uninitialized) {}
+  Simd() : Simd(Uninitialized()) {}
 
-  SCANN_HIGHWAY_INLINE Highway(HwyZeros) {
+  SCANN_HIGHWAY_INLINE Simd(Zeros) {
     for (size_t j : Seq(kTensorNumRegisters0)) {
-      tensor_[j] = HwyZeros();
+      tensor_[j] = Zeros();
     }
   }
 
@@ -616,9 +623,9 @@ class Highway {
 };
 
 template <typename T, size_t... kNumRegisters>
-SCANN_HIGHWAY_INLINE Highway<T, index_sequence_sum_v<kNumRegisters...> >
-HighwayConcat(const Highway<T, kNumRegisters>&... inputs) {
-  Highway<T, index_sequence_sum_v<kNumRegisters...> > ret;
+SCANN_HIGHWAY_INLINE Simd<T, index_sequence_sum_v<kNumRegisters...> >
+HighwayConcat(const Simd<T, kNumRegisters>&... inputs) {
+  Simd<T, index_sequence_sum_v<kNumRegisters...> > ret;
 
   size_t idx = 0;
   auto assign_one_input = [&](auto input) SCANN_INLINE_LAMBDA {
@@ -632,37 +639,34 @@ HighwayConcat(const Highway<T, kNumRegisters>&... inputs) {
 }
 
 template <typename T, typename AllButLastSeq, size_t kLast>
-struct HighwayForImpl;
+struct SimdForImpl;
 
 template <typename T, size_t... kAllButLast, size_t kLast>
-struct HighwayForImpl<T, index_sequence<kAllButLast...>, kLast> {
-  using type =
-      Highway<T, kAllButLast..., highway::InferNumRegisters<T, kLast>()>;
+struct SimdForImpl<T, index_sequence<kAllButLast...>, kLast> {
+  using type = Simd<T, kAllButLast..., InferNumRegisters<T, kLast>()>;
 };
 
 template <typename T, size_t... kTensorNumElements>
-using HighwayFor = typename HighwayForImpl<
-    T, index_sequence_all_but_last_t<kTensorNumElements...>,
-    index_sequence_last_v<kTensorNumElements...> >::type;
+using SimdFor =
+    typename SimdForImpl<T,
+                         index_sequence_all_but_last_t<kTensorNumElements...>,
+                         index_sequence_last_v<kTensorNumElements...> >::type;
 
-SCANN_HIGHWAY_INLINE auto GetComparisonMask(Highway<int16_t> a,
-                                            Highway<int16_t> b) {
+SCANN_HIGHWAY_INLINE auto GetComparisonMask(Simd<int16_t> a, Simd<int16_t> b) {
   auto demoted = hn::OrderedDemote2To(hn::ScalableTag<int8_t>(), *a, *b);
-  return Highway<int8_t>::BitsFromMask(demoted);
+  return Simd<int8_t>::BitsFromMask(demoted);
 }
 
-SCANN_HIGHWAY_INLINE auto GetComparisonMask(Highway<int16_t, 2> a) {
+SCANN_HIGHWAY_INLINE auto GetComparisonMask(Simd<int16_t, 2> a) {
   return GetComparisonMask(a[0], a[1]);
 }
 
-SCANN_HIGHWAY_INLINE auto GetComparisonMask(Highway<int16_t> a) {
-  return Highway<int16_t>::BitsFromMask(*a);
+SCANN_HIGHWAY_INLINE auto GetComparisonMask(Simd<int16_t> a) {
+  return Simd<int16_t>::BitsFromMask(*a);
 }
 
-SCANN_HIGHWAY_INLINE auto GetComparisonMask(Highway<int16_t> a,
-                                            Highway<int16_t> b,
-                                            Highway<int16_t> c,
-                                            Highway<int16_t> d) {
+SCANN_HIGHWAY_INLINE auto GetComparisonMask(Simd<int16_t> a, Simd<int16_t> b,
+                                            Simd<int16_t> c, Simd<int16_t> d) {
   if constexpr (hn::Lanes(hn::ScalableTag<int16_t>()) <= 16) {
     constexpr int kLanes = hn::Lanes(hn::ScalableTag<int16_t>());
     using ResultT = std::conditional_t<kLanes <= 8, uint32_t, uint64_t>;
@@ -675,22 +679,20 @@ SCANN_HIGHWAY_INLINE auto GetComparisonMask(Highway<int16_t> a,
   }
 }
 
-SCANN_HIGHWAY_INLINE auto GetComparisonMask(Highway<int16_t, 4> cmp) {
+SCANN_HIGHWAY_INLINE auto GetComparisonMask(Simd<int16_t, 4> cmp) {
   return GetComparisonMask(cmp[0], cmp[1], cmp[2], cmp[3]);
 }
 
-SCANN_HIGHWAY_INLINE auto GetComparisonMask(Highway<int16_t> cmp[2]) {
+SCANN_HIGHWAY_INLINE auto GetComparisonMask(Simd<int16_t> cmp[2]) {
   return GetComparisonMask(cmp[0], cmp[1]);
 }
 
-SCANN_HIGHWAY_INLINE uint32_t GetComparisonMask(Highway<float> cmp) {
-  return Highway<float>::BitsFromMask(*cmp);
+SCANN_HIGHWAY_INLINE uint32_t GetComparisonMask(Simd<float> cmp) {
+  return Simd<float>::BitsFromMask(*cmp);
 }
 
-SCANN_HIGHWAY_INLINE auto GetComparisonMask(Highway<float> v00,
-                                            Highway<float> v04,
-                                            Highway<float> v08,
-                                            Highway<float> v12) {
+SCANN_HIGHWAY_INLINE auto GetComparisonMask(Simd<float> v00, Simd<float> v04,
+                                            Simd<float> v08, Simd<float> v12) {
   constexpr int kLanes = hn::Lanes(hn::ScalableTag<float>());
   using ResultT = std::conditional_t<kLanes <= 8, uint32_t, uint64_t>;
   const ResultT m00 = GetComparisonMask(v00);
@@ -700,7 +702,7 @@ SCANN_HIGHWAY_INLINE auto GetComparisonMask(Highway<float> v00,
   return m00 + (m04 << kLanes) + (m08 << (2 * kLanes)) + (m12 << (3 * kLanes));
 }
 
-SCANN_HIGHWAY_INLINE auto GetComparisonMask(Highway<float, 2> cmp) {
+SCANN_HIGHWAY_INLINE auto GetComparisonMask(Simd<float, 2> cmp) {
   constexpr int kLanes = hn::Lanes(hn::ScalableTag<float>());
   using ResultT = std::conditional_t<kLanes <= 8, uint32_t, uint64_t>;
   const ResultT m0 = GetComparisonMask(cmp[0]);
@@ -708,11 +710,11 @@ SCANN_HIGHWAY_INLINE auto GetComparisonMask(Highway<float, 2> cmp) {
   return m0 + (m1 << kLanes);
 }
 
-SCANN_HIGHWAY_INLINE auto GetComparisonMask(Highway<float, 4> cmp) {
+SCANN_HIGHWAY_INLINE auto GetComparisonMask(Simd<float, 4> cmp) {
   return GetComparisonMask(cmp[0], cmp[1], cmp[2], cmp[3]);
 }
 
-SCANN_HIGHWAY_INLINE auto GetComparisonMask(Highway<float, 8> cmp) {
+SCANN_HIGHWAY_INLINE auto GetComparisonMask(Simd<float, 8> cmp) {
   constexpr int kLanes = hn::Lanes(hn::ScalableTag<float>());
   if constexpr (kLanes <= 8) {
     using ResultT = std::conditional_t<kLanes <= 4, uint32_t, uint64_t>;
@@ -725,22 +727,10 @@ SCANN_HIGHWAY_INLINE auto GetComparisonMask(Highway<float, 8> cmp) {
            "SIMD.";
   }
 }
-
-namespace highway {
-
-SCANN_INLINE string_view SimdName() { return "Highway"; }
+SCANN_INLINE string_view SimdName() { return hwy::TargetName(HWY_TARGET); }
 SCANN_INLINE bool RuntimeSupportsSimd() { return true; }
 
-template <typename T, size_t... kTensorNumRegisters>
-using Simd = Highway<T, kTensorNumRegisters...>;
-
-template <typename T, size_t kTensorNumElements0, size_t... kTensorNumElements>
-using SimdFor = HighwayFor<T, kTensorNumElements0, kTensorNumElements...>;
-
-using Zeros = HwyZeros;
-using Uninitialized = HwyUninitialized;
-
-}  // namespace highway
+}  // namespace HWY_NAMESPACE
 }  // namespace research_scann
 
 HWY_AFTER_NAMESPACE();

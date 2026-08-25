@@ -47,25 +47,25 @@ SCANN_INLINE void HorizontalSum4X(Simd<FloatT> a, Simd<FloatT> b,
 
 #if HWY_HAVE_CONSTEXPR_LANES
 HWY_BEFORE_NAMESPACE();
-namespace highway {
+namespace HWY_NAMESPACE {
 
 namespace hn = hwy::HWY_NAMESPACE;
 
 template <typename FloatT>
-SCANN_INLINE FloatT HorizontalSum(Highway<FloatT> a) {
+SCANN_INLINE FloatT HorizontalSum(Simd<FloatT> a) {
   return hn::ReduceSum(hn::ScalableTag<FloatT>(), *a);
 }
 
 template <typename FloatT>
-SCANN_INLINE void HorizontalSum2X(Highway<FloatT> a, Highway<FloatT> b,
+SCANN_INLINE void HorizontalSum2X(Simd<FloatT> a, Simd<FloatT> b,
                                   FloatT* resulta, FloatT* resultb) {
   *resulta = HorizontalSum(a);
   *resultb = HorizontalSum(b);
 }
 
 template <typename FloatT>
-SCANN_INLINE void HorizontalSum4X(Highway<FloatT> a, Highway<FloatT> b,
-                                  Highway<FloatT> c, Highway<FloatT> d,
+SCANN_INLINE void HorizontalSum4X(Simd<FloatT> a, Simd<FloatT> b,
+                                  Simd<FloatT> c, Simd<FloatT> d,
                                   FloatT* resulta, FloatT* resultb,
                                   FloatT* resultc, FloatT* resultd) {
   *resulta = HorizontalSum(a);
@@ -74,7 +74,7 @@ SCANN_INLINE void HorizontalSum4X(Highway<FloatT> a, Highway<FloatT> b,
   *resultd = HorizontalSum(d);
 }
 
-}  // namespace highway
+}  // namespace HWY_NAMESPACE
 HWY_AFTER_NAMESPACE();
 #endif
 

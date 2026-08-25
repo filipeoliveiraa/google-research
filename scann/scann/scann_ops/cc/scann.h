@@ -53,8 +53,8 @@ class ScannInterface {
   static StatusOr<std::unique_ptr<SingleMachineSearcherBase<float>>>
   CreateSearcher(ScannArtifacts artifacts);
 
-  Status Initialize(const std::string& config_pbtxt,
-                    const std::string& scann_assets_pbtxt);
+  Status Initialize(absl::string_view config_pbtxt,
+                    absl::string_view scann_assets_pbtxt);
   Status Initialize(ScannConfig config, SingleMachineFactoryOptions opts,
                     ConstSpan<float> dataset,
                     ConstSpan<int32_t> datapoint_to_token,
@@ -63,7 +63,7 @@ class ScannInterface {
                     ConstSpan<float> int8_multipliers,
                     ConstSpan<float> dp_norms, DatapointIndex n_points);
   Status Initialize(ConstSpan<float> dataset, DatapointIndex n_points,
-                    const std::string& config, int training_threads);
+                    absl::string_view config, int training_threads);
   Status Initialize(ScannArtifacts artifacts);
 
   StatusOr<typename SingleMachineSearcherBase<float>::Mutator*> GetMutator()

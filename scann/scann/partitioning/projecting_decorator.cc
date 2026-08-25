@@ -90,7 +90,7 @@ int32_t ProjectingDecoratorBase<Base, T>::n_tokens() const {
 
 template <typename T>
 Status KMeansTreeProjectingDecorator<T>::TokensForDatapointWithSpilling(
-    const DatapointPtr<T>& dptr, int32_t max_centers_override,
+    const DatapointPtr<T>& dptr, ConstSpan<int32_t> max_centers_override,
     vector<pair<DatapointIndex, float>>* result) const {
   SCANN_ASSIGN_OR_RETURN(Datapoint<float> projected,
                          this->ProjectAndNormalize(dptr));
@@ -101,7 +101,7 @@ Status KMeansTreeProjectingDecorator<T>::TokensForDatapointWithSpilling(
 template <typename T>
 StatusOrPtr<TypedDataset<float>>
 KMeansTreeProjectingDecorator<T>::CreateProjectedDataset(
-    const TypedDataset<T>& queries) const {
+    const TypedDatasetView<T>& queries) const {
   if (queries.empty()) return {nullptr};
   unique_ptr<TypedDataset<float>> projected_ds;
   for (size_t i : IndicesOf(queries)) {
@@ -109,9 +109,9 @@ KMeansTreeProjectingDecorator<T>::CreateProjectedDataset(
                            this->ProjectAndNormalize(queries[i]));
     if (!projected_ds) {
       if (projected.IsSparse()) {
-        projected_ds = make_unique<SparseDataset<float>>();
+        projected_ds = std::make_unique<SparseDataset<float>>();
       } else {
-        projected_ds = make_unique<DenseDataset<float>>();
+        projected_ds = std::make_unique<DenseDataset<float>>();
       }
       projected_ds->set_dimensionality(projected.dimensionality());
       projected_ds->Reserve(queries.size());
@@ -123,7 +123,7 @@ KMeansTreeProjectingDecorator<T>::CreateProjectedDataset(
 
 template <typename T>
 Status KMeansTreeProjectingDecorator<T>::TokenForDatapointBatched(
-    const TypedDataset<T>& queries,
+    const TypedDatasetView<T>& queries,
     std::vector<pair<DatapointIndex, float>>* results, ThreadPool* pool) const {
   if (queries.empty()) {
     results->clear();
@@ -137,8 +137,8 @@ Status KMeansTreeProjectingDecorator<T>::TokenForDatapointBatched(
 
 template <typename T>
 Status KMeansTreeProjectingDecorator<T>::TokensForDatapointWithSpillingBatched(
-    const TypedDataset<T>& queries, MutableSpan<std::vector<int32_t>> results,
-    ThreadPool* pool) const {
+    const TypedDatasetView<T>& queries,
+    MutableSpan<std::vector<int32_t>> results, ThreadPool* pool) const {
   if (queries.empty()) return OkStatus();
   SCANN_ASSIGN_OR_RETURN(unique_ptr<TypedDataset<float>> projected_ds,
                          CreateProjectedDataset(queries));
@@ -149,7 +149,8 @@ Status KMeansTreeProjectingDecorator<T>::TokensForDatapointWithSpillingBatched(
 
 template <typename T>
 Status KMeansTreeProjectingDecorator<T>::TokensForDatapointWithSpillingBatched(
-    const TypedDataset<T>& queries, ConstSpan<int32_t> max_centers_override,
+    const TypedDatasetView<T>& queries,
+    ConstSpan<std::vector<int32_t>> max_centers_override,
     MutableSpan<std::vector<pair<DatapointIndex, float>>> results,
     ThreadPool* pool) const {
   if (queries.empty()) return OkStatus();

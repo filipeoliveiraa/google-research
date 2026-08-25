@@ -72,9 +72,9 @@ PartitionerFromKMeansTreeNoProjection(shared_ptr<const KMeansTree> kmeans_tree,
     query_tokenization_dist = training_dist;
   }
 
-  auto km = make_unique<KMeansTreePartitioner<T>>(database_tokenization_dist,
-                                                  query_tokenization_dist,
-                                                  std::move(kmeans_tree));
+  auto km = std::make_unique<KMeansTreePartitioner<T>>(
+      database_tokenization_dist, query_tokenization_dist,
+      std::move(kmeans_tree));
   km->set_query_spilling_threshold(
       config.query_spilling().spilling_threshold());
   km->set_query_spilling_type(config.query_spilling().spilling_type());
@@ -140,7 +140,7 @@ StatusOr<unique_ptr<Partitioner<T>>> PartitionerFromSerializedImpl(
     if (config.bottom_up_top_level_partitioner().enabled() &&
         proto.kmeans().has_next_bottom_up_level()) {
       LOG(INFO) << "Deserializing top level partitioners.";
-      auto wrapper = make_unique<TreeBruteForceSecondLevelWrapper<T>>(
+      auto wrapper = std::make_unique<TreeBruteForceSecondLevelWrapper<T>>(
           std::move(partitioner));
       SCANN_RETURN_IF_ERROR(
           wrapper->CreatePartitioning(config.bottom_up_top_level_partitioner(),
@@ -191,7 +191,7 @@ StatusOr<unique_ptr<Partitioner<T>>> PartitionerFromSerialized(
             config.projection().num_dims_per_block(), rotation_vecs.size());
       }
     }
-    auto pca_projection = make_unique<PcaProjection<T>>(
+    auto pca_projection = std::make_unique<PcaProjection<T>>(
         config.projection().input_dim(), rotation_vecs.size());
     pca_projection->Create(std::move(rotation_vecs));
     projection = std::move(pca_projection);

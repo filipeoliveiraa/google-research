@@ -1,4 +1,5 @@
 #include <cstddef>
+#include <cstdint>
 #include <type_traits>
 
 #include "scann/utils/bfloat16_helpers.h"
@@ -374,6 +375,121 @@ SCANN_HIGHWAY_INLINE float ComputeOneToOneScoreImpl(
   }
 }
 
+template <typename Config, size_t kDimensionality = Config::kDimensionality>
+struct ComputeOneToManyInt8Int8 {
+  using DatasetViewT = typename Config::DatasetViewT;
+  using IndexT = typename Config::IndexT;
+  using ResultT = typename Config::ResultT;
+  using CallbackT = typename Config::CallbackT;
+  using DI8 = hn::ScalableTag<int8_t>;
+  using DI32 = hn::ScalableTag<int32_t>;
+
+  static constexpr bool kHasIndices = Config::kHasIndices;
+  static constexpr size_t kPrefetchDepth = Config::kPrefetchDepth;
+  static constexpr size_t kCacheLineBytes = Config::kCacheLineBytes;
+
+  static_assert(IsDivisibleBy(kDimensionality, kCacheLineBytes));
+
+  SCANN_HIGHWAY_INLINE static void Prefetch(const int8_t* HWY_RESTRICT p) {
+    __builtin_prefetch(p, 0, 2);
+  }
+
+  template <bool kPrefetch = true>
+  SCANN_HIGHWAY_INLINE static int32_t Int8Int8Dot(
+      const int8_t* HWY_RESTRICT query, const int8_t* HWY_RESTRICT dataset,
+      const int8_t* HWY_RESTRICT prefetch) {
+    DI8 di8;
+    DI32 di32;
+
+    constexpr size_t lanes = hn::Lanes(di8);
+    static_assert(IsDivisibleBy(kCacheLineBytes, lanes));
+
+    hn::Vec<DI32> acc = hn::Zero(di32);
+    for (size_t j = 0; j < kDimensionality; j += kCacheLineBytes) {
+      if constexpr (kPrefetch) Prefetch(prefetch + j);
+
+      for (size_t i = 0; i < kCacheLineBytes; i += lanes) {
+        acc = hn::SumOfMulQuadAccumulate(di32, hn::LoadU(di8, query + j + i),
+                                         hn::LoadU(di8, dataset + j + i), acc);
+      }
+    }
+    return -hn::ReduceSum(di32, acc);
+  }
+
+  static void Run(const int8_t* __restrict__ query, DatasetViewT dataset_view,
+                  const IndexT* indices, MutableSpan<ResultT> result,
+                  CallbackT callback) {
+    const size_t num_datapoints = result.size();
+    if (num_datapoints == 0) return;
+
+    auto get_datapoint_ptr = [&](size_t i) {
+      const size_t idx =
+          kHasIndices ? indices[i]
+                      : one_to_many_low_level::GetDatapointIndex(result, i);
+      return dataset_view.GetPtr(idx);
+    };
+
+    const size_t prologue_depth = std::min(num_datapoints, kPrefetchDepth);
+    for (size_t i = 0; i < prologue_depth; ++i) {
+      auto p = get_datapoint_ptr(i);
+      for (size_t j = 0; j < kDimensionality; j += kCacheLineBytes) {
+        Prefetch(p + j);
+      }
+    }
+
+    const size_t steady_state_iterations = num_datapoints - prologue_depth;
+    size_t i = 0;
+    for (; i < steady_state_iterations; ++i) {
+      auto p = get_datapoint_ptr(i);
+      auto prefetch = get_datapoint_ptr(i + kPrefetchDepth);
+      auto out = Int8Int8Dot(query, p, prefetch);
+      InvokeCallback(callback, i, out, kDimensionality, p);
+    }
+
+    for (; i < num_datapoints; ++i) {
+      auto p = get_datapoint_ptr(i);
+      auto out = Int8Int8Dot<false>(query, p, nullptr);
+      InvokeCallback(callback, i, out, kDimensionality, p);
+    }
+  }
+};
+
+template <typename Config>
+struct ComputeOneToManyInt8Int8<Config, 0> {
+  using DatasetViewT = typename Config::DatasetViewT;
+  using IndexT = typename Config::IndexT;
+  using ResultT = typename Config::ResultT;
+  using CallbackT = typename Config::CallbackT;
+
+  static constexpr bool kHasIndices = Config::kHasIndices;
+
+  SCANN_HIGHWAY_INLINE static void Run(const int8_t* __restrict__ query,
+                                       DatasetViewT dataset_view,
+                                       const IndexT* indices,
+                                       MutableSpan<ResultT> result,
+                                       CallbackT callback) {
+    const size_t dimensionality = dataset_view.dimensionality();
+    const size_t num_datapoints = result.size();
+    if (num_datapoints == 0 || dimensionality == 0) return;
+
+    auto get_datapoint_ptr = [&](size_t i) {
+      const size_t idx =
+          kHasIndices ? indices[i]
+                      : one_to_many_low_level::GetDatapointIndex(result, i);
+      return dataset_view.GetPtr(idx);
+    };
+
+    for (size_t i = 0; i < num_datapoints; ++i) {
+      auto p = get_datapoint_ptr(i);
+      int32_t out = 0;
+      for (size_t j = 0; j < dimensionality; ++j) {
+        out -= query[j] * p[j];
+      }
+      InvokeCallback(callback, i, out, dimensionality, p);
+    }
+  }
+};
+
 template <size_t kUnrollBy, bool kIsSquaredL2>
 SCANN_HIGHWAY_INLINE void ComputeOneToManyScoreImpl(
     const float* __restrict__ query, array<const int8_t*, kUnrollBy>& ptrs,
@@ -683,7 +799,7 @@ SCANN_HIGHWAY_INLINE void InvokeCallbackHighway(const CallbackT& callback,
 }  // namespace research_scann
 HWY_AFTER_NAMESPACE();
 
-#if HWY_ONCE
+#if HWY_ONCE || !SCANN_HIGHWAY_ONE_TO_MANY_DYNAMIC_DISPATCH
 
 namespace research_scann {
 namespace highway {
@@ -929,7 +1045,11 @@ SCANN_HIGHWAY_OUTLINE void OneToManyInt8FloatImpl(
     const IndexT* indices, MutableSpan<ResultElemT> result,
     CallbackT callback) {
   const size_t dims = dataset_view.dimensionality();
-  if (dims == 128) {
+  if (dims == 256) {
+    OneToManyIntFloatTemplate<256, 3, kHasIndices, kIsSquaredL2, true, int8_t>(
+        query, std::move(dataset_view), inv_multipliers_for_squared_l2, indices,
+        result, std::move(callback));
+  } else if (dims == 128) {
     OneToManyIntFloatTemplate<128, 3, kHasIndices, kIsSquaredL2, true, int8_t>(
         query, std::move(dataset_view), inv_multipliers_for_squared_l2, indices,
         result, std::move(callback));
@@ -985,6 +1105,62 @@ SCANN_HIGHWAY_OUTLINE void OneToManyUint4Int8Impl(
     OneToManyIntFloatTemplate<0, 1, kHasIndices, false, true, uint8_t>(
         query, std::move(dataset_view), nullptr, indices, result,
         std::move(callback));
+  }
+}
+
+template <typename DatasetViewT_, typename IndexT_, typename ResultT_,
+          typename CallbackT_, bool kHasIndices_, size_t kPrefetchDepth_,
+          size_t kDimensionality_>
+struct Int8Int8Config {
+  using DatasetViewT = DatasetViewT_;
+  using IndexT = IndexT_;
+  using ResultT = ResultT_;
+  using CallbackT = CallbackT_;
+
+  static constexpr bool kHasIndices = kHasIndices_;
+  static constexpr size_t kPrefetchDepth = kPrefetchDepth_;
+  static constexpr size_t kDimensionality = kDimensionality_;
+  static constexpr size_t kCacheLineBytes = 64;
+
+  static constexpr size_t AutoPrefetchDepth(size_t dimensionality) {
+    constexpr size_t kPrefetchDepthInLines = 128;
+    return kPrefetchDepthInLines / (dimensionality / kCacheLineBytes);
+  }
+
+  template <size_t kNewDimensionality>
+  using WithDimensionality =
+      Int8Int8Config<DatasetViewT, IndexT, ResultT, CallbackT, kHasIndices,
+                     AutoPrefetchDepth(kNewDimensionality), kNewDimensionality>;
+};
+
+template <bool kHasIndices, typename DatasetViewT, typename IndexT,
+          typename ResultT, typename CallbackT>
+SCANN_HIGHWAY_OUTLINE void OneToManyInt8Int8Impl(
+    const int8_t* __restrict__ query, DatasetViewT dataset_view,
+    const IndexT* indices, MutableSpan<ResultT> result, CallbackT callback) {
+  using GenericConfig = Int8Int8Config<DatasetViewT, IndexT, ResultT, CallbackT,
+                                       kHasIndices, 8, 0>;
+
+  size_t dims = dataset_view.dimensionality();
+  if (dims == 512) {
+    using Config512D = GenericConfig::template WithDimensionality<512>;
+    HWY_DISPATCH(ComputeOneToManyInt8Int8<Config512D>::Run)
+    (query, std::move(dataset_view), indices, result, std::move(callback));
+  } else if (dims == 256) {
+    using Config256D = GenericConfig::template WithDimensionality<256>;
+    HWY_DISPATCH(ComputeOneToManyInt8Int8<Config256D>::Run)
+    (query, std::move(dataset_view), indices, result, std::move(callback));
+  } else if (dims == 128) {
+    using Config128D = GenericConfig::template WithDimensionality<128>;
+    HWY_DISPATCH(ComputeOneToManyInt8Int8<Config128D>::Run)
+    (query, std::move(dataset_view), indices, result, std::move(callback));
+  } else if (dims == 64) {
+    using Config64D = GenericConfig::template WithDimensionality<64>;
+    HWY_DISPATCH(ComputeOneToManyInt8Int8<Config64D>::Run)
+    (query, std::move(dataset_view), indices, result, std::move(callback));
+  } else {
+    HWY_DISPATCH(ComputeOneToManyInt8Int8<GenericConfig>::Run)
+    (query, std::move(dataset_view), indices, result, std::move(callback));
   }
 }
 

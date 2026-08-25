@@ -69,7 +69,7 @@ StatusOrSearcherUntyped BruteForceFactory(
     return InvalidArgumentError(
         "Quantized brute force only works with float data.");
   }
-  auto result = make_unique<BruteForceSearcher<T>>(
+  auto result = std::make_unique<BruteForceSearcher<T>>(
       params.pre_reordering_dist, dataset, params.pre_reordering_num_neighbors,
       params.pre_reordering_epsilon);
   result->set_min_distance(params.min_distance);
@@ -91,7 +91,7 @@ StatusOrSearcherUntyped BruteForceFactory(const BruteForceConfig& config,
   if (distance_type == typeid(const DotProductDistance) ||
       distance_type == typeid(const CosineDistance) ||
       distance_type == typeid(const SquaredL2Distance)) {
-    auto result = make_unique<ScalarQuantizedBruteForceSearcher>(
+    auto result = std::make_unique<ScalarQuantizedBruteForceSearcher>(
         params.reordering_dist, std::move(squared_l2_norm_by_datapoint),
         std::move(fixed_point_dataset),
         make_shared<vector<float>>(std::move(inverse_multipliers)),
@@ -108,7 +108,7 @@ StatusOrSearcherUntyped BruteForceFactory(const BruteForceConfig& config,
 StatusOrSearcherUntyped BruteForceFactory(
     const BruteForceConfig& config, const GenericSearchParameters& params,
     shared_ptr<DenseDataset<int16_t>> bfloat16_dataset) {
-  return make_unique<Bfloat16BruteForceSearcher>(
+  return std::make_unique<Bfloat16BruteForceSearcher>(
       params.reordering_dist, std::move(bfloat16_dataset),
       params.pre_reordering_num_neighbors, params.pre_reordering_epsilon,
       config.bfloat16().noise_shaping_threshold());
@@ -145,7 +145,7 @@ StatusOrSearcherUntyped BruteForceFactory<float>(
         config.fixed_point().fixed_point_multiplier_quantile();
     opts.noise_shaping_threshold =
         config.scalar_quantization_noise_shaping_threshold();
-    auto result = make_unique<ScalarQuantizedBruteForceSearcher>(
+    auto result = std::make_unique<ScalarQuantizedBruteForceSearcher>(
         params.pre_reordering_dist, dense, params.pre_reordering_num_neighbors,
         params.pre_reordering_epsilon, opts);
     result->set_min_distance(params.min_distance);
@@ -156,12 +156,12 @@ StatusOrSearcherUntyped BruteForceFactory<float>(
       return InvalidArgumentError(
           "Dataset must be dense for bfloat16 brute force.");
     }
-    return make_unique<Bfloat16BruteForceSearcher>(
+    return std::make_unique<Bfloat16BruteForceSearcher>(
         params.pre_reordering_dist, dense, params.pre_reordering_num_neighbors,
         params.pre_reordering_epsilon,
         config.bfloat16().noise_shaping_threshold());
   } else {
-    auto result = make_unique<BruteForceSearcher<float>>(
+    auto result = std::make_unique<BruteForceSearcher<float>>(
         params.pre_reordering_dist, dataset,
         params.pre_reordering_num_neighbors, params.pre_reordering_epsilon);
     result->set_min_distance(params.min_distance);

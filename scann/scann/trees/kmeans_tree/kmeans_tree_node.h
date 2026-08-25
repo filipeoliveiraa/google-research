@@ -27,6 +27,7 @@
 #include "absl/container/flat_hash_set.h"
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
+#include "absl/log/log.h"
 #include "scann/data_format/datapoint.h"
 #include "scann/data_format/dataset.h"
 #include "scann/distance_measures/distance_measure_base.h"
@@ -61,7 +62,7 @@ class KMeansTreeNode {
   int32_t LeafId() const { return leaf_id_; }
 
   template <typename T>
-  Status ApplyAvq(const DenseDataset<T>& dataset,
+  Status ApplyAvq(const DefaultDenseDatasetView<T>& dataset,
                   ConstSpan<std::vector<DatapointIndex>> datapoints_by_token,
                   float avq_eta, ThreadPool* pool_or_null = nullptr);
 
@@ -85,7 +86,8 @@ class KMeansTreeNode {
  private:
   friend class KMeansTree;
 
-  Status Train(const Dataset& training_data, std::vector<DatapointIndex> subset,
+  Status Train(const DatasetView& training_data,
+               std::vector<DatapointIndex> subset,
                const DistanceMeasure& training_distance, int32_t k_per_level,
                int32_t current_level, KMeansTreeTrainingOptions* opts);
 
@@ -284,7 +286,7 @@ Status KMeansTreeNode::FindChildrenWithSpilling(
 
 template <typename T>
 Status KMeansTreeNode::ApplyAvq(
-    const DenseDataset<T>& dataset,
+    const DefaultDenseDatasetView<T>& dataset,
     ConstSpan<std::vector<DatapointIndex>> datapoints_by_token, float avq_eta,
     ThreadPool* pool_or_null) {
   if (IsLeaf()) return OkStatus();
@@ -292,16 +294,17 @@ Status KMeansTreeNode::ApplyAvq(
   new_centers.set_dimensionality(float_centers_.dimensionality());
   new_centers.Resize(float_centers_.size());
 
-  auto create_child_dataset = [](const DenseDataset<T>& dataset,
-                                 ConstSpan<DatapointIndex> child_datapoint_idxs)
+  const size_t dim = dataset.dimensionality();
+  auto create_child_dataset =
+      [dim](const DefaultDenseDatasetView<T>& dataset,
+            ConstSpan<DatapointIndex> child_datapoint_idxs)
       -> StatusOr<DenseDataset<float>> {
-    vector<float> result(child_datapoint_idxs.size() *
-                         dataset.dimensionality());
+    vector<float> result(child_datapoint_idxs.size() * dim);
     auto output_it = result.begin();
     for (DatapointIndex i : child_datapoint_idxs) {
-      ConstSpan<T> values = dataset[i].values_span();
-      std::copy(values.begin(), values.end(), output_it);
-      output_it += values.size();
+      const T* values = dataset.GetPtr(i);
+      std::copy(values, values + dim, output_it);
+      output_it += dim;
     }
     SCANN_RET_CHECK(output_it == result.end()) << result.end() - output_it;
     return DenseDataset<float>(std::move(result), child_datapoint_idxs.size());

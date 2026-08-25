@@ -44,7 +44,10 @@ float CalculateDatapointScale(const DatapointPtr<float>& dp,
     max_abs = std::max(max_abs,
                        std::abs(dp.values_span()[i] * fixed8_multipliers[i]));
   }
-  return max_abs / numeric_limits<int8_t>::max();
+  max_abs /= numeric_limits<int8_t>::max();
+
+  max_abs = std::min(max_abs, numeric_limits<float>::max() / 128);
+  return max_abs;
 }
 
 template <typename T, typename Span>
@@ -53,10 +56,9 @@ absl::Span<T> CastCharSpan(Span span) {
   return MakeMutableSpan(reinterpret_cast<T*>(span.data()), span.size());
 }
 
-uint32_t DecodeBottomBitsData(int bits, absl::string_view encoded) {
+uint32_t DecodeBottomBitsData(int bits, ConstSpan<uint8_t> encoded) {
   if (bits == 4) {
-    return DecodeBottomBitsDataFromPackedInt4(
-        CastCharSpan<const uint8_t>(encoded));
+    return DecodeBottomBitsDataFromPackedInt4(encoded);
   } else {
     return DecodeBottomBitsDataFromInt8(CastCharSpan<const int8_t>(encoded));
   }
@@ -64,21 +66,22 @@ uint32_t DecodeBottomBitsData(int bits, absl::string_view encoded) {
 
 }  // namespace
 
-absl::Status DecodeScaledDatapoint(int bits, ScaleEncoding scale_encoding,
-                                   absl::string_view encoded, float& scale,
-                                   absl::string_view& data) {
+absl::Status DecodeScaledDatapoint(int bits,
+                                   ResolvedScaleEncoding scale_encoding,
+                                   ConstSpan<uint8_t> encoded, float& scale,
+                                   ConstSpan<uint8_t>& data) {
   SCANN_RET_CHECK(bits == 4 || bits == 8) << bits;
   data = encoded;
   switch (scale_encoding) {
-    case UNSPECIFIED_SCALE_ENCODING:
+    case ResolvedScaleEncoding::kNone:
       scale = 1.0f;
       return OkStatus();
-    case FLOAT32_SCALE_SUFFIX:
+    case ResolvedScaleEncoding::kFloat32ScaleSuffix:
       scale = absl::bit_cast<float>(
           absl::little_endian::Load32(encoded.end() - sizeof(float)));
       data.remove_suffix(sizeof(float));
       return OkStatus();
-    case FLOAT32_SCALE_BOTTOM_BITS:
+    case ResolvedScaleEncoding::kFloat32ScaleBottomBits:
       scale = absl::bit_cast<float>(DecodeBottomBitsData(bits, encoded));
       return OkStatus();
   }
@@ -116,6 +119,8 @@ absl::Status QuantizeScaledFloatDatapointWithNoiseShaping(
     double noise_shaping_threshold, MutableSpan<uint8_t> encoded) {
   SCANN_RET_CHECK(bits == 8 || bits == 4) << bits;
   const size_t dims = dptr.dimensionality();
+  const auto resolved_scale_encoding =
+      ResolveScaleEncoding(bits, scale_encoding, dims);
   SCANN_ASSIGN_OR_RETURN(const size_t stride, ScaledDatapointEncodedBytes(
                                                   bits, scale_encoding, dims));
   SCANN_RET_CHECK_EQ(encoded.size(), stride);
@@ -132,22 +137,23 @@ absl::Status QuantizeScaledFloatDatapointWithNoiseShaping(
   SCANN_RET_CHECK_EQ(fixed8_multipliers.size(), dims);
 
   float inv_scale = 1.0f;
-  using one_to_many_low_level::DatapointBytes;
   if (bits == 4) {
     inv_scale *= (kFP4Max / kFP8Max);
   }
   std::optional<uint32_t> bottom_bits_data;
-  if (scale_encoding != UNSPECIFIED_SCALE_ENCODING) {
+  if (resolved_scale_encoding != ResolvedScaleEncoding::kNone) {
     const float scale = CalculateDatapointScale(dptr, fixed8_multipliers);
     inv_scale /= scale;
     if (std::isinf(inv_scale)) {
       inv_scale = numeric_limits<float>::max();
     }
     uint32_t uint32_scale = absl::bit_cast<uint32_t>(scale);
-    if (scale_encoding == FLOAT32_SCALE_BOTTOM_BITS) {
+    if (resolved_scale_encoding ==
+        ResolvedScaleEncoding::kFloat32ScaleBottomBits) {
       bottom_bits_data = absl::little_endian::FromHost32(uint32_scale);
     } else {
-      SCANN_RET_CHECK_EQ(scale_encoding, FLOAT32_SCALE_SUFFIX);
+      SCANN_RET_CHECK(resolved_scale_encoding ==
+                      ResolvedScaleEncoding::kFloat32ScaleSuffix);
       absl::little_endian::Store32(encoded.end() - sizeof(float), uint32_scale);
       encoded.remove_suffix(sizeof(float));
     }
@@ -192,19 +198,30 @@ static void ReconstructInt4Datapoint(
     float scale, MutableSpan<float>& dp) {
   std::vector<uint8_t> unpacked(dp.size());
   UnpackNibblesDatapoint(data, MakeMutableSpan(unpacked), dp.size());
-  ReconstructInt8Datapoint(CastCharSpan<const int8_t>(unpacked),
-                           inverse_fixed8_multipliers, scale, dp);
+  const float conversion_factor = scale * (kFP8Max / kFP4Max);
+  if (inverse_fixed8_multipliers.size() > 1) {
+    for (size_t i : Seq(dp.size())) {
+      dp[i] = (static_cast<float>(unpacked[i]) - kFP4Max) * conversion_factor *
+              inverse_fixed8_multipliers[i];
+    }
+  } else {
+    for (size_t i : Seq(dp.size())) {
+      dp[i] = (static_cast<float>(unpacked[i]) - kFP4Max) * conversion_factor;
+    }
+  }
 }
 
 absl::Status ReconstructScaledDatapoint(
     int bits, ConstSpan<float> inverse_fixed8_multipliers,
-    ScaleEncoding scale_encoding, absl::string_view encoded,
-    MutableSpan<float>& dp) {
+    ScaleEncoding scale_encoding, ConstSpan<uint8_t> encoded,
+    MutableSpan<float> dp) {
   SCANN_RET_CHECK(bits == 8 || bits == 4) << bits;
-  absl::string_view data;
+  const auto resolved_scale_encoding =
+      ResolveScaleEncoding(bits, scale_encoding, dp.size());
+  ConstSpan<uint8_t> data;
   float scale;
-  SCANN_RETURN_IF_ERROR(
-      DecodeScaledDatapoint(bits, scale_encoding, encoded, scale, data));
+  SCANN_RETURN_IF_ERROR(DecodeScaledDatapoint(bits, resolved_scale_encoding,
+                                              encoded, scale, data));
   if (inverse_fixed8_multipliers.size() == 1) {
     scale *= inverse_fixed8_multipliers[0];
   } else if (inverse_fixed8_multipliers.size() > 1) {
@@ -212,10 +229,8 @@ absl::Status ReconstructScaledDatapoint(
   }
   if (bits == 4) {
     SCANN_RET_CHECK_EQ(DivRoundUp(dp.size(), 2), data.size());
-    scale *= (kFP4Max / kFP8Max);
     SCANN_RET_CHECK_EQ(data.size(), DivRoundUp(dp.size(), 2));
-    ReconstructInt4Datapoint(CastCharSpan<const uint8_t>(data),
-                             inverse_fixed8_multipliers, scale, dp);
+    ReconstructInt4Datapoint(data, inverse_fixed8_multipliers, scale, dp);
   } else {
     SCANN_RET_CHECK_EQ(data.size(), dp.size());
     ReconstructInt8Datapoint(CastCharSpan<const int8_t>(data),

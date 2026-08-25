@@ -40,6 +40,8 @@ class UntypedMetadataGetter {
 
   virtual Status RemoveMetadata(DatapointIndex removed_idx);
 
+  virtual void ShrinkToFit() {}
+
   virtual bool needs_dataset() const;
 
   virtual research_scann::TypeTag TypeTag() const = 0;

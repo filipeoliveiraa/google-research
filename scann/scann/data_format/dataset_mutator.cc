@@ -27,7 +27,7 @@ template <typename T>
 StatusOr<unique_ptr<typename DenseDataset<T>::Mutator>>
 DenseDataset<T>::Mutator::Create(DenseDataset<T>* dataset) {
   SCANN_ASSIGN_OR_RETURN(auto mutator, dataset->docids()->GetMutator());
-  return make_unique<Mutator>(Mutator(dataset, mutator));
+  return std::make_unique<Mutator>(Mutator(dataset, mutator));
 }
 
 template <typename T>

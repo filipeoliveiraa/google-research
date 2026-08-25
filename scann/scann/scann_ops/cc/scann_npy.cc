@@ -61,7 +61,7 @@ ScannNumpy::ScannNumpy(const std::string& artifacts_dir,
 }
 
 ScannNumpy::ScannNumpy(const np_row_major_arr<float>& np_dataset,
-                       const std::string& config, int training_threads) {
+                       absl::string_view config, int training_threads) {
   if (np_dataset.ndim() != 2)
     throw std::invalid_argument("Dataset input must be two-dimensional");
   ConstSpan<float> dataset(np_dataset.data(), np_dataset.size());

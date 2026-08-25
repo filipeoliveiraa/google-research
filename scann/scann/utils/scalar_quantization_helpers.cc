@@ -54,10 +54,9 @@ std::vector<float> ComputeMaxQuantizationMultipliers(
     }
   }
   for (float& f : multipliers) {
-    if (f == 0.0f) {
+    f = numeric_limits<int8_t>::max() / f;
+    if (f == std::numeric_limits<float>::infinity()) {
       f = 1.0f;
-    } else {
-      f = numeric_limits<int8_t>::max() / f;
     }
   }
   return multipliers;

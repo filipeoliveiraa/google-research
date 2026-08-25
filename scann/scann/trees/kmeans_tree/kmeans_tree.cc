@@ -71,7 +71,7 @@ KMeansTree KMeansTree::CreateFlat(DenseDataset<float> centers) {
   return result;
 }
 
-Status KMeansTree::Train(const Dataset& training_data,
+Status KMeansTree::Train(const DatasetView& training_data,
                          const DistanceMeasure& training_distance,
                          int32_t k_per_level,
                          KMeansTreeTrainingOptions* training_options) {

@@ -459,8 +459,11 @@ Status AhImpl<T>::IndexDatapointNoiseShaped(
   vector<uint16_t> subspace_idxs(result.size());
   std::iota(subspace_idxs.begin(), subspace_idxs.end(), 0U);
   vector<double> subspace_residual_norms(result.size());
+  SCANN_RET_CHECK_EQ(residual_stats.size(), result.size());
   for (size_t subspace_idx : IndicesOf(result)) {
     const uint8_t cluster_idx = result[subspace_idx];
+    DCHECK_LT(subspace_idx, residual_stats.size());
+    DCHECK_LT(cluster_idx, residual_stats[subspace_idx].size());
     subspace_residual_norms[subspace_idx] =
         residual_stats[subspace_idx][cluster_idx].residual_norm;
   }
@@ -476,6 +479,7 @@ Status AhImpl<T>::IndexDatapointNoiseShaped(
     cur_round_changes = false;
     for (size_t i : IndicesOf(subspace_idxs)) {
       const size_t subspace_idx = subspace_idxs[i];
+      DCHECK_LT(subspace_idx, residual_stats.size());
       ConstSpan<SubspaceResidualStats> cur_subspace_residual_stats =
           residual_stats[subspace_idx];
       const uint8_t cur_center_idx = result_sorted[i];
@@ -495,6 +499,8 @@ Status AhImpl<T>::IndexDatapointNoiseShaped(
   for (size_t i : IndicesOf(result_sorted)) {
     const size_t subspace_idx = subspace_idxs[i];
     const uint8_t center_idx = result_sorted[i];
+    DCHECK_LT(subspace_idx, residual_stats.size());
+    DCHECK_LT(center_idx, residual_stats[subspace_idx].size());
     result[subspace_idx] = center_idx;
     final_residual_norm +=
         residual_stats[subspace_idx][center_idx].residual_norm;
@@ -586,6 +592,20 @@ float ComputeMultiplierByQuantile(ConstSpan<float> raw_lookup, float quantile,
   }
 }
 
+template <typename TargetT>
+inline TargetT SafeSaturatingCast(float f) {
+  if (std::isnan(f)) {
+    return 0;
+  }
+  if (f >= static_cast<float>(std::numeric_limits<TargetT>::max())) {
+    return std::numeric_limits<TargetT>::max();
+  }
+  if (f <= static_cast<float>(std::numeric_limits<TargetT>::min())) {
+    return std::numeric_limits<TargetT>::min();
+  }
+  return static_cast<TargetT>(f);
+}
+
 template <typename T, typename Lambda>
 inline vector<T> ConvertLookupToFixedPointImpl(ConstSpan<float> raw_lookup,
                                                Lambda convert_to_int_lambda,
@@ -617,28 +637,23 @@ vector<T> ConvertLookupToFixedPoint(
   if (conversion_options.multiplier_quantile() == 1.0f) {
     if (conversion_options.float_to_int_conversion_method() == kRound) {
       return ConvertLookupToFixedPointImpl<T>(
-          raw_lookup, [](float f) { return std::round(f); }, *multiplier);
+          raw_lookup,
+          [](float f) { return SafeSaturatingCast<SignedT>(std::round(f)); },
+          *multiplier);
     } else {
       return ConvertLookupToFixedPointImpl<T>(
-          raw_lookup, [](float f) { return static_cast<SignedT>(f); },
+          raw_lookup, [](float f) { return SafeSaturatingCast<SignedT>(f); },
           *multiplier);
     }
   } else {
-    auto compress_to_bounds = [](float f) {
-      f = std::min<float>(f, numeric_limits<SignedT>::max());
-      return std::max<float>(f, numeric_limits<SignedT>::min());
-    };
     if (conversion_options.float_to_int_conversion_method() == kRound) {
       return ConvertLookupToFixedPointImpl<T>(
           raw_lookup,
-          [&](float f) {
-            return static_cast<SignedT>(std::round(compress_to_bounds(f)));
-          },
+          [&](float f) { return SafeSaturatingCast<SignedT>(std::round(f)); },
           *multiplier);
     } else {
       return ConvertLookupToFixedPointImpl<T>(
-          raw_lookup,
-          [&](float f) { return static_cast<SignedT>(compress_to_bounds(f)); },
+          raw_lookup, [&](float f) { return SafeSaturatingCast<SignedT>(f); },
           *multiplier);
     }
   }

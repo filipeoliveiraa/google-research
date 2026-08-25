@@ -152,7 +152,7 @@ class FixedLengthDocidCollection final : public DocidCollectionInterface {
     docids.Reserve(length);
     for (uint32_t i = 0; i < length; ++i) {
       std::string encoded;
-      strings::KeyFromUint32(i, &encoded);
+      encoded = strings::Uint32ToKey(i);
       SCANN_RETURN_IF_ERROR(docids.Append(encoded));
     }
     return docids;

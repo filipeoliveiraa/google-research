@@ -42,6 +42,7 @@ StatusOr<shared_ptr<const Output>> WeakPtrCache(
   auto create_new_output = [&]() -> StatusOr<shared_ptr<const Output>> {
     SCANN_ASSIGN_OR_RETURN(shared_ptr<const Output> output,
                            base_factory(inputs...));
+
     cache[fp] = output;
     return output;
   };

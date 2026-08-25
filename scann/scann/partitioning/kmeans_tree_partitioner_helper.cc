@@ -77,7 +77,7 @@ CreateRecommendedAsymmetricSearcher(
   SCANN_ASSIGN_OR_RETURN(shared_ptr<asymmetric_hashing2::Model<float>> model,
                          asymmetric_hashing2::TrainSingleMachine<float>(
                              *dataset, training_opts, pool));
-  auto indexer = make_unique<asymmetric_hashing2::Indexer<float>>(
+  auto indexer = std::make_unique<asymmetric_hashing2::Indexer<float>>(
       training_opts.projector(), quantization_distance, model);
 
   auto hashed_dataset = std::make_shared<DenseDataset<uint8_t>>();
@@ -88,8 +88,9 @@ CreateRecommendedAsymmetricSearcher(
     hashed_dataset->AppendOrDie(dp.ToPtr());
   }
 
-  auto queryer = make_unique<asymmetric_hashing2::AsymmetricQueryer<float>>(
-      training_opts.projector(), quantization_distance, model);
+  auto queryer =
+      std::make_unique<asymmetric_hashing2::AsymmetricQueryer<float>>(
+          training_opts.projector(), quantization_distance, model);
   asymmetric_hashing2::SearcherOptions<float> searcher_opts(std::move(queryer));
   searcher_opts.set_asymmetric_lookup_type(hasher_config.lookup_type());
   unique_ptr<SingleMachineSearcherBase<float>> ah_searcher(

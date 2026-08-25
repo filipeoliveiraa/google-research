@@ -271,7 +271,7 @@ class ImmutableMemoryOptCollection : public DocidCollectionInterface {
     chunks_.shrink_to_fit();
   }
   void Clear() final {
-    std::exchange(chunks_, {});
+    chunks_.clear();
     last_chunk_size_ = 0;
   }
 
@@ -341,7 +341,7 @@ class ImmutableMemoryOptCollection : public DocidCollectionInterface {
         CHECK_OK(result->Append(payload));
         ptr = payload.data() + payload.size();
       }
-      std::exchange(chunk, {});
+      chunk.clear();
     }
     Clear();
     return result;
@@ -444,7 +444,7 @@ void VariableLengthDocidCollection::ShrinkToFit() {
 
 void VariableLengthDocidCollection::InstantiateImpl() {
   if (mutator_) {
-    impl_ = make_unique<MutableCollection>(size_);
+    impl_ = std::make_unique<MutableCollection>(size_);
   } else if (absl::GetFlag(
                  FLAGS_use_memory_optimized_immutable_docid_collection)) {
     impl_ = std::make_unique<ImmutableMemoryOptCollection>(size_);
@@ -659,7 +659,7 @@ MutableCollection& MutableCollection::operator=(const MutableCollection& rhs) {
 
 unique_ptr<MutableCollection> MutableCollection::FromImmutableDestructive(
     ImmutableCollection* static_impl) {
-  auto result = make_unique<MutableCollection>();
+  auto result = std::make_unique<MutableCollection>();
   result->Reserve(static_impl->size());
   for (auto& chunk : static_impl->chunks_) {
     for (size_t i : IndicesOf(chunk.payload_offsets)) {

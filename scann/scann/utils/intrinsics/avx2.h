@@ -1010,6 +1010,17 @@ SCANN_AVX2_INLINE uint32_t GetComparisonMask(Avx2<float, 4> cmp) {
   return GetComparisonMask(cmp[0], cmp[1], cmp[2], cmp[3]);
 }
 
+SCANN_AVX2_INLINE uint32_t GetComparisonMask(Avx2<int32_t> v0, Avx2<int32_t> v1,
+                                             Avx2<int32_t> v2,
+                                             Avx2<int32_t> v3) {
+  return v0.MaskFromHighBits() | (v1.MaskFromHighBits() << 8) |
+         (v2.MaskFromHighBits() << 16) | (v3.MaskFromHighBits() << 24);
+}
+
+SCANN_AVX2_INLINE uint32_t GetComparisonMask(Avx2<int32_t, 4> cmp) {
+  return GetComparisonMask(cmp[0], cmp[1], cmp[2], cmp[3]);
+}
+
 namespace avx2 {
 
 SCANN_INLINE string_view SimdName() { return "AVX2"; }

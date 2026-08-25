@@ -37,28 +37,19 @@ namespace research_scann {
 namespace mm_internal {
 
 template <typename FloatT, typename CallbackT>
-void DenseDistanceManyToManyImpl(const DistanceMeasure& dist,
-                                 DefaultDenseDatasetView<FloatT> queries,
-                                 const DenseDataset<FloatT>& database,
-                                 ThreadPool* pool, CallbackT callback);
+void DenseDistanceManyToManyImpl(
+    const DistanceMeasure& dist, DefaultDenseDatasetView<FloatT> queries,
+    const DefaultDenseDatasetView<FloatT>& database, ThreadPool* pool,
+    CallbackT callback);
 
 SCANN_INSTANTIATE_MANY_TO_MANY(extern, DenseDistanceManyToManyImpl);
-
-template <typename FloatT, typename CallbackT>
-SCANN_INLINE void DenseDistanceManyToManyImpl(
-    const DistanceMeasure& dist, const DenseDataset<FloatT>& queries,
-    const DenseDataset<FloatT>& database, ThreadPool* pool,
-    CallbackT callback) {
-  DenseDistanceManyToManyImpl(dist, DefaultDenseDatasetView<FloatT>(queries),
-                              database, pool, callback);
-}
 
 }  // namespace mm_internal
 
 template <typename FloatT>
 void DenseDistanceManyToMany(const DistanceMeasure& dist,
-                             const DenseDataset<FloatT>& queries,
-                             const DenseDataset<FloatT>& database,
+                             const DefaultDenseDatasetView<FloatT>& queries,
+                             const DefaultDenseDatasetView<FloatT>& database,
                              ManyToManyResultsCallback<FloatT> callback) {
   mm_internal::DenseDistanceManyToManyImpl(dist, queries, database, nullptr,
                                            std::move(callback));
@@ -66,8 +57,8 @@ void DenseDistanceManyToMany(const DistanceMeasure& dist,
 
 template <typename FloatT>
 void DenseDistanceManyToMany(const DistanceMeasure& dist,
-                             const DenseDataset<FloatT>& queries,
-                             const DenseDataset<FloatT>& database,
+                             const DefaultDenseDatasetView<FloatT>& queries,
+                             const DefaultDenseDatasetView<FloatT>& database,
                              ThreadPool* pool,
                              ManyToManyResultsCallback<FloatT> callback) {
   mm_internal::DenseDistanceManyToManyImpl(dist, queries, database, pool,
@@ -75,16 +66,16 @@ void DenseDistanceManyToMany(const DistanceMeasure& dist,
 }
 template <typename FloatT>
 void DenseDistanceManyToMany(const DistanceMeasure& dist,
-                             const DenseDataset<FloatT>& queries,
-                             const DenseDataset<FloatT>& database,
+                             const DefaultDenseDatasetView<FloatT>& queries,
+                             const DefaultDenseDatasetView<FloatT>& database,
                              EpsilonFilteringCallback<FloatT> callback) {
   mm_internal::DenseDistanceManyToManyImpl(dist, queries, database, nullptr,
                                            std::move(callback));
 }
 template <typename FloatT>
 void DenseDistanceManyToMany(const DistanceMeasure& dist,
-                             const DenseDataset<FloatT>& queries,
-                             const DenseDataset<FloatT>& database,
+                             const DefaultDenseDatasetView<FloatT>& queries,
+                             const DefaultDenseDatasetView<FloatT>& database,
                              ThreadPool* pool,
                              EpsilonFilteringCallback<FloatT> callback) {
   mm_internal::DenseDistanceManyToManyImpl(dist, queries, database, pool,
@@ -94,7 +85,8 @@ void DenseDistanceManyToMany(const DistanceMeasure& dist,
 template <typename FloatT>
 vector<pair<DatapointIndex, FloatT>> DenseDistanceManyToManyTop1(
     const DistanceMeasure& dist, DefaultDenseDatasetView<FloatT> queries,
-    const DenseDataset<FloatT>& database, ThreadPool* pool = nullptr) {
+    const DefaultDenseDatasetView<FloatT>& database,
+    ThreadPool* pool = nullptr) {
   static_assert(IsSameAny<FloatT, float, double>(),
                 "DenseDistanceManyToMany only works with float/double.");
   vector<pair<DatapointIndex, FloatT>> result(
@@ -108,39 +100,60 @@ vector<pair<DatapointIndex, FloatT>> DenseDistanceManyToManyTop1(
   return result;
 }
 
-template <typename FloatT>
-vector<pair<DatapointIndex, FloatT>> DenseDistanceManyToManyTop1(
-    const DistanceMeasure& dist, const DenseDataset<FloatT>& queries,
-    const DenseDataset<FloatT>& database, ThreadPool* pool = nullptr) {
-  return DenseDistanceManyToManyTop1(
-      dist, DefaultDenseDatasetView<FloatT>(queries), database, pool);
-}
-
+template <typename TopN>
 inline void DenseDistanceManyToManyTopK(
-    const DistanceMeasure& dist, const DenseDataset<float>& queries,
-    const DenseDataset<float>& database,
-    MutableSpan<FastTopNeighbors<float>> topns, ThreadPool* pool = nullptr) {
+    const DistanceMeasure& dist, const DefaultDenseDatasetView<float>& queries,
+    const DefaultDenseDatasetView<float>& database, MutableSpan<TopN> topns,
+    ThreadPool* pool = nullptr) {
   DCHECK_EQ(queries.size(), topns.size());
-  ManyToManyTopKCallback topk_callback(topns, pool);
+  ManyToManyTopKCallback<TopN> topk_callback(topns, pool);
   EpsilonFilteringCallback<float> eps_callback(topk_callback.epsilons(),
                                                topk_callback);
   mm_internal::DenseDistanceManyToManyImpl(dist, queries, database, pool,
                                            eps_callback);
 }
 
+template <typename TopN>
 inline void DenseDistanceManyToManyTopKRemapped(
-    const DistanceMeasure& dist, const DenseDataset<float>& queries,
-    const DenseDataset<float>& database,
-    MutableSpan<FastTopNeighbors<float>*> topns,
+    const DistanceMeasure& dist, const DefaultDenseDatasetView<float>& queries,
+    const DefaultDenseDatasetView<float>& database, MutableSpan<TopN*> topns,
     ConstSpan<DatapointIndex> datapoint_index_mapping,
     ThreadPool* pool = nullptr) {
   DCHECK_EQ(queries.size(), topns.size());
-  ManyToManyTopKCallbackRemapped topk_callback(topns, datapoint_index_mapping,
-                                               pool);
+  ManyToManyTopKCallbackRemapped<TopN> topk_callback(
+      topns, datapoint_index_mapping, pool);
   EpsilonFilteringCallback<float> eps_callback(topk_callback.epsilons(),
                                                topk_callback);
   mm_internal::DenseDistanceManyToManyImpl(dist, queries, database, pool,
                                            eps_callback);
+}
+
+template <typename FloatT, typename... Args>
+void DenseDistanceManyToMany(const DistanceMeasure& dist,
+                             const DenseDataset<FloatT>& queries,
+                             const DenseDataset<FloatT>& database,
+                             Args... args) {
+  return DenseDistanceManyToMany<FloatT>(
+      dist, DefaultDenseDatasetView<FloatT>(queries),
+      DefaultDenseDatasetView<FloatT>(database), args...);
+}
+
+template <typename FloatT, typename... Args>
+vector<pair<DatapointIndex, FloatT>> DenseDistanceManyToManyTop1(
+    const DistanceMeasure& dist, const DenseDataset<FloatT>& queries,
+    const DenseDataset<FloatT>& database, Args... args) {
+  return DenseDistanceManyToManyTop1<FloatT>(
+      dist, DefaultDenseDatasetView<FloatT>(queries),
+      DefaultDenseDatasetView<FloatT>(database), args...);
+}
+
+template <typename FloatT, typename... Args>
+vector<pair<DatapointIndex, FloatT>> DenseDistanceManyToManyTop1(
+    const DistanceMeasure& dist, const DefaultDenseDatasetView<FloatT>& queries,
+    const DenseDataset<FloatT>& database, Args... args) {
+  return DenseDistanceManyToManyTop1<FloatT>(
+      dist, DefaultDenseDatasetView<FloatT>(queries),
+      DefaultDenseDatasetView<FloatT>(database), args...);
 }
 
 }  // namespace research_scann

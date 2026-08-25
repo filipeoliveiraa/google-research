@@ -16,6 +16,7 @@
 
 #include <cstdint>
 
+#include "absl/flags/flag.h"
 #include "absl/log/check.h"
 #include "scann/data_format/datapoint.h"
 #include "scann/data_format/dataset.h"
@@ -23,6 +24,10 @@
 #include "scann/distance_measures/one_to_many/scale_encoding.pb.h"
 #include "scann/utils/common.h"
 #include "scann/utils/types.h"
+
+ABSL_FLAG(
+    bool, scann_one_to_many_enable_int8_quantized_query, false,
+    "Enable int8 quantization of the query vector in OneToManyInt8Float.");
 
 namespace research_scann {
 namespace one_to_many_low_level {
@@ -32,56 +37,59 @@ using one_to_many_low_level::SetDistanceFunctor;
 template <bool kHasIndices = false, typename ResultElemT>
 SCANN_INLINE void DenseDotProductDistanceOneToManyInt8FloatDispatch(
     const DatapointPtr<float>& query, DefaultDenseDatasetView<int8_t> view,
-    const DatapointIndex* indices, MutableSpan<ResultElemT> result) {
+    const DatapointIndex* indices, MutableSpan<ResultElemT> result,
+    OneToManyOptions options = OneToManyOptions()) {
   constexpr const float* kNoMultipliersForDotProductDistance = nullptr;
   OneToManyInt8FloatDispatch<kHasIndices, false>(
       query.values(), view, kNoMultipliersForDotProductDistance, indices,
-      result, SetDistanceFunctor<ResultElemT>(result));
+      result, SetDistanceFunctor<ResultElemT>(result), options);
 }
 
 }  // namespace one_to_many_low_level
 
 void DenseDotProductDistanceOneToManyInt8Float(
     const DatapointPtr<float>& query, DefaultDenseDatasetView<int8_t> database,
-    MutableSpan<float> result) {
+    MutableSpan<float> result, OneToManyOptions options) {
   one_to_many_low_level::DenseDotProductDistanceOneToManyInt8FloatDispatch(
-      query, database, static_cast<DatapointIndex*>(nullptr), result);
+      query, database, static_cast<DatapointIndex*>(nullptr), result, options);
 }
 
 void DenseDotProductDistanceOneToManyInt8Float(
     const DatapointPtr<float>& query, DefaultDenseDatasetView<int8_t> database,
-    MutableSpan<double> result) {
+    MutableSpan<double> result, OneToManyOptions options) {
   one_to_many_low_level::DenseDotProductDistanceOneToManyInt8FloatDispatch(
-      query, database, static_cast<DatapointIndex*>(nullptr), result);
+      query, database, static_cast<DatapointIndex*>(nullptr), result, options);
 }
 
 void DenseDotProductDistanceOneToManyInt8Float(
     const DatapointPtr<float>& query, DefaultDenseDatasetView<int8_t> database,
-    MutableSpan<pair<uint32_t, float>> result) {
+    MutableSpan<pair<uint32_t, float>> result, OneToManyOptions options) {
   one_to_many_low_level::DenseDotProductDistanceOneToManyInt8FloatDispatch(
-      query, database, static_cast<DatapointIndex*>(nullptr), result);
+      query, database, static_cast<DatapointIndex*>(nullptr), result, options);
 }
 
 void DenseDotProductDistanceOneToManyInt8Float(
     const DatapointPtr<float>& query, DefaultDenseDatasetView<int8_t> database,
-    MutableSpan<pair<uint64_t, float>> result) {
+    MutableSpan<pair<uint64_t, float>> result, OneToManyOptions options) {
   one_to_many_low_level::DenseDotProductDistanceOneToManyInt8FloatDispatch(
-      query, database, static_cast<DatapointIndex*>(nullptr), result);
+      query, database, static_cast<DatapointIndex*>(nullptr), result, options);
 }
 
 void DenseDotProductDistanceOneToManyInt8Float(
     const DatapointPtr<float>& query, DefaultDenseDatasetView<int8_t> database,
-    MutableSpan<pair<DatapointIndex, double>> result) {
+    MutableSpan<pair<DatapointIndex, double>> result,
+    OneToManyOptions options) {
   one_to_many_low_level::DenseDotProductDistanceOneToManyInt8FloatDispatch(
-      query, database, static_cast<DatapointIndex*>(nullptr), result);
+      query, database, static_cast<DatapointIndex*>(nullptr), result, options);
 }
 
 void DenseDotProductDistanceOneToManyInt8Float(
     const DatapointPtr<float>& query, DefaultDenseDatasetView<int8_t> dataset,
-    ConstSpan<DatapointIndex> indices, MutableSpan<float> result) {
+    ConstSpan<DatapointIndex> indices, MutableSpan<float> result,
+    OneToManyOptions options) {
   QCHECK_EQ(indices.size(), result.size());
   one_to_many_low_level::DenseDotProductDistanceOneToManyInt8FloatDispatch<
-      true>(query, dataset, indices.data(), result);
+      true>(query, dataset, indices.data(), result, options);
 }
 
 void DenseDotProductDistanceOneToManyBf16Float(

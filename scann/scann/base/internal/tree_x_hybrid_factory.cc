@@ -24,6 +24,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "scann/base/internal/single_machine_factory_impl.h"
 #include "scann/base/single_machine_base.h"
@@ -303,7 +304,7 @@ StatusOrSearcherUntyped TreeAhHybridResidualFactory<float>(
         "Tree-AH with residual quantization only works with dot product "
         "distance for now.");
   }
-  auto result = make_unique<TreeAHHybridResidual>(
+  auto result = std::make_unique<TreeAHHybridResidual>(
       dense, params.pre_reordering_num_neighbors,
       params.pre_reordering_epsilon);
 
@@ -447,7 +448,7 @@ StatusOrPtr<TreeXHybridSMMD<float>> PretrainedTreeSQFactoryFromAssets(
 
   auto inverse_multipliers = internal::InverseMultiplier(fp_assets.get());
 
-  auto searcher = make_unique<TreeXHybridSMMD<float>>(
+  auto searcher = std::make_unique<TreeXHybridSMMD<float>>(
       nullptr, nullptr, params.pre_reordering_num_neighbors,
       params.pre_reordering_epsilon);
 
@@ -575,7 +576,7 @@ StatusOrSearcherUntyped NonResidualTreeXHybridFactory(
     }
   }
 
-  auto result = make_unique<TreeXHybridSMMD<T>>(
+  auto result = std::make_unique<TreeXHybridSMMD<T>>(
       dataset, opts->hashed_dataset, params.pre_reordering_num_neighbors,
       params.pre_reordering_epsilon);
 
@@ -624,7 +625,7 @@ StatusOrSearcherUntyped NonResidualTreeXHybridFactory(
     }
 
     result->set_leaf_searcher_optional_parameter_creator(
-        make_unique<
+        std::make_unique<
             asymmetric_hashing2::PrecomputedAsymmetricLookupTableCreator<T>>(
             training_results.queryer, training_results.lookup_type));
   } else {
@@ -671,7 +672,7 @@ StatusOrSearcherUntyped NonResidualTreeXHybridFactory(
                 [leaf_searcher_builder, params](
                     shared_ptr<const DenseDataset<int16_t>> dataset_partition,
                     int32_t token) {
-                  return make_unique<Bfloat16BruteForceSearcher>(
+                  return std::make_unique<Bfloat16BruteForceSearcher>(
                       params.pre_reordering_dist, dataset_partition,
                       params.pre_reordering_num_neighbors,
                       params.pre_reordering_epsilon);

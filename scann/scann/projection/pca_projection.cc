@@ -44,7 +44,8 @@ PcaProjection<T>::PcaProjection(const int32_t input_dims,
 }
 
 template <typename T>
-void PcaProjection<T>::Create(const Dataset& data, const bool build_covariance,
+void PcaProjection<T>::Create(const DatasetView& data,
+                              const bool build_covariance,
                               ThreadPool* parallelization_pool) {
   vector<float> eigen_vals;
 
@@ -62,7 +63,7 @@ void PcaProjection<T>::Create(const Dataset& data, const bool build_covariance,
 }
 
 template <typename T>
-void PcaProjection<T>::Create(const Dataset& data,
+void PcaProjection<T>::Create(const DatasetView& data,
                               const float pca_significance_threshold,
                               const float pca_truncation_threshold,
                               const bool build_covariance,

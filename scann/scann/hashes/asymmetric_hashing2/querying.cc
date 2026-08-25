@@ -180,9 +180,27 @@ PackedDataset CreatePackedDataset(
 }
 
 DenseDataset<uint8_t> UnpackDataset(const PackedDatasetView& packed) {
-  const size_t num_dim = packed.num_blocks, num_dp = packed.num_datapoints;
+  vector<uint8_t> unpacked_vec(packed.num_blocks * packed.num_datapoints);
+  DenseDataset<uint8_t> unpacked(std::move(unpacked_vec),
+                                 packed.num_datapoints);
 
-  vector<uint8_t> unpacked(num_dim * num_dp);
+  UnpackDataset(packed, unpacked).IgnoreError();
+  return unpacked;
+}
+
+absl::Status UnpackDataset(const PackedDatasetView& packed,
+                           DenseDataset<uint8_t>& unpacked) {
+  const size_t num_dim = packed.num_blocks;
+  const size_t num_dp = packed.num_datapoints;
+  SCANN_RET_CHECK_GE(unpacked.size(), num_dp)
+      << "Unpacked dataset size (" << unpacked.size()
+      << ") is smaller than the number of datapoints (" << num_dp << ").";
+  if (unpacked.dimensionality() != num_dim) {
+    return absl::InvalidArgumentError(absl::StrCat(
+        "Unpacked dataset dimensionality (", unpacked.dimensionality(),
+        ") is smaller than the number of blocks (", num_dim, ")."));
+  }
+  MutableSpan<uint8_t> output = unpacked.mutable_data();
 
   int idx = 0;
   for (int dp_block = 0; dp_block < num_dp / kNumDatapointsPerBlock;
@@ -191,9 +209,9 @@ DenseDataset<uint8_t> UnpackDataset(const PackedDatasetView& packed) {
     for (int dim = 0; dim < num_dim; dim++) {
       for (int offset = 0; offset < kPackedDatasetBlockSize; offset++) {
         uint8_t data = packed.bit_packed_data[idx++];
-        unpacked[(out_idx | offset) * num_dim + dim] =
+        output[(out_idx | offset) * num_dim + dim] =
             data & (kPackedDatasetBlockSize - 1);
-        unpacked[(out_idx | 16 | offset) * num_dim + dim] =
+        output[(out_idx | 16 | offset) * num_dim + dim] =
             data >> kPackedDataSetBlockSizeBits;
       }
     }
@@ -207,13 +225,13 @@ DenseDataset<uint8_t> UnpackDataset(const PackedDatasetView& packed) {
         int idx1 = out_idx | offset,
             idx2 = out_idx | kPackedDatasetBlockSize | offset;
         if (idx1 < num_dp)
-          unpacked[idx1 * num_dim + dim] = data & (kPackedDatasetBlockSize - 1);
+          output[idx1 * num_dim + dim] = data & (kPackedDatasetBlockSize - 1);
         if (idx2 < num_dp)
-          unpacked[idx2 * num_dim + dim] = data >> kPackedDataSetBlockSizeBits;
+          output[idx2 * num_dim + dim] = data >> kPackedDataSetBlockSizeBits;
       }
     }
   }
-  return DenseDataset<uint8_t>(std::move(unpacked), packed.num_datapoints);
+  return OkStatus();
 }
 
 PackedDatasetView CreatePackedDatasetView(const PackedDataset& packed_dataset) {

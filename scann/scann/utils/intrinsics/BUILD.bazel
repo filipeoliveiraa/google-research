@@ -195,7 +195,6 @@ cc_library(
         ":flags",
         "//scann/utils:common",
         "//scann/utils:index_sequence",
-        "//scann/utils:types",
         "@com_google_highway//:hwy",
     ],
 )

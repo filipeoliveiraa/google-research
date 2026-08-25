@@ -71,7 +71,7 @@ class KMeansTreePartitioner final : public KMeansTreeLikePartitioner<T> {
 
   ~KMeansTreePartitioner() final;
 
-  Status CreatePartitioning(const Dataset& training_dataset,
+  Status CreatePartitioning(const DatasetView& training_dataset,
                             const DistanceMeasure& training_dist,
                             int32_t k_per_level,
                             KMeansTreeTrainingOptions* opts);
@@ -83,11 +83,11 @@ class KMeansTreePartitioner final : public KMeansTreeLikePartitioner<T> {
   void set_query_spilling_threshold(double val);
 
   void set_query_spilling_max_centers(uint32_t val) {
-    query_spilling_max_centers_ = val;
+    query_spilling_max_centers_ = static_cast<int32_t>(val);
   }
 
   void set_database_spilling_fixed_number_of_centers(uint32_t val) {
-    database_spilling_fixed_number_of_centers_ = val;
+    database_spilling_fixed_number_of_centers_ = static_cast<int32_t>(val);
   }
 
   void set_orthogonality_amplification_lambda(float val) {
@@ -140,17 +140,17 @@ class KMeansTreePartitioner final : public KMeansTreeLikePartitioner<T> {
 
   Status TokenForDatapoint(const DatapointPtr<T>& dptr,
                            int32_t* result) const final;
-  Status TokenForDatapointBatched(const TypedDataset<T>& queries,
+  Status TokenForDatapointBatched(const TypedDatasetView<T>& queries,
                                   std::vector<int32_t>* results,
                                   ThreadPool* pool = nullptr) const final;
 
   Status TokensForDatapointWithSpilling(
       const DatapointPtr<T>& dptr, std::vector<int32_t>* result) const final {
-    return TokensForDatapointWithSpillingAndOverride(dptr, 0, result);
+    return TokensForDatapointWithSpillingAndOverride(dptr, {}, result);
   }
 
   Status TokensForDatapointWithSpillingAndOverride(
-      const DatapointPtr<T>& dptr, int32_t max_centers_override,
+      const DatapointPtr<T>& dptr, ConstSpan<int32_t> max_centers_override,
       std::vector<int32_t>* result) const;
 
   Status TokenForDatapoint(const DatapointPtr<T>& dptr,
@@ -158,32 +158,38 @@ class KMeansTreePartitioner final : public KMeansTreeLikePartitioner<T> {
 
   using KMeansTreeLikePartitioner<T>::TokenForDatapointBatched;
   Status TokenForDatapointBatched(
-      const TypedDataset<T>& queries,
+      const TypedDatasetView<T>& queries,
       std::vector<pair<DatapointIndex, float>>* result,
       ThreadPool* pool) const final;
 
+  using KMeansTreeLikePartitioner<T>::TokensForDatapointWithSpilling;
   Status TokensForDatapointWithSpilling(
-      const DatapointPtr<T>& dptr, int32_t max_centers_override,
+      const DatapointPtr<T>& dptr, ConstSpan<int32_t> max_centers_override,
       std::vector<pair<DatapointIndex, float>>* result) const final;
 
+  using KMeansTreeLikePartitioner<T>::TokensForDatapointWithSpillingBatched;
   Status TokensForDatapointWithSpillingBatched(
-      const TypedDataset<T>& queries, MutableSpan<std::vector<int32_t>> results,
+      const TypedDatasetView<T>& queries,
+      MutableSpan<std::vector<int32_t>> results,
       ThreadPool* pool = nullptr) const final {
     return TokensForDatapointWithSpillingBatchedAndOverride(
-        queries, vector<int32_t>(), results, pool);
+        queries, ConstSpan<std::vector<int32_t>>(), results, pool);
   }
   Status TokensForDatapointWithSpillingBatchedAndOverride(
-      const TypedDataset<T>& queries, ConstSpan<int32_t> max_centers_override,
+      const TypedDatasetView<T>& queries,
+      ConstSpan<std::vector<int32_t>> max_centers_override,
       MutableSpan<std::vector<int32_t>> results,
       ThreadPool* pool = nullptr) const;
 
   Status TokensForDatapointWithSpillingBatched(
-      const TypedDataset<T>& queries, ConstSpan<int32_t> max_centers_override,
+      const TypedDatasetView<T>& queries,
+      ConstSpan<std::vector<int32_t>> max_centers_override,
       MutableSpan<vector<pair<DatapointIndex, float>>> results,
       ThreadPool* pool = nullptr) const final;
 
   StatusOr<vector<std::vector<DatapointIndex>>> TokenizeDatabase(
-      const TypedDataset<T>& database, ThreadPool* pool_or_null) const final;
+      const TypedDatasetView<T>& database,
+      ThreadPool* pool_or_null) const final;
 
   struct AvqOptions {
     bool avq_after_primary = false;
@@ -193,7 +199,7 @@ class KMeansTreePartitioner final : public KMeansTreeLikePartitioner<T> {
     bool skip_secondary_tokenization = false;
   };
   StatusOr<vector<std::vector<DatapointIndex>>> TokenizeDatabase(
-      const TypedDataset<T>& database, ThreadPool* pool_or_null,
+      const TypedDatasetView<T>& database, ThreadPool* pool_or_null,
       AvqOptions avq_opts);
 
   StatusOr<Datapoint<float>> ResidualizeToFloat(const DatapointPtr<T>& dptr,
@@ -201,7 +207,7 @@ class KMeansTreePartitioner final : public KMeansTreeLikePartitioner<T> {
 
   const DenseDataset<float>& LeafCenters() const final;
 
-  Status ApplyAvq(const DenseDataset<T>& dataset,
+  Status ApplyAvq(const DefaultDenseDatasetView<T>& dataset,
                   ConstSpan<std::vector<DatapointIndex>> datapoints_by_token,
                   float avq_eta, ThreadPool* pool_or_null = nullptr);
 
@@ -235,6 +241,29 @@ class KMeansTreePartitioner final : public KMeansTreeLikePartitioner<T> {
                  typeid(const SquaredL2Distance)));
   }
 
+  ABSL_DEPRECATED("Use ConstSpan overload instead.")
+  Status TokensForDatapointWithSpillingAndOverride(
+      const DatapointPtr<T>& dptr, int32_t max_centers_override,
+      std::vector<int32_t>* result) const {
+    return TokensForDatapointWithSpillingAndOverride(
+        dptr, ConstSpan<int32_t>{max_centers_override}, result);
+  }
+
+  ABSL_DEPRECATED("Use ConstSpan overload instead.")
+  Status TokensForDatapointWithSpillingBatchedAndOverride(
+      const TypedDataset<T>& queries, ConstSpan<int32_t> max_centers_override,
+      MutableSpan<std::vector<int32_t>> results,
+      ThreadPool* pool = nullptr) const {
+    vector<std::vector<int32_t>> max_centers_override_vec(
+        max_centers_override.size());
+    for (size_t i : IndicesOf(max_centers_override)) {
+      max_centers_override_vec[i].push_back(max_centers_override[i]);
+    }
+    return TokensForDatapointWithSpillingBatchedAndOverride(
+        queries, ConstSpan<std::vector<int32_t>>(max_centers_override_vec),
+        results, pool);
+  }
+
  private:
   Status TokenForDatapointUseSearcher(
       const DatapointPtr<T>& dptr, pair<DatapointIndex, float>* result,
@@ -245,21 +274,32 @@ class KMeansTreePartitioner final : public KMeansTreeLikePartitioner<T> {
       int32_t pre_reordering_num_neighbors) const;
 
   StatusOr<std::vector<pair<DatapointIndex, float>>>
-  TokenizeDatabaseImplFastPath(const DenseDataset<T>& database,
+  TokenizeDatabaseImplFastPath(const DefaultDenseDatasetView<T>& database,
                                ThreadPool* pool_or_null) const;
 
   StatusOr<std::vector<pair<DatapointIndex, float>>>
-  TokenizeDatabaseImplFastPath(const DenseDataset<T>& database,
+  TokenizeDatabaseImplFastPath(const DefaultDenseDatasetView<T>& database,
                                const DenseDataset<float>& centers,
                                ThreadPool* pool_or_null) const;
 
-  const DenseDataset<float>* ConvertToFloatIfNecessary(
-      const DenseDataset<T>& dataset, DenseDataset<float>* storage) const {
-    if (std::is_same<T, float>::value) {
-      return reinterpret_cast<const DenseDataset<float>*>(&dataset);
+  DefaultDenseDatasetView<float> ConvertToFloatIfNecessary(
+      const DefaultDenseDatasetView<T>& dataset,
+      DenseDataset<float>* storage) const {
+    if constexpr (std::is_same_v<T, float>) {
+      return dataset;
     } else {
-      dataset.ConvertType(storage);
-      return storage;
+      storage->clear();
+      storage->set_dimensionality(dataset.dimensionality());
+      storage->Reserve(dataset.size());
+      for (size_t i = 0; i < dataset.size(); ++i) {
+        auto dptr = dataset[i];
+        std::vector<float> float_vals(dptr.nonzero_entries());
+        for (size_t j = 0; j < dptr.nonzero_entries(); ++j) {
+          float_vals[j] = static_cast<float>(dptr.values()[j]);
+        }
+        storage->AppendOrDie(MakeDatapointPtr(float_vals), "");
+      }
+      return DefaultDenseDatasetView<float>(*storage);
     }
   }
 
@@ -272,10 +312,10 @@ class KMeansTreePartitioner final : public KMeansTreeLikePartitioner<T> {
   }
 
   StatusOr<vector<pair<DatapointIndex, float>>> TokenForDatapointBatchedImpl(
-      const TypedDataset<T>& queries, ThreadPool* pool = nullptr) const;
+      const TypedDatasetView<T>& queries, ThreadPool* pool = nullptr) const;
 
   Status OrthogonalityAmplifiedTokenForDatapointBatched(
-      const DenseDataset<T>& queries,
+      const DefaultDenseDatasetView<T>& queries,
       ConstSpan<pair<DatapointIndex, float>> primary_centroids,
       MutableSpan<pair<DatapointIndex, float>> secondary_centroids,
       ThreadPool* pool = nullptr) const;
@@ -318,8 +358,8 @@ class KMeansTreePartitioner final : public KMeansTreeLikePartitioner<T> {
 template <>
 StatusOr<vector<pair<DatapointIndex, float>>>
 KMeansTreePartitioner<float>::TokenizeDatabaseImplFastPath(
-    const DenseDataset<float>& database, const DenseDataset<float>& centers,
-    ThreadPool* pool_or_null) const;
+    const DefaultDenseDatasetView<float>& database,
+    const DenseDataset<float>& centers, ThreadPool* pool_or_null) const;
 
 SCANN_INSTANTIATE_TYPED_CLASS(extern, KMeansTreePartitioner);
 

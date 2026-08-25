@@ -33,12 +33,12 @@ namespace research_scann {
 
 template <typename T>
 StatusOr<unique_ptr<Partitioner<T>>> PartitionerFactory(
-    const TypedDataset<T>* dataset, const PartitioningConfig& config,
+    const TypedDatasetView<T>* dataset, const PartitioningConfig& config,
     shared_ptr<ThreadPool> pool = nullptr);
 
 template <typename T>
 StatusOr<unique_ptr<Partitioner<T>>> PartitionerFactoryPreSampledAndProjected(
-    const TypedDataset<T>* dataset, const PartitioningConfig& config,
+    const TypedDatasetView<T>* dataset, const PartitioningConfig& config,
     shared_ptr<ThreadPool> training_parallelization_pool = nullptr);
 
 template <typename T>
@@ -87,11 +87,11 @@ Status MaybeAddTopLevelPartitioner(unique_ptr<Partitioner<T>>& partitioner,
             projected->base_partitioner()->Clone().release()));
     SCANN_RET_CHECK(cloned_base);
     auto top_level_partitioner =
-        make_unique<TreeBruteForceSecondLevelWrapper<float>>(
+        std::make_unique<TreeBruteForceSecondLevelWrapper<float>>(
             std::move(cloned_base));
     SCANN_RETURN_IF_ERROR(top_level_partitioner->CreatePartitioning(
         config.bottom_up_top_level_partitioner()));
-    auto wrapped_top = make_unique<KMeansTreeProjectingDecorator<T>>(
+    auto wrapped_top = std::make_unique<KMeansTreeProjectingDecorator<T>>(
         projected->projection(), std::move(top_level_partitioner));
     partitioner = std::move(wrapped_top);
   } else {
@@ -101,7 +101,7 @@ Status MaybeAddTopLevelPartitioner(unique_ptr<Partitioner<T>>& partitioner,
     unique_ptr<KMeansTreeLikePartitioner<T>> kmeans_tree_partitioner(
         static_cast<KMeansTreeLikePartitioner<T>*>(partitioner.release()));
     auto top_level_partitioner =
-        make_unique<TreeBruteForceSecondLevelWrapper<T>>(
+        std::make_unique<TreeBruteForceSecondLevelWrapper<T>>(
             std::move(kmeans_tree_partitioner));
     SCANN_RETURN_IF_ERROR(top_level_partitioner->CreatePartitioning(
         config.bottom_up_top_level_partitioner()));
@@ -110,14 +110,14 @@ Status MaybeAddTopLevelPartitioner(unique_ptr<Partitioner<T>>& partitioner,
   return OkStatus();
 }
 
-#define SCANN_INSTANTIATE_PARTITIONER_FACTORY(extern_or_nothing, type)     \
-  extern_or_nothing template StatusOr<unique_ptr<Partitioner<type>>>       \
-  PartitionerFactory<type>(                                                \
-      const TypedDataset<type>* dataset, const PartitioningConfig& config, \
-      shared_ptr<ThreadPool> training_parallelization_pool);               \
-  extern_or_nothing template StatusOr<unique_ptr<Partitioner<type>>>       \
-  PartitionerFactoryPreSampledAndProjected<type>(                          \
-      const TypedDataset<type>* dataset, const PartitioningConfig& config, \
+#define SCANN_INSTANTIATE_PARTITIONER_FACTORY(extern_or_nothing, type)         \
+  extern_or_nothing template StatusOr<unique_ptr<Partitioner<type>>>           \
+  PartitionerFactory<type>(                                                    \
+      const TypedDatasetView<type>* dataset, const PartitioningConfig& config, \
+      shared_ptr<ThreadPool> training_parallelization_pool);                   \
+  extern_or_nothing template StatusOr<unique_ptr<Partitioner<type>>>           \
+  PartitionerFactoryPreSampledAndProjected<type>(                              \
+      const TypedDatasetView<type>* dataset, const PartitioningConfig& config, \
       shared_ptr<ThreadPool> training_parallelization_pool);
 
 SCANN_INSTANTIATE_PARTITIONER_FACTORY(extern, int8_t);

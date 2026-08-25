@@ -64,6 +64,7 @@ class TreeXHybridSMMD : public SingleMachineSearcherBase<T> {
   using StatusOrSearcher = StatusOr<unique_ptr<SingleMachineSearcherBase<T>>>;
 
   DatapointIndex optimal_batch_size() const final;
+  StatusOr<DatapointIndex> DatasetSize() const final;
 
   Status BuildLeafSearchers(
       const Partitioner<T>& database_tokenizer,
@@ -213,7 +214,7 @@ class TreeXHybridSMMD : public SingleMachineSearcherBase<T> {
                            NNResultsVector* result) const final;
 
   Status FindNeighborsBatchedImpl(
-      const TypedDataset<T>& queries, ConstSpan<SearchParameters> params,
+      const TypedDatasetView<T>& queries, ConstSpan<SearchParameters> params,
       MutableSpan<NNResultsVector> results) const final;
 
  private:
@@ -241,12 +242,12 @@ class TreeXHybridSMMD : public SingleMachineSearcherBase<T> {
                                        NNResultsVector* results) const;
 
   Status FindNeighborsPreTokenizedBatchedGenericImpl(
-      const TypedDataset<T>& queries, ConstSpan<SearchParameters> params,
+      const TypedDatasetView<T>& queries, ConstSpan<SearchParameters> params,
       ConstSpan<ConstSpan<int32_t>> query_tokens,
       MutableSpan<NNResultsVector> results) const;
 
   Status FindNeighborsPreTokenizedBatchedOptimizedImpl(
-      const TypedDataset<T>& queries, ConstSpan<SearchParameters> params,
+      const TypedDatasetView<T>& queries, ConstSpan<SearchParameters> params,
       ConstSpan<ConstSpan<int32_t>> query_tokens,
       MutableSpan<NNResultsVector> results) const;
 

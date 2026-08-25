@@ -161,44 +161,56 @@ class LUT16Interface {
 
 #if defined(__x86_64__) && !defined(SCANN_FORCE_HIGHWAY_LUT16)
 
-#define SCANN_CALL_LUT16_FUNCTION(enable_avx512_codepath, batch_size,   \
-                                  prefetch_strategy, Function, ...)     \
-  if (prefetch_strategy == PrefetchStrategy::kOff) {                    \
-    if (enable_avx512_codepath && RuntimeSupportsAvx512()) {            \
-      SCANN_CALL_LUT16_FUNCTION_1(batch_size, PrefetchStrategy::kOff,   \
-                                  LUT16Avx512, Function, __VA_ARGS__);  \
-    }                                                                   \
-    if (RuntimeSupportsAvx2()) {                                        \
-      SCANN_CALL_LUT16_FUNCTION_1(batch_size, PrefetchStrategy::kOff,   \
-                                  LUT16Avx2, Function, __VA_ARGS__);    \
-    } else {                                                            \
-      SCANN_CALL_LUT16_FUNCTION_1(batch_size, PrefetchStrategy::kOff,   \
-                                  LUT16Sse4, Function, __VA_ARGS__);    \
-    }                                                                   \
-  } else if (prefetch_strategy == PrefetchStrategy::kSeq) {             \
-    if (enable_avx512_codepath && RuntimeSupportsAvx512()) {            \
-      SCANN_CALL_LUT16_FUNCTION_1(batch_size, PrefetchStrategy::kSeq,   \
-                                  LUT16Avx512, Function, __VA_ARGS__);  \
-    }                                                                   \
-    if (RuntimeSupportsAvx2()) {                                        \
-      SCANN_CALL_LUT16_FUNCTION_1(batch_size, PrefetchStrategy::kSeq,   \
-                                  LUT16Avx2, Function, __VA_ARGS__);    \
-    } else {                                                            \
-      SCANN_CALL_LUT16_FUNCTION_1(batch_size, PrefetchStrategy::kSeq,   \
-                                  LUT16Sse4, Function, __VA_ARGS__);    \
-    }                                                                   \
-  } else {                                                              \
-    if (enable_avx512_codepath && RuntimeSupportsAvx512()) {            \
-      SCANN_CALL_LUT16_FUNCTION_1(batch_size, PrefetchStrategy::kSmart, \
-                                  LUT16Avx512, Function, __VA_ARGS__);  \
-    }                                                                   \
-    if (RuntimeSupportsAvx2()) {                                        \
-      SCANN_CALL_LUT16_FUNCTION_1(batch_size, PrefetchStrategy::kSmart, \
-                                  LUT16Avx2, Function, __VA_ARGS__);    \
-    } else {                                                            \
-      SCANN_CALL_LUT16_FUNCTION_1(batch_size, PrefetchStrategy::kSmart, \
-                                  LUT16Sse4, Function, __VA_ARGS__);    \
-    }                                                                   \
+#define SCANN_CALL_LUT16_FUNCTION(enable_avx512_codepath, batch_size,     \
+                                  prefetch_strategy, Function, ...)       \
+  if (prefetch_strategy == PrefetchStrategy::kOff) {                      \
+    if (enable_avx512_codepath && RuntimeSupportsAvx512()) {              \
+      SCANN_CALL_LUT16_FUNCTION_1(batch_size, PrefetchStrategy::kOff,     \
+                                  LUT16Avx512, Function, __VA_ARGS__);    \
+    }                                                                     \
+    if (RuntimeSupportsAvx2()) {                                          \
+      SCANN_CALL_LUT16_FUNCTION_1(batch_size, PrefetchStrategy::kOff,     \
+                                  LUT16Avx2, Function, __VA_ARGS__);      \
+    } else {                                                              \
+      SCANN_CALL_LUT16_FUNCTION_1(batch_size, PrefetchStrategy::kOff,     \
+                                  LUT16Sse4, Function, __VA_ARGS__);      \
+    }                                                                     \
+  } else if (prefetch_strategy == PrefetchStrategy::kSeq) {               \
+    if (enable_avx512_codepath && RuntimeSupportsAvx512()) {              \
+      SCANN_CALL_LUT16_FUNCTION_1(batch_size, PrefetchStrategy::kSeq,     \
+                                  LUT16Avx512, Function, __VA_ARGS__);    \
+    }                                                                     \
+    if (RuntimeSupportsAvx2()) {                                          \
+      SCANN_CALL_LUT16_FUNCTION_1(batch_size, PrefetchStrategy::kSeq,     \
+                                  LUT16Avx2, Function, __VA_ARGS__);      \
+    } else {                                                              \
+      SCANN_CALL_LUT16_FUNCTION_1(batch_size, PrefetchStrategy::kSeq,     \
+                                  LUT16Sse4, Function, __VA_ARGS__);      \
+    }                                                                     \
+  } else if (prefetch_strategy == PrefetchStrategy::kSmartT0) {           \
+    if (enable_avx512_codepath && RuntimeSupportsAvx512()) {              \
+      SCANN_CALL_LUT16_FUNCTION_1(batch_size, PrefetchStrategy::kSmart,   \
+                                  LUT16Avx512, Function, __VA_ARGS__);    \
+    }                                                                     \
+    if (RuntimeSupportsAvx2()) {                                          \
+      SCANN_CALL_LUT16_FUNCTION_1(batch_size, PrefetchStrategy::kSmartT0, \
+                                  LUT16Avx2, Function, __VA_ARGS__);      \
+    } else {                                                              \
+      SCANN_CALL_LUT16_FUNCTION_1(batch_size, PrefetchStrategy::kSmart,   \
+                                  LUT16Sse4, Function, __VA_ARGS__);      \
+    }                                                                     \
+  } else {                                                                \
+    if (enable_avx512_codepath && RuntimeSupportsAvx512()) {              \
+      SCANN_CALL_LUT16_FUNCTION_1(batch_size, PrefetchStrategy::kSmart,   \
+                                  LUT16Avx512, Function, __VA_ARGS__);    \
+    }                                                                     \
+    if (RuntimeSupportsAvx2()) {                                          \
+      SCANN_CALL_LUT16_FUNCTION_1(batch_size, PrefetchStrategy::kSmart,   \
+                                  LUT16Avx2, Function, __VA_ARGS__);      \
+    } else {                                                              \
+      SCANN_CALL_LUT16_FUNCTION_1(batch_size, PrefetchStrategy::kSmart,   \
+                                  LUT16Sse4, Function, __VA_ARGS__);      \
+    }                                                                     \
   }
 
 void LUT16Interface::GetDistances(LUT16Args<int16_t> args) {

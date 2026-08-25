@@ -27,6 +27,7 @@
 
 #include "absl/flags/flag.h"
 #include "absl/status/status.h"
+#include "absl/synchronization/mutex.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "scann/base/search_parameters.h"
@@ -54,6 +55,7 @@
 #include "scann/tree_x_hybrid/tree_x_params.h"
 #include "scann/utils/common.h"
 #include "scann/utils/fast_top_neighbors.h"
+#include "scann/utils/parallel_for.h"
 #include "scann/utils/types.h"
 
 namespace research_scann {
@@ -231,9 +233,9 @@ Status TreeAHHybridResidual::PreprocessQueryIntoParamsUnlocked(
   const auto& params =
       search_params
           .searcher_specific_optional_parameters<TreeXOptionalParameters>();
-  int32_t max_centers_override = 0;
+  ConstSpan<int32_t> max_centers_override;
 
-  if (params && params->num_partitions_to_search_override()) {
+  if (params && !params->num_partitions_to_search_override().empty()) {
     max_centers_override = params->num_partitions_to_search_override();
   }
 
@@ -259,7 +261,7 @@ Status TreeAHHybridResidual::PreprocessQueryIntoParamsUnlocked(
 }
 
 Status TreeAHHybridResidual::AddLeafSearcher() {
-  auto hashed_partition = make_unique<DenseDataset<uint8_t>>();
+  auto hashed_partition = std::make_unique<DenseDataset<uint8_t>>();
   leaf_searchers_.push_back(make_unique<asymmetric_hashing2::Searcher<float>>(
       nullptr, std::move(hashed_partition), *searcher_options_,
       default_pre_reordering_num_neighbors(),
@@ -291,9 +293,9 @@ StatusOr<DatapointPtr<float>> TreeAHHybridResidual::MaybeProjectQuery(
   return projected_query_storage->ToPtr();
 }
 
-StatusOr<const TypedDataset<float>*>
+StatusOr<const TypedDatasetView<float>*>
 TreeAHHybridResidual::MaybeProjectQueriesBatched(
-    const TypedDataset<float>* queries,
+    const TypedDatasetView<float>* queries,
     DenseDataset<float>* projected_query_storage) const {
   if (!projection_) return queries;
   Datapoint<float> tmp;
@@ -437,15 +439,16 @@ Status TreeAHHybridResidual::BuildLeafSearchers(
       vector<unique_ptr<asymmetric_hashing2::SearcherBase<float>>>(
           datapoints_by_token.size());
 
-  searcher_options_ = make_unique<asymmetric_hashing2::SearcherOptions<float>>(
-      asymmetric_queryer_, indexer);
+  searcher_options_ =
+      std::make_unique<asymmetric_hashing2::SearcherOptions<float>>(
+          asymmetric_queryer_, indexer);
   searcher_options_->set_asymmetric_lookup_type(lookup_type_tag_);
   searcher_options_->set_noise_shaping_threshold(
       config.noise_shaping_threshold());
 
   auto build_leaf_for_token = [&](size_t token) -> Status {
     const absl::Time token_start = absl::Now();
-    auto hashed_partition = make_unique<DenseDataset<uint8_t>>();
+    auto hashed_partition = std::make_unique<DenseDataset<uint8_t>>();
     if (asymmetric_queryer_->quantization_scheme() ==
         AsymmetricHasherConfig::PRODUCT_AND_PACK) {
       hashed_partition->set_packing_strategy(HashedItem::NIBBLE);
@@ -460,10 +463,11 @@ Status TreeAHHybridResidual::BuildLeafSearchers(
       SCANN_RETURN_IF_ERROR(local_status);
     }
 
-    leaf_searchers_[token] = make_unique<asymmetric_hashing2::Searcher<float>>(
-        nullptr, std::move(hashed_partition), *searcher_options_,
-        default_pre_reordering_num_neighbors(),
-        default_pre_reordering_epsilon());
+    leaf_searchers_[token] =
+        std::make_unique<asymmetric_hashing2::Searcher<float>>(
+            nullptr, std::move(hashed_partition), *searcher_options_,
+            default_pre_reordering_num_neighbors(),
+            default_pre_reordering_epsilon());
     if (!leaf_searchers_[token]->needs_hashed_dataset()) {
       leaf_searchers_[token]->ReleaseHashedDataset();
     }
@@ -514,12 +518,11 @@ Status TreeAHHybridResidual::FindNeighborsImpl(const DatapointPtr<float>& query,
   Datapoint<float> projected_query_storage;
   SCANN_ASSIGN_OR_RETURN(DatapointPtr<float> maybe_projected_query,
                          MaybeProjectQuery(query, &projected_query_storage));
-  int num_centers = 0;
+  ConstSpan<int32_t> num_centers = {};
   auto tree_x_params =
       params.searcher_specific_optional_parameters<TreeXOptionalParameters>();
   if (tree_x_params) {
-    int center_override = tree_x_params->num_partitions_to_search_override();
-    if (center_override > 0) num_centers = center_override;
+    num_centers = tree_x_params->num_partitions_to_search_override();
   }
   vector<pair<DatapointIndex, float>> centers_to_search_storage;
   ConstSpan<pair<DatapointIndex, float>> centers_to_search;
@@ -572,8 +575,9 @@ Status TreeAHHybridResidual::BuildStreamingLeafSearchers(
       std::make_shared<asymmetric_hashing2::AsymmetricQueryer<float>>(
           projector, lookup_distance, ah_model);
 
-  searcher_options_ = make_unique<asymmetric_hashing2::SearcherOptions<float>>(
-      asymmetric_queryer_, indexer);
+  searcher_options_ =
+      std::make_unique<asymmetric_hashing2::SearcherOptions<float>>(
+          asymmetric_queryer_, indexer);
   searcher_options_->set_asymmetric_lookup_type(lookup_type_tag_);
   searcher_options_->set_noise_shaping_threshold(
       config.noise_shaping_threshold());
@@ -629,18 +633,20 @@ inline void AssignResults(TopN* top_n, NNResultsVector* results) {
 }  // namespace
 
 Status TreeAHHybridResidual::FindNeighborsBatchedImpl(
-    const TypedDataset<float>& queries, ConstSpan<SearchParameters> params,
+    const TypedDatasetView<float>& queries, ConstSpan<SearchParameters> params,
     MutableSpan<NNResultsVector> results) const {
-  vector<int32_t> centers_override(queries.size());
+  vector<std::vector<int32_t>> centers_override(queries.size());
   bool centers_overridden = false;
   for (int i = 0; i < queries.size(); i++) {
     auto tree_x_params =
         params[i]
             .searcher_specific_optional_parameters<TreeXOptionalParameters>();
     if (tree_x_params) {
-      int center_override = tree_x_params->num_partitions_to_search_override();
-      if (center_override > 0) {
-        centers_override[i] = center_override;
+      ConstSpan<int32_t> center_override =
+          tree_x_params->num_partitions_to_search_override();
+      if (!center_override.empty()) {
+        centers_override[i] = std::vector<int32_t>(center_override.begin(),
+                                                   center_override.end());
         centers_overridden = true;
       }
     }
@@ -648,9 +654,9 @@ Status TreeAHHybridResidual::FindNeighborsBatchedImpl(
 
   DenseDataset<float> projected_query_storage;
   SCANN_ASSIGN_OR_RETURN(
-      const TypedDataset<float>* maybe_projected_queries_ptr,
+      const TypedDatasetView<float>* maybe_projected_queries_ptr,
       MaybeProjectQueriesBatched(&queries, &projected_query_storage));
-  const TypedDataset<float>& maybe_projected_queries =
+  const TypedDatasetView<float>& maybe_projected_queries =
       *maybe_projected_queries_ptr;
 
   vector<vector<pair<DatapointIndex, float>>> centers_to_search(queries.size());
@@ -662,7 +668,7 @@ Status TreeAHHybridResidual::FindNeighborsBatchedImpl(
   else
     SCANN_RETURN_IF_ERROR(
         maybe_projected_query_tokenizer_->TokensForDatapointWithSpillingBatched(
-            maybe_projected_queries, vector<int32_t>(),
+            maybe_projected_queries, ConstSpan<int32_t>(),
             MakeMutableSpan(centers_to_search)));
   if (!tree_x_internal::SupportsLowLevelBatching(maybe_projected_queries,
                                                  params) ||
@@ -899,15 +905,10 @@ Status TreeAHHybridResidual::FindNeighborsInternal1(
                                   params.pre_reordering_epsilon());
     DCHECK(result);
 
-    std::array<FastTopNeighbors<float>*, 1> tops = {&top_n};
     std::array<const uint8_t*, 1> lookups = {
         lookup_table->precomputed_lookup_table().int8_lookup_table.data()};
     std::array<float, 1> multipliers = {
         lookup_table->precomputed_lookup_table().fixed_point_multiplier};
-
-    SearchParameters leaf_params;
-    std::array<RestrictAllowlistConstView, 1> allowlists = {
-        RestrictAllowlistConstView()};
 
     size_t num_blocks = 0;
 
@@ -927,8 +928,19 @@ Status TreeAHHybridResidual::FindNeighborsInternal1(
       center_data.back() = center_data[center_data.size() - 2];
     }
 
-    for (size_t i = 0; i < centers_to_search.size(); ++i) {
+    const bool parallel_enabled = false;
+
+    auto pf_task = [&](size_t i) -> Status {
+      SearchParameters leaf_params;
       const uint32_t token = centers_to_search[i].first;
+
+      FastTopNeighbors<float> local_top_n;
+      std::array<FastTopNeighbors<float>*, 1> tops;
+
+      tops = {&top_n};
+
+      std::array<RestrictAllowlistConstView, 1> allowlists = {
+          RestrictAllowlistConstView()};
 
       asymmetric_hashing_internal::LUT16ArgsTopN<float> args;
       args.packed_dataset = center_data[i].first;
@@ -947,6 +959,12 @@ Status TreeAHHybridResidual::FindNeighborsInternal1(
       args.restrict_whitelists = allowlists;
       asymmetric_hashing_internal::LUT16Interface::GetTopFloatDistances(
           std::move(args));
+
+      return OkStatus();
+    };
+
+    for (size_t i = 0; i < centers_to_search.size(); ++i) {
+      SCANN_RETURN_IF_ERROR(pf_task(i));
     }
 
     AssignResults(&top_n, result);
@@ -987,26 +1005,39 @@ Status TreeAHHybridResidual::FindNeighborsInternal2(
   DCHECK(result);
   DCHECK(!params.pre_reordering_crowding_enabled() ||
          datapoints_by_token_disjoint_);
-  SearchParameters leaf_params;
-  leaf_params.set_pre_reordering_num_neighbors(
-      NumNeighborsWithSpillingMultiplier(
-          params.pre_reordering_num_neighbors()));
   if (params.pre_reordering_crowding_enabled()) {
     SCANN_RET_CHECK_EQ(params.pre_reordering_num_neighbors(),
-                       leaf_params.pre_reordering_num_neighbors());
-    leaf_params.set_per_crowding_attribute_pre_reordering_num_neighbors(
-        params.per_crowding_attribute_pre_reordering_num_neighbors());
+                       NumNeighborsWithSpillingMultiplier(
+                           params.pre_reordering_num_neighbors()));
   }
-  leaf_params.set_searcher_specific_optional_parameters(lookup_table);
+  auto create_leaf_params = [&]() -> SearchParameters {
+    SearchParameters leaf_params;
+    leaf_params.set_pre_reordering_num_neighbors(
+        NumNeighborsWithSpillingMultiplier(
+            params.pre_reordering_num_neighbors()));
+    if (params.pre_reordering_crowding_enabled()) {
+      leaf_params.set_per_crowding_attribute_pre_reordering_num_neighbors(
+          params.per_crowding_attribute_pre_reordering_num_neighbors());
+    }
+    leaf_params.set_searcher_specific_optional_parameters(lookup_table);
+    return leaf_params;
+  };
 
   typename TopN::Mutator mutator;
   top_n.AcquireMutator(&mutator);
-  for (size_t center_idx : IndicesOf(centers_to_search)) {
+
+  constexpr bool require_top_n_locking = false;
+
+  auto pf_task = [&](size_t center_idx) -> Status {
+    SearchParameters leaf_params = create_leaf_params();
     const int32_t token = centers_to_search[center_idx].first;
     const float distance_to_center = centers_to_search[center_idx].second;
     NNResultsVector leaf_results;
-    leaf_params.set_pre_reordering_epsilon(mutator.epsilon() -
-                                           distance_to_center);
+
+    float local_epsilon;
+    { local_epsilon = mutator.epsilon(); }
+
+    leaf_params.set_pre_reordering_epsilon(local_epsilon - distance_to_center);
     SCANN_RETURN_IF_ERROR(
         leaf_searchers_[token]->FindNeighborsNoSortNoExactReorder(
             maybe_projected_query, leaf_params, &leaf_results));
@@ -1016,7 +1047,13 @@ Status TreeAHHybridResidual::FindNeighborsInternal2(
                                             distance_to_center, leaf_results,
                                             &mutator);
     }
+    return OkStatus();
+  };
+
+  for (size_t center_idx : IndicesOf(centers_to_search)) {
+    SCANN_RETURN_IF_ERROR(pf_task(center_idx));
   }
+
   mutator.Release();
 
   if (!is_streaming_result_) {
@@ -1057,7 +1094,7 @@ TreeAHHybridResidual::TokenizeAndMaybeResidualize(
         Datapoint<float> residual,
         database_tokenizer_->ResidualizeToFloat(dptr, token.first));
     if (result.residual_storage[0] == nullptr) {
-      result.residual_storage[0] = make_unique<float[]>(
+      result.residual_storage[0] = std::make_unique<float[]>(
           residual.dimensionality() * token_storage.size());
       result.residual_dimensionality[0] = residual.dimensionality();
     }
@@ -1078,7 +1115,8 @@ TreeAHHybridResidual::TokenizeAndMaybeResidualize(
   SCANN_RET_CHECK(database_tokenizer_);
   SCANN_RETURN_IF_ERROR(
       database_tokenizer_->TokensForDatapointWithSpillingBatched(
-          dps, {}, MakeMutableSpan(token_storage)));
+          dps, ConstSpan<std::vector<int32_t>>{},
+          MakeMutableSpan(token_storage)));
   vector<TreeAHHybridResidual::MutationArtifacts> results(dps.size());
   for (size_t dp_idx : IndicesOf(token_storage)) {
     DatapointPtr<float> dptr = dps[dp_idx];
@@ -1093,7 +1131,7 @@ TreeAHHybridResidual::TokenizeAndMaybeResidualize(
           database_tokenizer_->ResidualizeToFloat(dptr, token_and_dist.first));
       if (result.residual_storage[0] == nullptr) {
         result.residual_storage[0] =
-            make_unique<float[]>(residual.dimensionality() * num_tokens);
+            std::make_unique<float[]>(residual.dimensionality() * num_tokens);
         result.residual_dimensionality[0] = residual.dimensionality();
       }
       MutableSpan<float> residual_span(

@@ -71,7 +71,7 @@ Status AppendRangeToVector(ConstSpan<SrcT> span, VecT* result) {
 }
 
 template <typename T, typename VecT>
-enable_if_t<IsUint8<T>(), Status> AppendGfvValuesToVectorBitPacked(
+std::enable_if_t<IsUint8<T>(), Status> AppendGfvValuesToVectorBitPacked(
     const GenericFeatureVector& gfv, VecT* result) {
   if (gfv.feature_type() != GenericFeatureVector::BINARY) {
     return InvalidArgumentError(
@@ -112,7 +112,7 @@ enable_if_t<IsUint8<T>(), Status> AppendGfvValuesToVectorBitPacked(
 }
 
 template <typename T, typename VecT>
-enable_if_t<!IsUint8<T>(), Status> AppendGfvValuesToVectorBitPacked(
+std::enable_if_t<!IsUint8<T>(), Status> AppendGfvValuesToVectorBitPacked(
     const GenericFeatureVector& gfv, VecT* result) {
   return AppendRangeToVector<T>(MakeConstSpan(gfv.feature_value_int64()),
                                 result);

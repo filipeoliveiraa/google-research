@@ -81,6 +81,8 @@ SingleMachineSearcherBase<T>::Mutator::GetNextDatapointIndex() const {
       SCANN_RET_CHECK_EQ(result, searcher_->docids_->size());
   } else if (searcher_->docids_) {
     result = searcher_->docids_->size();
+  } else if (auto size = searcher_->DatasetSize(); size.ok()) {
+    result = *size;
   }
   return result;
 }

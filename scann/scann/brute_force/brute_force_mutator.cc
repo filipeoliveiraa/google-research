@@ -14,6 +14,7 @@
 
 #include <optional>
 
+#include "absl/base/casts.h"
 #include "absl/strings/str_cat.h"
 #include "scann/brute_force/brute_force.h"
 #include "scann/data_format/datapoint.h"
@@ -27,6 +28,11 @@ namespace research_scann {
 template <typename T>
 StatusOr<unique_ptr<typename BruteForceSearcher<T>::Mutator>>
 BruteForceSearcher<T>::Mutator::Create(BruteForceSearcher<T>* searcher) {
+  if (!searcher->dataset()) {
+    return FailedPreconditionError(
+        "Cannot create mutator for BruteForceSearcher when the dataset was "
+        "provided only as a DefaultDenseDatasetView.");
+  }
   return absl::WrapUnique<typename BruteForceSearcher<T>::Mutator>(
       new typename BruteForceSearcher<T>::Mutator(searcher));
 }

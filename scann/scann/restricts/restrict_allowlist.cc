@@ -20,7 +20,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <utility>
-#include <vector>
 
 #include "scann/utils/bits.h"
 #include "scann/utils/common.h"
@@ -56,12 +55,15 @@ RestrictAllowlist::RestrictAllowlist(DatapointIndex num_points,
 }
 
 RestrictAllowlist::RestrictAllowlist(const RestrictAllowlistConstView& view)
-    : allowlist_array_(
-          view.allowlist_array_,
-          view.allowlist_array_ + DivRoundUp(view.num_points_, kBitsPerWord)),
-      num_points_(view.num_points_) {}
+    : num_points_(view.num_points_) {
+  const size_t num_words = DivRoundUp(view.num_points_, kBitsPerWord);
+  allowlist_array_.resize_uninitialized(num_words);
+  std::copy(view.allowlist_array_, view.allowlist_array_ + num_words,
+            allowlist_array_.begin());
+  ClearRemainderBits(MakeMutableSpan(allowlist_array_), num_points_);
+}
 
-RestrictAllowlist::RestrictAllowlist(std::vector<size_t>&& allowlist_array,
+RestrictAllowlist::RestrictAllowlist(VectorNoResize<size_t>&& allowlist_array,
                                      DatapointIndex num_points,
                                      bool default_allowlisted)
     : allowlist_array_(std::move(allowlist_array)), num_points_(num_points) {
@@ -81,9 +83,9 @@ void RestrictAllowlist::Initialize(DatapointIndex num_points,
                                    bool default_allowlisted) {
   num_points_ = num_points;
 
-  allowlist_array_.resize(0);
-  allowlist_array_.resize(DivRoundUp(num_points, kBitsPerWord),
-                          default_allowlisted ? kAllOnes : 0);
+  allowlist_array_.clear();
+  allowlist_array_.resize_and_initialize(DivRoundUp(num_points, kBitsPerWord),
+                                         default_allowlisted ? kAllOnes : 0);
   if (default_allowlisted) {
     ClearRemainderBits(MakeMutableSpan(allowlist_array_), num_points);
   }
@@ -94,9 +96,9 @@ void RestrictAllowlist::Resize(size_t num_points, bool default_allowlisted) {
     SetRemainderBits(MakeMutableSpan(allowlist_array_), num_points_);
   }
 
-  const size_t n_words =
-      num_points / kBitsPerWord + (num_points % kBitsPerWord > 0);
-  allowlist_array_.resize(n_words, (default_allowlisted ? kAllOnes : 0));
+  const size_t n_words = DivRoundUp(num_points, kBitsPerWord);
+  allowlist_array_.resize_and_initialize(n_words,
+                                         (default_allowlisted ? kAllOnes : 0));
   num_points_ = num_points;
   ClearRemainderBits(MakeMutableSpan(allowlist_array_), num_points);
 }
@@ -119,13 +121,35 @@ DummyAllowlist::DummyAllowlist(DatapointIndex num_points)
 DummyAllowlist::Iterator::Iterator(DatapointIndex num_points)
     : value_(0), num_points_(num_points) {}
 
+RestrictAllowlist RestrictAllowlist::Intersection(
+    const RestrictAllowlistConstView& view1,
+    const RestrictAllowlistConstView& view2) {
+  RestrictAllowlist result;
+  const DatapointIndex num_points =
+      std::min(view1.num_points(), view2.num_points());
+  result.num_points_ = num_points;
+  const size_t num_words = DivRoundUp(num_points, kBitsPerWord);
+  result.allowlist_array_.resize_uninitialized(num_words);
+
+  const size_t* src1 = view1.data();
+  const size_t* src2 = view2.data();
+  size_t* dst = result.allowlist_array_.data();
+  for (size_t i = 0; i < num_words; ++i) {
+    dst[i] = src1[i] & src2[i];
+  }
+
+  ClearRemainderBits(MakeMutableSpan(result.allowlist_array_),
+                     result.num_points_);
+  return result;
+}
+
 RestrictAllowlist CreateAllowlist(RestrictAllowlistRecycler* recycler,
                                   DatapointIndex num_datapoints,
                                   bool default_allowed) {
   if (!recycler) {
     return RestrictAllowlist(num_datapoints, default_allowed);
   }
-  vector<size_t> to_recycle = recycler->MaybeRemoveFromFreelist();
+  VectorNoResize<size_t> to_recycle = recycler->MaybeRemoveFromFreelist();
   VLOG(2) << "Creating allowlist with recycled at " << to_recycle.data();
   RestrictAllowlist result;
   if (to_recycle.empty()) {

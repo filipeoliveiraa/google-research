@@ -28,7 +28,7 @@ namespace research_scann {
 namespace tree_x_internal {
 
 template <typename T>
-bool SupportsLowLevelBatching(const TypedDataset<T>& queries,
+bool SupportsLowLevelBatching(const TypedDatasetView<T>& queries,
                               ConstSpan<SearchParameters> params) {
   if (!queries.IsDense()) return false;
   for (const SearchParameters& p : params) {

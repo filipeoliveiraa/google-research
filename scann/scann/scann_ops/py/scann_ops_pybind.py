@@ -152,12 +152,13 @@ class ScannSearcher(object):
         raise KeyError(f"Docid not found: {docid} ")
       idx = self.docid_to_id[docid]
       indices.append(idx)
-      old_idx = len(self.docids) - 1
+      old_idx = len(self.docids) - 1  # pyrefly: ignore[bad-argument-type]
       if idx != old_idx:
-        old_docid = self.docids[old_idx]
-        self.docids[idx] = old_docid
+        old_docid = self.docids[
+            old_idx]  # pyrefly: ignore[unsupported-operation]
+        self.docids[idx] = old_docid  # pyrefly: ignore[unsupported-operation]
         self.docid_to_id[old_docid] = idx
-      self.docids.pop()
+      self.docids.pop()  # pyrefly: ignore[missing-attribute]
       self.docid_to_id.pop(docid)
     _ = self.searcher.delete(indices)
 

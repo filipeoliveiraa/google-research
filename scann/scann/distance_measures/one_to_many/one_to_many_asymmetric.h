@@ -24,10 +24,13 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <tuple>
 #include <type_traits>
 
 #include "absl/base/optimization.h"
 #include "absl/base/prefetch.h"
+#include "absl/flags/declare.h"
+#include "absl/flags/flag.h"
 #include "scann/data_format/datapoint.h"
 #include "scann/data_format/dataset.h"
 #include "scann/distance_measures/distance_measures.h"
@@ -45,36 +48,47 @@
 #include "scann/utils/scalar_quantization_helpers.h"
 #include "scann/utils/types.h"
 
+ABSL_DECLARE_FLAG(bool, scann_one_to_many_enable_int8_quantized_query);
+
 namespace research_scann {
+
+struct OneToManyOptions {
+  bool enable_int8_quantized_query =
+      absl::GetFlag(FLAGS_scann_one_to_many_enable_int8_quantized_query);
+};
 
 void DenseDotProductDistanceOneToManyInt8Float(
     const DatapointPtr<float>& query, DefaultDenseDatasetView<int8_t> database,
-    MutableSpan<float> result);
+    MutableSpan<float> result, OneToManyOptions options = OneToManyOptions());
 
 template <typename DatasetView>
 void DenseDotProductDistanceOneToManyInt8Float(
     const DatapointPtr<float>& query, const DatasetView* __restrict__ database,
-    MutableSpan<float> result);
+    MutableSpan<float> result, OneToManyOptions options = OneToManyOptions());
 
 void DenseDotProductDistanceOneToManyInt8Float(
     const DatapointPtr<float>& query, DefaultDenseDatasetView<int8_t> database,
-    MutableSpan<double> result);
+    MutableSpan<double> result, OneToManyOptions options = OneToManyOptions());
 
 void DenseDotProductDistanceOneToManyInt8Float(
     const DatapointPtr<float>& query, DefaultDenseDatasetView<int8_t> database,
-    MutableSpan<pair<uint32_t, float>> result);
+    MutableSpan<pair<uint32_t, float>> result,
+    OneToManyOptions options = OneToManyOptions());
 
 void DenseDotProductDistanceOneToManyInt8Float(
     const DatapointPtr<float>& query, DefaultDenseDatasetView<int8_t> database,
-    MutableSpan<pair<uint64_t, float>> result);
+    MutableSpan<pair<uint64_t, float>> result,
+    OneToManyOptions options = OneToManyOptions());
 
 void DenseDotProductDistanceOneToManyInt8Float(
     const DatapointPtr<float>& query, DefaultDenseDatasetView<int8_t> database,
-    MutableSpan<pair<DatapointIndex, double>> result);
+    MutableSpan<pair<DatapointIndex, double>> result,
+    OneToManyOptions options = OneToManyOptions());
 
 void DenseDotProductDistanceOneToManyInt8Float(
     const DatapointPtr<float>& query, DefaultDenseDatasetView<int8_t> database,
-    ConstSpan<DatapointIndex> indices, MutableSpan<float> result);
+    ConstSpan<DatapointIndex> indices, MutableSpan<float> result,
+    OneToManyOptions options = OneToManyOptions());
 
 void DenseDotProductDistanceOneToManyBf16Float(
     const DatapointPtr<float>& query, DefaultDenseDatasetView<int16_t> database,
@@ -203,6 +217,57 @@ SCANN_OUTLINE void OneToManyUint4Int8Impl(const int8_t* __restrict__ query,
 
 namespace one_to_many_low_level {
 
+SCANN_INLINE std::tuple<float, float> MaxAbsoluteAndSum(
+    absl::Span<const float> query) {
+  float query_max_abs = 0.0f;
+  float query_sum = 0.0f;
+  for (size_t j : Seq(query.size())) {
+    const float qval = query[j];
+    query_max_abs = std::max(query_max_abs, std::abs(qval));
+    query_sum += qval;
+  }
+  return std::make_tuple(query_max_abs, query_sum);
+}
+
+SCANN_INLINE std::tuple<float, float> Int8QuantizationMultipliers(
+    const float query_max_abs) {
+  if (query_max_abs == 0.0f) return std::make_tuple(0.0f, 0.0f);
+  const float quantize_query_multiplier = kFP8Max / query_max_abs;
+  const float dequantize_query_multiplier = query_max_abs * (1.0f / kFP8Max);
+  return std::make_tuple(quantize_query_multiplier,
+                         dequantize_query_multiplier);
+}
+
+template <bool kHasIndices, typename DatasetViewT, typename IndexT,
+          typename ResultElemT, typename CallbackT,
+          typename = std::enable_if_t<!std::is_pointer_v<DatasetViewT>>,
+          typename = std::enable_if_t<!std::is_pointer_v<CallbackT>>>
+SCANN_INLINE void OneToManyInt8Int8Dispatch(const float* __restrict__ query,
+                                            DatasetViewT dataset_view,
+                                            const IndexT* indices,
+                                            MutableSpan<ResultElemT> result,
+                                            CallbackT callback) {
+  const size_t dims = dataset_view.dimensionality();
+  auto query_max_abs =
+      std::get<0>(MaxAbsoluteAndSum(absl::MakeConstSpan(query, dims)));
+  auto [quantize_query_multiplier, dequantize_query_multiplier] =
+      Int8QuantizationMultipliers(query_max_abs);
+
+  vector<int8_t> int8_query(dims);
+  for (size_t j : Seq(dims)) {
+    int8_query[j] = Int8Quantize(query[j] * quantize_query_multiplier);
+  }
+
+  highway::OneToManyInt8Int8Impl<kHasIndices>(
+      int8_query.data(), std::move(dataset_view), indices, result,
+      MakeDequantizeFunctor(dequantize_query_multiplier, 0, callback));
+}
+
+SCANN_INLINE constexpr bool CanUseInt8QuantizedQuery(
+    bool is_squared_l2, OneToManyOptions options = OneToManyOptions()) {
+  return !is_squared_l2 && options.enable_int8_quantized_query;
+}
+
 template <bool kHasIndices, bool kIsSquaredL2, typename DatasetViewT,
           typename IndexT, typename ResultElemT, typename CallbackT,
           typename = std::enable_if_t<!std::is_pointer_v<DatasetViewT>>,
@@ -210,8 +275,13 @@ template <bool kHasIndices, bool kIsSquaredL2, typename DatasetViewT,
 SCANN_INLINE void OneToManyInt8FloatDispatch(
     const float* __restrict__ query, DatasetViewT dataset_view,
     const float* __restrict__ inv_multipliers_for_squared_l2,
-    const IndexT* indices, MutableSpan<ResultElemT> result,
-    CallbackT callback) {
+    const IndexT* indices, MutableSpan<ResultElemT> result, CallbackT callback,
+    OneToManyOptions options = OneToManyOptions()) {
+  if (CanUseInt8QuantizedQuery(kIsSquaredL2, options)) {
+    return OneToManyInt8Int8Dispatch<kHasIndices>(query, dataset_view, indices,
+                                                  result, callback);
+  }
+
 #ifdef __x86_64__
 
   if constexpr (false && RuntimeSupportsAvx512()) {
@@ -246,13 +316,15 @@ SCANN_INLINE void OneToManyScaledInt8FloatDispatch(
     ScaleEncoding scale_encoding, const float* __restrict__ query,
     DatasetViewT dataset_view,
     const float* __restrict__ inv_multipliers_for_squared_l2,
-    const IndexT* indices, MutableSpan<ResultElemT> result,
-    CallbackT callback) {
+    const IndexT* indices, MutableSpan<ResultElemT> result, CallbackT callback,
+    OneToManyOptions options = OneToManyOptions()) {
+  const auto resolved_scale_encoding =
+      ResolveScaleEncoding(8, scale_encoding, dataset_view.dimensionality());
   WithScaleFunctor(
-      scale_encoding, callback, [&](auto functor) SCANN_INLINE_LAMBDA {
+      resolved_scale_encoding, callback, [&](auto functor) SCANN_INLINE_LAMBDA {
         return OneToManyInt8FloatDispatch<kHasIndices, kIsSquaredL2>(
             query, dataset_view, inv_multipliers_for_squared_l2, indices,
-            result, functor);
+            result, functor, options);
       });
 }
 
@@ -291,19 +363,16 @@ SCANN_INLINE void OneToManyUint4FloatDispatch(const float* __restrict__ query,
                                               MutableSpan<ResultElemT> result,
                                               CallbackT callback) {
   const size_t dims = dataset_view.dimensionality();
+  auto [query_max_abs, query_sum] =
+      MaxAbsoluteAndSum(absl::MakeConstSpan(query, dims));
+  auto [quantize_query_multiplier, dequantize_query_multiplier] =
+      Int8QuantizationMultipliers(query_max_abs);
+
   vector<int8_t> int8_query(dims);
-  float query_max_abs = 0.0f;
-  float query_sum = 0.0f;
-  for (size_t j : Seq(dataset_view.dimensionality())) {
-    const float qval = query[j];
-    query_max_abs = std::max(query_max_abs, std::abs(qval));
-    query_sum += qval;
-  }
-  const float quantize_query_multiplier = kFP8Max / query_max_abs;
-  const float dequantize_query_multiplier = query_max_abs * (1.0f / kFP8Max);
   for (size_t j : Seq(dims)) {
     int8_query[j] = Int8Quantize(query[j] * quantize_query_multiplier);
   }
+
   const float query_offset = query_sum * kFP4Max;
   OneToManyUint4Int8Dispatch<kHasIndices>(
       int8_query.data(), std::move(dataset_view), indices, result,
@@ -319,7 +388,9 @@ SCANN_INLINE void OneToManyScaledUint4FloatDispatch(
     ScaleEncoding scale_encoding, const float* __restrict__ query,
     DatasetViewT dataset_view, const IndexT* indices,
     MutableSpan<ResultElemT> result, CallbackT callback) {
-  WithScaleFunctor(scale_encoding, callback,
+  const auto resolved_scale_encoding =
+      ResolveScaleEncoding(4, scale_encoding, dataset_view.dimensionality());
+  WithScaleFunctor(resolved_scale_encoding, callback,
                    [&](auto functor) SCANN_INLINE_LAMBDA {
                      return OneToManyUint4FloatDispatch<kHasIndices>(
                          query, dataset_view, indices, result, functor);
@@ -414,12 +485,12 @@ template <typename DatasetView, bool kHasIndices, typename IndexT,
 SCANN_INLINE void DenseDotProductDistanceOneToManyInt8FloatLowLevel(
     const float* __restrict__ query, const DatasetView* dataset_view,
     const IndexT* indices, MutableSpan<ResultElemT> result,
-    CallbackLambda* callback) {
+    CallbackLambda* callback, OneToManyOptions options = OneToManyOptions()) {
   constexpr const float* kNoMultipliersForDotProductDistance = nullptr;
   OneToManyInt8FloatDispatch<kHasIndices, false>(
       query, GetCopyableDatasetView(dataset_view),
       kNoMultipliersForDotProductDistance, indices, result,
-      GetCopyableCallback(callback));
+      GetCopyableCallback(callback), options);
 }
 
 }  // namespace one_to_many_low_level
@@ -427,7 +498,7 @@ SCANN_INLINE void DenseDotProductDistanceOneToManyInt8FloatLowLevel(
 template <typename DatasetView>
 SCANN_INLINE void DenseDotProductDistanceOneToManyInt8Float(
     const DatapointPtr<float>& query, const DatasetView* database,
-    MutableSpan<float> result) {
+    MutableSpan<float> result, OneToManyOptions options) {
   constexpr const DatapointIndex* kNoIndices = nullptr;
   constexpr const float* kNoMultipliersForDotProductDistance = nullptr;
   using one_to_many_low_level::GetCopyableDatasetView;
@@ -435,30 +506,31 @@ SCANN_INLINE void DenseDotProductDistanceOneToManyInt8Float(
   one_to_many_low_level::OneToManyInt8FloatDispatch<false, false>(
       query.values(), GetCopyableDatasetView(database),
       kNoMultipliersForDotProductDistance, kNoIndices, result,
-      SetDistanceFunctor<float>(result));
+      SetDistanceFunctor<float>(result), options);
 }
 
 template <typename DatasetView>
 SCANN_INLINE void OneToManyInt8FloatDotProductDistance(
-    ConstSpan<float> query, DatasetView dataset_view,
-    MutableSpan<float> result) {
+    ConstSpan<float> query, DatasetView dataset_view, MutableSpan<float> result,
+    OneToManyOptions options = OneToManyOptions()) {
   constexpr const DatapointIndex* kNoIndices = nullptr;
   constexpr const float* kNoMultipliersForDotProductDistance = nullptr;
   using one_to_many_low_level::SetDistanceFunctor;
   one_to_many_low_level::OneToManyInt8FloatDispatch<false, false>(
       query.data(), dataset_view, kNoMultipliersForDotProductDistance,
-      kNoIndices, result, SetDistanceFunctor<float>(result));
+      kNoIndices, result, SetDistanceFunctor<float>(result), options);
 }
 
 template <typename DatasetView>
 SCANN_INLINE void OneToManyInt8FloatDotProductDistance(
     ConstSpan<float> query, DatasetView dataset_view,
-    ConstSpan<DatapointIndex> indices, MutableSpan<float> result) {
+    ConstSpan<DatapointIndex> indices, MutableSpan<float> result,
+    OneToManyOptions options = OneToManyOptions()) {
   constexpr const float* kNoMultipliersForDotProductDistance = nullptr;
   using one_to_many_low_level::SetDistanceFunctor;
   one_to_many_low_level::OneToManyInt8FloatDispatch<true, false>(
       query.data(), dataset_view, kNoMultipliersForDotProductDistance,
-      indices.data(), result, SetDistanceFunctor<float>(result));
+      indices.data(), result, SetDistanceFunctor<float>(result), options);
 }
 
 template <typename DatasetView>

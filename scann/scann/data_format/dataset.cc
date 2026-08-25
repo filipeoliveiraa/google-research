@@ -45,7 +45,7 @@ namespace research_scann {
 
 shared_ptr<DocidCollectionInterface> Dataset::ReleaseDocids() {
   auto result = std::move(docids_);
-  docids_ = make_unique<VariableLengthDocidCollection>(
+  docids_ = std::make_unique<VariableLengthDocidCollection>(
       VariableLengthDocidCollection::CreateWithEmptyDocids(result->size()));
   return result;
 }
@@ -95,22 +95,22 @@ void TypedDataset<T>::AppendOrDie(const GenericFeatureVector& gfv,
   CHECK_OK(this->Append(gfv, docid));
 }
 
-template <typename T>
-Status TypedDataset<T>::MeanByDimension(Datapoint<double>* result) const {
-  const size_t size = this->size();
+template <typename T, typename ViewT>
+Status MeanByDimensionImpl(const ViewT* view, Datapoint<double>* result) {
+  const size_t size = view->size();
   if (size <= 0) {
     return FailedPreconditionError(
         "Cannot compute the mean of an empty dataset.");
   }
 
   DCHECK(result);
-  result->ZeroFill(this->dimensionality());
+  result->ZeroFill(view->dimensionality());
   std::vector<double>& values = *result->mutable_values();
 
-  if (this->IsSparse()) {
+  if (view->IsSparse()) {
     for (size_t i = 0; i < size; ++i) {
-      auto dptr = (*this)[i];
-      if (this->is_binary()) {
+      auto dptr = (*view)[i];
+      if (view->is_binary()) {
         for (DimensionIndex j = 0; j < dptr.nonzero_entries(); ++j) {
           ++values[dptr.indices()[j]];
         }
@@ -122,8 +122,8 @@ Status TypedDataset<T>::MeanByDimension(Datapoint<double>* result) const {
     }
   } else {
     for (size_t i = 0; i < size; ++i) {
-      auto dptr = (*this)[i];
-      if (this->is_binary()) {
+      auto dptr = (*view)[i];
+      if (view->is_binary()) {
         for (DimensionIndex j = 0; j < dptr.dimensionality(); ++j) {
           values[j] += dptr.GetElementPacked(j);
         }
@@ -142,20 +142,31 @@ Status TypedDataset<T>::MeanByDimension(Datapoint<double>* result) const {
 }
 
 template <typename T>
-Status TypedDataset<T>::MeanByDimension(ConstSpan<DatapointIndex> subset,
-                                        Datapoint<double>* result) const {
+Status TypedDataset<T>::MeanByDimension(Datapoint<double>* result) const {
+  return MeanByDimensionImpl<T>(this, result);
+}
+
+template <typename T>
+Status DenseDatasetView<T>::MeanByDimension(Datapoint<double>* result) const {
+  return MeanByDimensionImpl<T>(this, result);
+}
+
+template <typename T, typename ViewT>
+Status MeanByDimensionSubsetImpl(const ViewT* view,
+                                 ConstSpan<DatapointIndex> subset,
+                                 Datapoint<double>* result) {
   if (subset.empty()) {
     return InvalidArgumentError("Cannot compute the mean of an empty subset.");
   }
 
   DCHECK(result);
-  result->ZeroFill(this->dimensionality());
+  result->ZeroFill(view->dimensionality());
   std::vector<double>& values = *result->mutable_values();
 
-  if (this->IsSparse()) {
+  if (view->IsSparse()) {
     for (DatapointIndex i : subset) {
-      auto dptr = (*this)[i];
-      if (this->is_binary()) {
+      auto dptr = (*view)[i];
+      if (view->is_binary()) {
         for (DimensionIndex j = 0; j < dptr.nonzero_entries(); ++j) {
           ++values[dptr.indices()[j]];
         }
@@ -167,8 +178,8 @@ Status TypedDataset<T>::MeanByDimension(ConstSpan<DatapointIndex> subset,
     }
   } else {
     for (DatapointIndex i : subset) {
-      auto dptr = (*this)[i];
-      if (this->is_binary()) {
+      auto dptr = (*view)[i];
+      if (view->is_binary()) {
         for (DimensionIndex j = 0; j < dptr.dimensionality(); ++j) {
           values[j] += dptr.GetElementPacked(j);
         }
@@ -187,12 +198,24 @@ Status TypedDataset<T>::MeanByDimension(ConstSpan<DatapointIndex> subset,
 }
 
 template <typename T>
+Status TypedDataset<T>::MeanByDimension(ConstSpan<DatapointIndex> subset,
+                                        Datapoint<double>* result) const {
+  return MeanByDimensionSubsetImpl<T>(this, subset, result);
+}
+
+template <typename T>
+Status DenseDatasetView<T>::MeanByDimension(ConstSpan<DatapointIndex> subset,
+                                            Datapoint<double>* result) const {
+  return MeanByDimensionSubsetImpl<T>(this, subset, result);
+}
+
+template <typename T>
 void TypedDataset<T>::MeanVarianceByDimension(
     Datapoint<double>* means, Datapoint<double>* variances) const {
   CHECK(!this->is_binary()) << "Not implemented for binary datasets.";
   vector<DatapointIndex> subset;
-  subset.reserve(dimensionality());
-  for (DatapointIndex i = 0; i < size(); ++i) {
+  subset.reserve(this->dimensionality());
+  for (DatapointIndex i = 0; i < this->size(); ++i) {
     subset.push_back(i);
   }
 
@@ -200,21 +223,35 @@ void TypedDataset<T>::MeanVarianceByDimension(
 }
 
 template <typename T>
-void TypedDataset<T>::MeanVarianceByDimension(
-    ConstSpan<DatapointIndex> subset, Datapoint<double>* means,
-    Datapoint<double>* variances) const {
-  DCHECK(variances);
+void DenseDatasetView<T>::MeanVarianceByDimension(
+    Datapoint<double>* means, Datapoint<double>* variances) const {
   CHECK(!this->is_binary()) << "Not implemented for binary datasets.";
+  vector<DatapointIndex> subset;
+  subset.reserve(this->dimensionality());
+  for (DatapointIndex i = 0; i < this->size(); ++i) {
+    subset.push_back(i);
+  }
+
+  return MeanVarianceByDimension(subset, means, variances);
+}
+
+template <typename T, typename ViewT>
+void MeanVarianceByDimensionImpl(const ViewT* view,
+                                 ConstSpan<DatapointIndex> subset,
+                                 Datapoint<double>* means,
+                                 Datapoint<double>* variances) {
+  DCHECK(variances);
+  CHECK(!view->is_binary()) << "Not implemented for binary datasets.";
   CHECK_GT(subset.size(), 0)
       << "Cannot compute MeanVarianceByDimension on empty subset.";
-  const DimensionIndex dimensionality = this->dimensionality();
+  const DimensionIndex dimensionality = view->dimensionality();
   using AT = AccumulatorTypeFor<T>;
   vector<AT> sums(dimensionality);
   vector<AT> squares(dimensionality);
 
   for (DatapointIndex index : subset) {
-    auto point = (*this)[index];
-    if (this->IsDense()) {
+    auto point = (*view)[index];
+    if (view->IsDense()) {
       for (DimensionIndex i = 0; i < dimensionality; ++i) {
         const T num = point.values()[i];
         sums[i] += num;
@@ -244,6 +281,20 @@ void TypedDataset<T>::MeanVarianceByDimension(
       (*means->mutable_values())[i] = mean;
     }
   }
+}
+
+template <typename T>
+void TypedDataset<T>::MeanVarianceByDimension(
+    ConstSpan<DatapointIndex> subset, Datapoint<double>* means,
+    Datapoint<double>* variances) const {
+  MeanVarianceByDimensionImpl<T>(this, subset, means, variances);
+}
+
+template <typename T>
+void DenseDatasetView<T>::MeanVarianceByDimension(
+    ConstSpan<DatapointIndex> subset, Datapoint<double>* means,
+    Datapoint<double>* variances) const {
+  MeanVarianceByDimensionImpl<T>(this, subset, means, variances);
 }
 
 template <typename T>
@@ -328,24 +379,48 @@ inline void ToFloatAlwaysCopy(const DatapointPtr<float>& dptr,
 }
 }  // namespace
 
+template <typename T, typename ViewT>
+void GetDatapointDoubleImpl(const ViewT* view, size_t index,
+                            Datapoint<double>* result) {
+  DCHECK(result);
+  result->clear();
+  auto unconverted = (*view)[index];
+  ToDoubleAlwaysCopy(unconverted, result);
+  result->set_normalization(view->normalization());
+}
+
+template <typename T, typename ViewT>
+void GetDatapointFloatImpl(const ViewT* view, size_t index,
+                           Datapoint<float>* result) {
+  DCHECK(result);
+  result->clear();
+  auto unconverted = (*view)[index];
+  ToFloatAlwaysCopy(unconverted, result);
+  result->set_normalization(view->normalization());
+}
+
 template <typename T>
 void TypedDataset<T>::GetDatapoint(size_t index,
                                    Datapoint<double>* result) const {
-  DCHECK(result);
-  result->clear();
-  auto unconverted = (*this)[index];
-  ToDoubleAlwaysCopy(unconverted, result);
-  result->set_normalization(this->normalization());
+  GetDatapointDoubleImpl<T>(this, index, result);
 }
 
 template <typename T>
 void TypedDataset<T>::GetDatapoint(size_t index,
                                    Datapoint<float>* result) const {
-  DCHECK(result);
-  result->clear();
-  auto unconverted = (*this)[index];
-  ToFloatAlwaysCopy(unconverted, result);
-  result->set_normalization(this->normalization());
+  GetDatapointFloatImpl<T>(this, index, result);
+}
+
+template <typename T>
+void DenseDatasetView<T>::GetDatapoint(size_t index,
+                                       Datapoint<double>* result) const {
+  GetDatapointDoubleImpl<T>(this, index, result);
+}
+
+template <typename T>
+void DenseDatasetView<T>::GetDatapoint(size_t index,
+                                       Datapoint<float>* result) const {
+  GetDatapointFloatImpl<T>(this, index, result);
 }
 
 template <typename T>
@@ -489,7 +564,7 @@ template <typename T>
 DenseDataset<T>::DenseDataset(vector<T>&& datapoint_vec, size_t num_dp)
     : DenseDataset<T>(
           std::move(datapoint_vec),
-          make_unique<VariableLengthDocidCollection>(
+          std::make_unique<VariableLengthDocidCollection>(
               VariableLengthDocidCollection::CreateWithEmptyDocids(num_dp))) {}
 
 template <typename T>
@@ -785,6 +860,8 @@ void SparseDataset<T>::ShrinkToFit() {
   this->docids()->ShrinkToFit();
 }
 
+SCANN_INSTANTIATE_TYPED_CLASS(, TypedDatasetView);
+SCANN_INSTANTIATE_TYPED_CLASS(, DenseDatasetView);
 SCANN_INSTANTIATE_TYPED_CLASS(, TypedDataset);
 SCANN_INSTANTIATE_TYPED_CLASS(, SparseDataset);
 SCANN_INSTANTIATE_TYPED_CLASS(, DenseDataset);

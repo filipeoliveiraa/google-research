@@ -353,21 +353,32 @@ bool UntypedSingleMachineSearcherBase::needs_hashed_dataset() const {
 template <typename T>
 Status SingleMachineSearcherBase<T>::FindNeighbors(
     const DatapointPtr<T>& query, const SearchParameters& params,
-    NNResultsVector* result) const {
+    NNResultsVector* result,
+    FindNeighborsOptionalParams& optional_params) const {
   SCANN_RET_CHECK(query.IsFinite())
       << "Cannot query ScaNN with vectors that contain NaNs or infinity.";
   DCHECK(result);
-  SCANN_RETURN_IF_ERROR(
-      FindNeighborsNoSortNoExactReorder(query, params, result));
+  if (params.pre_reordering_num_neighbors() > 0) {
+    SCANN_RETURN_IF_ERROR(
+        FindNeighborsNoSortNoExactReorder(query, params, result));
 
-  if (reordering_helper_) {
-    SCANN_RETURN_IF_ERROR(ReorderResults(query, params, result));
+    if (reordering_helper_) {
+      SCANN_RETURN_IF_ERROR(ReorderResults(query, params, result));
+    }
+
+    SCANN_RETURN_IF_ERROR(SortAndDropResults(result, params));
+    if (optional_params.num_non_random_neighbors != nullptr) {
+      *optional_params.num_non_random_neighbors = result->size();
+    }
   }
 
-  SCANN_RETURN_IF_ERROR(SortAndDropResults(result, params));
-
-  if (params.num_random_neighbors()) {
+  if (params.num_random_neighbors() > 0) {
+    int num_non_random_neighbors = result->size();
     SCANN_RETURN_IF_ERROR(SampleRandomNeighbors(query, params, result));
+    if (optional_params.num_random_neighbors != nullptr) {
+      *optional_params.num_random_neighbors =
+          result->size() - num_non_random_neighbors;
+    }
   }
 
   return OkStatus();
@@ -497,7 +508,8 @@ Status SingleMachineSearcherBase<T>::PropagateDistances(
 
 template <typename T>
 Status SingleMachineSearcherBase<T>::FindNeighborsBatched(
-    const TypedDataset<T>& queries, MutableSpan<NNResultsVector> result) const {
+    const TypedDatasetView<T>& queries,
+    MutableSpan<NNResultsVector> result) const {
   vector<SearchParameters> params(queries.size());
   for (auto& p : params) {
     p.SetUnspecifiedParametersFrom(default_search_parameters_);
@@ -507,8 +519,16 @@ Status SingleMachineSearcherBase<T>::FindNeighborsBatched(
 
 template <typename T>
 Status SingleMachineSearcherBase<T>::FindNeighborsBatched(
-    const TypedDataset<T>& queries, ConstSpan<SearchParameters> params,
+    const TypedDatasetView<T>& queries, ConstSpan<SearchParameters> params,
     MutableSpan<NNResultsVector> results) const {
+  return FindNeighborsBatched(queries, params, results, {});
+}
+
+template <typename T>
+Status SingleMachineSearcherBase<T>::FindNeighborsBatched(
+    const TypedDatasetView<T>& queries, ConstSpan<SearchParameters> params,
+    MutableSpan<NNResultsVector> results,
+    MutableSpan<FindNeighborsOptionalParams> optional_params) const {
   SCANN_RETURN_IF_ERROR(
       FindNeighborsBatchedNoSortNoExactReorder(queries, params, results));
 
@@ -520,6 +540,14 @@ Status SingleMachineSearcherBase<T>::FindNeighborsBatched(
 
   for (DatapointIndex i = 0; i < results.size(); ++i) {
     SCANN_RETURN_IF_ERROR(SortAndDropResults(&results[i], params[i]));
+    if (optional_params.size() > i) {
+      if (optional_params[i].num_non_random_neighbors != nullptr) {
+        *optional_params[i].num_non_random_neighbors = results[i].size();
+      }
+      if (optional_params[i].num_random_neighbors != nullptr) {
+        *optional_params[i].num_random_neighbors = 0;
+      }
+    }
   }
 
   return OkStatus();
@@ -527,7 +555,7 @@ Status SingleMachineSearcherBase<T>::FindNeighborsBatched(
 
 template <typename ResultElem>
 Status UntypedSingleMachineSearcherBase::ValidateFindNeighborsBatched(
-    const Dataset& queries, ConstSpan<SearchParameters> params,
+    const DatasetView& queries, ConstSpan<SearchParameters> params,
     MutableSpan<ResultElem> results) const {
   if (!params.empty() ||
       !std::is_same_v<ResultElem, FastTopNeighbors<float>*>) {
@@ -592,7 +620,7 @@ Status UntypedSingleMachineSearcherBase::ValidateFindNeighborsBatched(
 
 template <typename T>
 Status SingleMachineSearcherBase<T>::FindNeighborsBatchedNoSortNoExactReorder(
-    const TypedDataset<T>& queries, ConstSpan<SearchParameters> params,
+    const TypedDatasetView<T>& queries, ConstSpan<SearchParameters> params,
     MutableSpan<NNResultsVector> results) const {
   SCANN_RETURN_IF_ERROR(ValidateFindNeighborsBatched(queries, params, results));
   return FindNeighborsBatchedImpl(queries, params, results);
@@ -600,7 +628,7 @@ Status SingleMachineSearcherBase<T>::FindNeighborsBatchedNoSortNoExactReorder(
 
 template <typename T>
 Status SingleMachineSearcherBase<T>::FindNeighborsBatchedNoSortNoExactReorder(
-    const TypedDataset<T>& queries, ConstSpan<SearchParameters> params,
+    const TypedDatasetView<T>& queries, ConstSpan<SearchParameters> params,
     MutableSpan<FastTopNeighbors<float>*> results,
     ConstSpan<DatapointIndex> datapoint_index_lookup) const {
   SCANN_RETURN_IF_ERROR(ValidateFindNeighborsBatched(queries, params, results));
@@ -628,7 +656,7 @@ Status UntypedSingleMachineSearcherBase::GetNeighborProtoNoMetadata(
   DCHECK(result);
   result->Clear();
   SCANN_ASSIGN_OR_RETURN(auto docid, GetDocid(neighbor.first));
-  result->set_docid(std::string(docid));
+  result->set_docid(docid.data(), docid.size());
   result->set_distance(neighbor.second);
   if (crowding_enabled()) {
     result->set_crowding_attribute(
@@ -673,7 +701,7 @@ void SingleMachineSearcherBase<T>::ReleaseDatasetAndDocids() {
 
 template <typename T>
 Status SingleMachineSearcherBase<T>::FindNeighborsBatchedImpl(
-    const TypedDataset<T>& queries, ConstSpan<SearchParameters> params,
+    const TypedDatasetView<T>& queries, ConstSpan<SearchParameters> params,
     MutableSpan<NNResultsVector> results) const {
   DCHECK_EQ(queries.size(), params.size());
   DCHECK_EQ(queries.size(), results.size());
@@ -687,7 +715,7 @@ Status SingleMachineSearcherBase<T>::FindNeighborsBatchedImpl(
 
 template <typename T>
 Status SingleMachineSearcherBase<T>::FindNeighborsBatchedImpl(
-    const TypedDataset<T>& queries, ConstSpan<SearchParameters> params,
+    const TypedDatasetView<T>& queries, ConstSpan<SearchParameters> params,
     MutableSpan<FastTopNeighbors<float>*> results,
     ConstSpan<DatapointIndex> datapoint_index_mapping) const {
   if (!params.empty()) SCANN_RET_CHECK_EQ(queries.size(), params.size());

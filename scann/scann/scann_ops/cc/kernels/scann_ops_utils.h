@@ -43,8 +43,8 @@ template <typename DstType, typename SrcType>
 absl::Status PopulateDenseDatasetFromTensor(
     const Tensor& tensor, research_scann::DenseDataset<DstType>* dataset) {
   if (tensor.dims() != 2) {
-    return errors::InvalidArgument("Dataset must be 2-dimensional",
-                                   tensor.DebugString());
+    return absl::InvalidArgumentError(
+        absl::StrCat("Dataset must be 2-dimensional", tensor.DebugString()));
   }
   auto tensor_t = tensor.matrix<SrcType>();
   int num_dim = tensor_t.dimension(1);

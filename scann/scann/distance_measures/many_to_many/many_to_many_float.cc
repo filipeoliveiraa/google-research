@@ -14,20 +14,19 @@
 
 
 
-#include "scann/distance_measures/many_to_many/many_to_many_floating_point.h"
-#include "scann/distance_measures/many_to_many/many_to_many_templates.h"
+#include "scann/distance_measures/many_to_many/many_to_many_internal.h"
 
 namespace research_scann {
 namespace mm_internal {
 
 template void DenseDistanceManyToManyImpl(
     const DistanceMeasure &dist, DefaultDenseDatasetView<float> queries,
-    const DenseDataset<float> &database, ThreadPool *pool,
+    const DefaultDenseDatasetView<float> &database, ThreadPool *pool,
     ManyToManyResultsCallback<float> callback);
 
 template void DenseDistanceManyToManyImpl(
     const DistanceMeasure &dist, DefaultDenseDatasetView<float> queries,
-    const DenseDataset<float> &database, ThreadPool *pool,
+    const DefaultDenseDatasetView<float> &database, ThreadPool *pool,
     EpsilonFilteringCallback<float> callback);
 
 }  // namespace mm_internal

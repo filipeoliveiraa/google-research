@@ -217,6 +217,18 @@ proto_library(
 )
 
 proto_library(
+    name = "coding_proto",
+    srcs = ["coding.proto"],
+    deps = [
+        ":centers_proto",
+        ":exact_reordering_proto",
+        ":hash_proto",
+        "//scann/distance_measures/one_to_many:scale_encoding_proto",
+        "//scann/utils/fixed_point:fixed_point_training_results",
+    ],
+)
+
+proto_library(
     name = "auto_tuning_proto",
     srcs = ["auto_tuning.proto"],
 )
@@ -224,6 +236,11 @@ proto_library(
 cc_proto_library(
     name = "auto_tuning_cc_proto",
     deps = [":auto_tuning_proto"],
+)
+
+cc_proto_library(
+    name = "coding_cc_proto",
+    deps = [":coding_proto"],
 )
 
 proto_library(

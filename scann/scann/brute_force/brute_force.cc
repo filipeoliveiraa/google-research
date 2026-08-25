@@ -26,6 +26,7 @@
 #include "scann/base/restrict_allowlist.h"
 #include "scann/base/search_parameters.h"
 #include "scann/base/single_machine_base.h"
+#include "scann/data_format/dataset.h"
 #include "scann/distance_measures/many_to_many/many_to_many_floating_point.h"
 #include "scann/distance_measures/one_to_many/one_to_many.h"
 #include "scann/oss_wrappers/scann_down_cast.h"
@@ -55,18 +56,35 @@ BruteForceSearcher<T>::BruteForceSearcher(
           dataset->IsDense() && IsFloatingType<T>()) {}
 
 template <typename T>
+BruteForceSearcher<T>::BruteForceSearcher(
+    shared_ptr<const DistanceMeasure> distance,
+    DefaultDenseDatasetView<T> dataset,
+    const int32_t default_pre_reordering_num_neighbors,
+    const float default_pre_reordering_epsilon)
+    : SingleMachineSearcherBase<T>(nullptr,
+                                   default_pre_reordering_num_neighbors,
+                                   default_pre_reordering_epsilon),
+      dataset_view_(dataset),
+      distance_(distance),
+      supports_low_level_batching_(
+          (typeid(*distance) == typeid(DotProductDistance) ||
+           typeid(*distance) == typeid(CosineDistance) ||
+           typeid(*distance) == typeid(SquaredL2Distance)) &&
+          IsFloatingType<T>()) {}
+
+template <typename T>
 BruteForceSearcher<T>::~BruteForceSearcher() {}
 
 template <typename T>
 Status BruteForceSearcher<T>::EnableCrowdingImpl(
     ConstSpan<int64_t> datapoint_index_to_crowding_attribute,
     ConstSpan<std::string> crowding_dimension_names) {
-  if (datapoint_index_to_crowding_attribute.size() != this->dataset()->size()) {
+  if (datapoint_index_to_crowding_attribute.size() != dataset_size()) {
     return InvalidArgumentError(absl::StrCat(
         "datapoint_index_to_crowding_attribute must have size equal to "
         "number of datapoints.  (",
-        datapoint_index_to_crowding_attribute.size(), " vs. ",
-        this->dataset()->size(), "."));
+        datapoint_index_to_crowding_attribute.size(), " vs. ", dataset_size(),
+        "."));
   }
   return OkStatus();
 }
@@ -279,11 +297,11 @@ unique_ptr<TopNWrapperInterface<ResultType>> MakeNonCrowdingTopN(
   if (min_distance == -numeric_limits<float>::infinity()) {
     if constexpr (IsSame<ResultType, float>()) {
       if (thread_safe) {
-        return make_unique<FastTopNeighborsWrapperThreadSafe>(
+        return std::make_unique<FastTopNeighborsWrapperThreadSafe>(
             params.pre_reordering_num_neighbors(),
             params.pre_reordering_epsilon());
       } else {
-        return make_unique<FastTopNeighborsWrapper>(
+        return std::make_unique<FastTopNeighborsWrapper>(
             params.pre_reordering_num_neighbors(),
             params.pre_reordering_epsilon());
       }
@@ -301,7 +319,8 @@ template <typename T>
 template <typename Float>
 enable_if_t<!IsSameAny<Float, float, double>(), void>
 BruteForceSearcher<T>::FinishBatchedSearch(
-    const DenseDataset<Float>& db, const DenseDataset<Float>& queries,
+    const DefaultDenseDatasetView<Float>& db,
+    const DefaultDenseDatasetView<Float>& queries,
     ConstSpan<SearchParameters> params,
     MutableSpan<NNResultsVector> results) const {
   LOG(FATAL) << "Low-level batching only works and should only be called with "
@@ -312,25 +331,31 @@ template <typename T>
 template <typename Float>
 enable_if_t<IsSameAny<Float, float, double>(), void>
 BruteForceSearcher<T>::FinishBatchedSearch(
-    const DenseDataset<Float>& db, const DenseDataset<Float>& queries,
+    const DefaultDenseDatasetView<Float>& db,
+    const DefaultDenseDatasetView<Float>& queries,
     ConstSpan<SearchParameters> params,
     MutableSpan<NNResultsVector> results) const {
   if constexpr (std::is_same_v<Float, float>) {
     if (min_distance_ == -numeric_limits<float>::infinity() &&
-        std::all_of(params.begin(), params.end(),
-                    [](const SearchParameters& params) {
-                      return !params.pre_reordering_crowding_enabled();
-                    })) {
+        std::all_of(
+            params.begin(), params.end(), [](const SearchParameters& p) {
+              return !p.pre_reordering_crowding_enabled() &&
+                     p.min_distance() == -numeric_limits<float>::infinity();
+            })) {
       return FinishBatchedSearchSimple(db, queries, params, results);
     }
   }
 
   vector<unique_ptr<TopNWrapperInterface<Float>>> top_ns(queries.size());
   for (size_t i : IndicesOf(params)) {
+    const float query_min_distance =
+        params[i].min_distance() > -numeric_limits<float>::infinity()
+            ? params[i].min_distance()
+            : min_distance_;
     if (params[i].pre_reordering_crowding_enabled()) {
     } else {
-      top_ns[i] =
-          MakeNonCrowdingTopN<Float>(params[i], min_distance_, pool_.get());
+      top_ns[i] = MakeNonCrowdingTopN<Float>(params[i], query_min_distance,
+                                             pool_.get());
     }
   }
 
@@ -350,7 +375,8 @@ BruteForceSearcher<T>::FinishBatchedSearch(
 
 template <typename T>
 void BruteForceSearcher<T>::FinishBatchedSearchSimple(
-    const DenseDataset<float>& db, const DenseDataset<float>& queries,
+    const DefaultDenseDatasetView<float>& db,
+    const DefaultDenseDatasetView<float>& queries,
     ConstSpan<SearchParameters> params,
     MutableSpan<NNResultsVector> results) const {
   vector<FastTopNeighbors<float>> top_ns(queries.size());
@@ -367,7 +393,7 @@ void BruteForceSearcher<T>::FinishBatchedSearchSimple(
 
 template <typename T>
 Status BruteForceSearcher<T>::FindNeighborsBatchedImpl(
-    const TypedDataset<T>& queries, ConstSpan<SearchParameters> params,
+    const TypedDatasetView<T>& queries, ConstSpan<SearchParameters> params,
     MutableSpan<NNResultsVector> results) const {
   if (!supports_low_level_batching_ || !queries.IsDense()) {
     return SingleMachineSearcherBase<T>::FindNeighborsBatchedImpl(
@@ -380,17 +406,25 @@ Status BruteForceSearcher<T>::FindNeighborsBatchedImpl(
           queries, params, results);
     }
   }
-  const DenseDataset<T>& database =
-      *down_cast<const DenseDataset<T>*>(this->dataset());
-  const DenseDataset<T>& queries_dense =
-      *down_cast<const DenseDataset<T>*>(&queries);
-  FinishBatchedSearch<T>(database, queries_dense, params, results);
+
+  DefaultDenseDatasetView<T> queries_view;
+  if (auto* dense_ds = dynamic_cast<const DenseDataset<T>*>(&queries)) {
+    queries_view = *dense_ds;
+  } else if (auto* view =
+                 dynamic_cast<const DefaultDenseDatasetView<T>*>(&queries)) {
+    queries_view = *view;
+  } else {
+    return SingleMachineSearcherBase<T>::FindNeighborsBatchedImpl(
+        queries, params, results);
+  }
+
+  FinishBatchedSearch<T>(dataset_view(), queries_view, params, results);
   return OkStatus();
 }
 
 template <typename T>
 Status BruteForceSearcher<T>::FindNeighborsBatchedImpl(
-    const TypedDataset<T>& queries, ConstSpan<SearchParameters> params,
+    const TypedDatasetView<T>& queries, ConstSpan<SearchParameters> params,
     MutableSpan<FastTopNeighbors<float>*> results,
     ConstSpan<DatapointIndex> datapoint_index_mapping) const {
   auto fallback = [&] {
@@ -407,14 +441,25 @@ Status BruteForceSearcher<T>::FindNeighborsBatchedImpl(
     return fallback();
   }
 
-  const DenseDataset<float>& database =
-      *reinterpret_cast<const DenseDataset<float>*>(this->dataset());
-  const DenseDataset<float>& queries_dense =
-      *reinterpret_cast<const DenseDataset<float>*>(&queries);
-  DenseDistanceManyToManyTopKRemapped(*distance_, queries_dense, database,
-                                      results, datapoint_index_mapping,
-                                      pool_.get());
-  return OkStatus();
+  if constexpr (std::is_same_v<T, float>) {
+    DefaultDenseDatasetView<float> queries_view;
+    if (auto* dense_ds = dynamic_cast<const DenseDataset<float>*>(&queries)) {
+      queries_view = *dense_ds;
+    } else if (auto* view = dynamic_cast<const DefaultDenseDatasetView<float>*>(
+                   &queries)) {
+      queries_view = *view;
+    } else {
+      return fallback();
+    }
+    DenseDistanceManyToManyTopKRemapped(*distance_, queries_view,
+                                        dataset_view(), results,
+                                        datapoint_index_mapping, pool_.get());
+    return OkStatus();
+  } else {
+    LOG(FATAL) << "This codepath should be impossible.  We already called "
+                  "fallback() if "
+                  "T is not float.";
+  }
 }
 
 template <typename T>
@@ -423,6 +468,7 @@ Status BruteForceSearcher<T>::FindNeighborsImpl(const DatapointPtr<T>& query,
                                                 NNResultsVector* result) const {
   DCHECK(result);
   const bool use_min_distance =
+      params.min_distance() > -numeric_limits<float>::infinity() ||
       min_distance_ != -numeric_limits<float>::infinity();
   if (params.pre_reordering_crowding_enabled()) {
     return FailedPreconditionError("Crowding is not supported.");
@@ -444,12 +490,15 @@ Status BruteForceSearcher<T>::FindNeighborsInternal(
     TopN* top_n_ptr) const {
   DCHECK(top_n_ptr);
 
-  if (query.IsDense() && this->dataset()->IsDense()) {
+  if (query.IsDense() && dataset_is_dense()) {
     TopN top_n = std::move(*top_n_ptr);
     const float epsilon = params.pre_reordering_epsilon();
     float min_keep_distance = epsilon;
 
-    const float min_distance = min_distance_;
+    const float min_distance =
+        params.min_distance() > -numeric_limits<float>::infinity()
+            ? params.min_distance()
+            : min_distance_;
 
     auto should_push = [&](float dist) SCANN_INLINE_LAMBDA {
       if constexpr (kUseMinDistance) {
@@ -459,15 +508,15 @@ Status BruteForceSearcher<T>::FindNeighborsInternal(
       }
     };
 
-    const DenseDataset<T>& dataset =
-        *down_cast<const DenseDataset<T>*>(this->dataset());
-
+    DefaultDenseDatasetView<T> dataset_view = this->dataset_view();
     if (params.restricts_enabled()) {
     } else {
-      unique_ptr<float[]> distances_storage(new float[dataset.size()]);
-      MutableSpan<float> distances(distances_storage.get(), dataset.size());
-      DenseDistanceOneToMany<T, float>(*distance_, query, dataset, distances);
-      for (DatapointIndex i : IndicesOf(dataset)) {
+      unique_ptr<float[]> distances_storage(new float[dataset_view.size()]);
+      MutableSpan<float> distances(distances_storage.get(),
+                                   dataset_view.size());
+      DenseDistanceOneToMany<T, float>(*distance_, query, &dataset_view,
+                                       distances);
+      for (DatapointIndex i : IndicesOf(dataset_view)) {
         const float dist = distances[i];
         if (should_push(dist)) {
           top_n.push(std::make_pair(i, dist));
@@ -483,7 +532,7 @@ Status BruteForceSearcher<T>::FindNeighborsInternal(
     FindNeighborsOneToOneInternal<kUseMinDistance>(query, params, &it,
                                                    top_n_ptr);
   } else {
-    DummyAllowlist allowlist(this->dataset()->size());
+    DummyAllowlist allowlist(dataset_size());
     auto it = allowlist.AllowlistedPointIterator();
     FindNeighborsOneToOneInternal<kUseMinDistance>(query, params, &it,
                                                    top_n_ptr);
@@ -502,7 +551,10 @@ void BruteForceSearcher<T>::FindNeighborsOneToOneInternal(
   const float epsilon = params.pre_reordering_epsilon();
   float min_keep_distance = epsilon;
 
-  const float min_distance = min_distance_;
+  const float min_distance =
+      params.min_distance() > -numeric_limits<float>::infinity()
+          ? params.min_distance()
+          : min_distance_;
 
   auto should_push = [&](float dist) SCANN_INLINE_LAMBDA {
     if constexpr (kUseMinDistance) {
@@ -512,7 +564,7 @@ void BruteForceSearcher<T>::FindNeighborsOneToOneInternal(
     }
   };
 
-  if (query.IsDense() && this->dataset()->IsDense()) {
+  if (query.IsDense() && dataset_is_dense()) {
     const DenseDataset<T>& dataset =
         *down_cast<const DenseDataset<T>*>(this->dataset());
     for (; !allowlist_iterator->Done(); allowlist_iterator->Next()) {
@@ -543,7 +595,11 @@ void BruteForceSearcher<T>::FindNeighborsOneToOneInternal(
   } else {
     for (; !allowlist_iterator->Done(); allowlist_iterator->Next()) {
       const DatapointIndex i = allowlist_iterator->value();
-      const DatapointPtr<T> dptr = (*this->dataset())[i];
+      const DatapointPtr<T> dptr =
+          dataset_view_.has_value()
+              ? MakeDatapointPtr<T>(dataset_view_->GetPtr(i),
+                                    dataset_view_->dimensionality())
+              : (*this->dataset())[i];
       const double dist = distance_->GetDistanceHybrid(query, dptr);
       if (should_push(dist)) {
         top_n.push(std::make_pair(i, dist));

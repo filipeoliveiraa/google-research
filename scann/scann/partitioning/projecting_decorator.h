@@ -125,7 +125,7 @@ class KMeansTreeProjectingDecorator final
     auto partitioner_clone = base_kmeans_tree_partitioner()->Clone();
     auto downcast_partitioner = down_cast<KMeansTreeLikePartitioner<float>*>(
         partitioner_clone.release());
-    return make_unique<KMeansTreeProjectingDecorator<T>>(
+    return std::make_unique<KMeansTreeProjectingDecorator<T>>(
         this->projection(), absl::WrapUnique(downcast_partitioner));
   }
 
@@ -145,20 +145,25 @@ class KMeansTreeProjectingDecorator final
   using Partitioner<T>::TokensForDatapointWithSpilling;
   using Partitioner<T>::TokenForDatapoint;
 
+  using KMeansTreeLikePartitioner<T>::TokensForDatapointWithSpilling;
   Status TokensForDatapointWithSpilling(
-      const DatapointPtr<T>& dptr, int32_t max_centers_override,
+      const DatapointPtr<T>& dptr, ConstSpan<int32_t> max_centers_override,
       vector<pair<DatapointIndex, float>>* result) const final;
+
+  using KMeansTreeLikePartitioner<T>::TokensForDatapointWithSpillingBatched;
   Status TokensForDatapointWithSpillingBatched(
-      const TypedDataset<T>& queries, MutableSpan<std::vector<int32_t>> results,
+      const TypedDatasetView<T>& queries,
+      MutableSpan<std::vector<int32_t>> results,
       ThreadPool* pool = nullptr) const final;
   Status TokensForDatapointWithSpillingBatched(
-      const TypedDataset<T>& queries, ConstSpan<int32_t> max_centers_override,
+      const TypedDatasetView<T>& queries,
+      ConstSpan<std::vector<int32_t>> max_centers_override,
       MutableSpan<std::vector<pair<DatapointIndex, float>>> results,
       ThreadPool* pool = nullptr) const final;
   Status TokenForDatapoint(const DatapointPtr<T>& dptr,
                            pair<DatapointIndex, float>* result) const final;
   Status TokenForDatapointBatched(
-      const TypedDataset<T>& queries,
+      const TypedDatasetView<T>& queries,
       std::vector<pair<DatapointIndex, float>>* result,
       ThreadPool* pool) const final;
   StatusOr<Datapoint<float>> ResidualizeToFloat(const DatapointPtr<T>& dptr,
@@ -168,9 +173,13 @@ class KMeansTreeProjectingDecorator final
     return base_kmeans_tree_partitioner()->query_spilling_max_centers();
   }
 
+  int bottom_up_depth() const final {
+    return base_kmeans_tree_partitioner()->bottom_up_depth();
+  }
+
  private:
   StatusOrPtr<TypedDataset<float>> CreateProjectedDataset(
-      const TypedDataset<T>& queries) const;
+      const TypedDatasetView<T>& queries) const;
 };
 
 #define SCANN_INSTANTIATE_PROJECTING_DECORATOR(extern_keyword, T)           \

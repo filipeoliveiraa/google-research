@@ -30,13 +30,12 @@ ABSL_FLAG(bool, ignore_avx2, false,
           "function pointers at ScaNN startup.  Useful for testing and "
           "debugging.");
 
-ABSL_FLAG(bool, ignore_avx512_vnni, false,
-          "Ignore AVX512_VNNI.  NOTE:  AVX512_VNNI support is currently "
-          "experimental and therefore disabled by default.");
+ABSL_FLAG(bool, ignore_avx512_vnni, false, "Ignore AVX512_VNNI.");
 
-ABSL_FLAG(bool, ignore_amx, false,
-          "Ignore AMX.  NOTE:  AMX support is currently experimental and "
-          "therefore disabled by default.");
+ABSL_FLAG(bool, ignore_amx, true,
+          "Ignore AMX.  NOTE:  AMX support is currently experimental, and "
+          "performance is sometimes worse than AVX512_VNNI, so "
+          "it's disabled by default.");
 
 ABSL_RETIRED_FLAG(bool, ignore_avx, false, "Ignore AVX1.");
 

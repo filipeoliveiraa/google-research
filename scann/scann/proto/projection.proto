@@ -30,6 +30,7 @@ message ProjectionConfig {
     RANDOM_BINARY_DYNAMIC = 5;
     RANDOM_SPARSE_BINARY = 6;
     RANDOM_ORTHOGONAL = 7;
+    BLOCKWISE_RANDOM_ORTHOGONAL = 18;
     PCA = 8;
     RANDOM_BILINEAR = 9;
     MEANSTD_PROJECTION = 12;
@@ -74,6 +75,9 @@ message ProjectionConfig {
   optional CkmeansConfig ckmeans_config = 11;
 
   optional MeanStdConfig meanstd_config = 12;
+
+  optional BlockwiseRandomOrthogonalConfig blockwise_random_orthogonal_config =
+      16;
 }
 
 message CkmeansConfig {
@@ -106,6 +110,10 @@ message RandomBilinearConfig {
   optional int32 proj_vector_rows = 3;
 
   optional int32 proj_vector_columns = 4;
+}
+
+message BlockwiseRandomOrthogonalConfig {
+  optional int32 block_size = 1 [default = 32];
 }
 
 message SerializedProjection {

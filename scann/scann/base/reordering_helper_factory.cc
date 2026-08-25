@@ -88,8 +88,8 @@ StatusOrHelper<float> BuildBfloat16ReorderingHelper(
           *dense_dataset, noise_shaping_threshold,
           opts->parallelization_pool.get())};
     } else {
-      return {
-          make_unique<Bfloat16DenseSquaredL2ReorderingHelper>(*dense_dataset)};
+      return {std::make_unique<Bfloat16DenseSquaredL2ReorderingHelper>(
+          *dense_dataset)};
     }
   }
 }

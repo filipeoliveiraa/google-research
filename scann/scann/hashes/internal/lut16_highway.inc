@@ -161,7 +161,9 @@ SCANN_HIGHWAY_INLINE void HighwayLUT16BottomLoopAccum(
   V bitmask = hn::Set(d, 0x0F);
 
   for (size_t i = 0; i < num_iters; ++i) {
-    if constexpr (kPrefetch != PrefetchStrategy::kOff) {
+    if constexpr (kPrefetch == PrefetchStrategy::kSeq) {
+      absl::PrefetchToLocalCache((data_start + i * N) + kPrefetchBytesAhead);
+    } else if constexpr (kPrefetch == PrefetchStrategy::kSmart) {
       absl::PrefetchToLocalCacheNta((data_start + i * N) + kPrefetchBytesAhead);
     }
 

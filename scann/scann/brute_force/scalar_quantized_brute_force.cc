@@ -258,6 +258,7 @@ Status ScalarQuantizedBruteForceSearcher::FindNeighborsImpl(
   }
 
   const bool use_min_distance =
+      params.min_distance() > -numeric_limits<float>::infinity() ||
       min_distance_ > -numeric_limits<float>::infinity();
   if (params.restricts_enabled()) {
     return UnimplementedError("Restricts not supported.");
@@ -374,6 +375,7 @@ Status ScalarQuantizedBruteForceSearcher::PostprocessDistancesImpl(
     ConstSpan<ResultElem> dot_products, DistanceFunctor distance_functor,
     NNResultsVector* result) const {
   const bool use_min_distance =
+      params.min_distance() > -numeric_limits<float>::infinity() ||
       min_distance_ > -numeric_limits<float>::infinity();
   if (params.pre_reordering_crowding_enabled()) {
     return FailedPreconditionError("Crowding is not supported.");
@@ -401,7 +403,10 @@ Status ScalarQuantizedBruteForceSearcher::PostprocessTopNImpl(
   typename TopN::Mutator mutator;
   top_n_ptr->AcquireMutator(&mutator);
   float min_keep_distance = mutator.epsilon();
-  const float min_distance = min_distance_;
+  const float min_distance =
+      params.min_distance() > -numeric_limits<float>::infinity()
+          ? params.min_distance()
+          : min_distance_;
   for (DatapointIndex i = 0; i < dot_products.size(); ++i) {
     const float distance = distance_functor(dot_products[i], i);
     if (distance <= min_keep_distance &&
@@ -424,7 +429,10 @@ Status ScalarQuantizedBruteForceSearcher::PostprocessTopNImpl(
   typename TopN::Mutator mutator;
   top_n_ptr->AcquireMutator(&mutator);
   float min_keep_distance = mutator.epsilon();
-  const float min_distance = min_distance_;
+  const float min_distance =
+      params.min_distance() > -numeric_limits<float>::infinity()
+          ? params.min_distance()
+          : min_distance_;
   for (const auto& pair : dot_products) {
     const DatapointIndex dp_idx = pair.first;
     const float distance = distance_functor(pair.second, dp_idx);

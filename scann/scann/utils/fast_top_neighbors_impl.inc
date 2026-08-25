@@ -190,7 +190,7 @@ template <typename DistT, typename DatapointIndexT>
 SCANN_SIMD_INLINE size_t UseMasksToCompact(DatapointIndexT* indices,
                                            DistT* values, uint32_t* masks,
                                            size_t n_masks) {
-#ifdef SCANN_TOPN_AVX2_ENABLED
+#ifdef SCANN_TOPN_HWY_COMPACT_ENABLED
   if constexpr (IsSame<DatapointIndexT, uint32_t>() && IsSame<DistT, float>()) {
     return HwyCompact(indices, values, masks, n_masks);
   }

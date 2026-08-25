@@ -15,14 +15,12 @@
 #include "scann/distance_measures/many_to_many/sfp8_transposed.h"
 
 #include <algorithm>
-#include <cmath>
 #include <cstdint>
-#include <utility>
 
 #include "absl/algorithm/container.h"
-#include "scann/data_format/datapoint.h"
 #include "scann/data_format/dataset.h"
 #include "scann/distance_measures/one_to_many/scale_encoding.pb.h"
+#include "scann/hashes/coder/fixed_point_coder.h"
 #include "scann/utils/common.h"
 #include "scann/utils/intrinsics/flags.h"
 #include "scann/utils/scale_encoding_helpers.h"
@@ -31,33 +29,14 @@
 namespace research_scann {
 namespace {
 
-template <Int8TileSide kSide>
-std::unique_ptr<Int8TileCodec> MakeCodec(size_t dims) {
-#ifdef __x86_64__
-
-  if (RuntimeSupportsAmx()) {
-    return std::make_unique<amx::Int8TileCodecImpl<kSide>>(dims);
-  } else if (RuntimeSupportsAvx512Vnni()) {
-    return std::make_unique<avx512_vnni::Int8TileCodecImpl<kSide>>(dims);
-  } else if (RuntimeSupportsAvx512()) {
-    return std::make_unique<avx512::Int8TileCodecImpl<kSide>>(dims);
-  } else if (RuntimeSupportsAvx2()) {
-    return std::make_unique<avx2::Int8TileCodecImpl<kSide>>(dims);
-  } else {
-    return std::make_unique<sse4::Int8TileCodecImpl<kSide>>(dims);
-  }
-#endif
-
-  return std::make_unique<fallback::Int8TileCodecImpl<kSide>>(dims);
+template <typename T, typename Span>
+absl::Span<T> CastCharSpan(Span span) {
+  static_assert(sizeof(T) == sizeof(char));
+  return MakeMutableSpan(reinterpret_cast<T*>(span.data()), span.size());
 }
 
 std::unique_ptr<Int8TileCodec> MakeCodec(size_t dims, Int8TileSide side) {
-  switch (side) {
-    case Int8TileSide::kQuery:
-      return MakeCodec<Int8TileSide::kQuery>(dims);
-    case Int8TileSide::kDatabase:
-      return MakeCodec<Int8TileSide::kDatabase>(dims);
-  }
+  SCANN_DISPATCH_INT8_TILE(return simd_namespace::NewInt8TileCodec(dims, side));
 }
 
 float SquaredL2Norm(ConstSpan<int8_t> dp, float scale) {
@@ -68,50 +47,70 @@ float SquaredL2Norm(ConstSpan<int8_t> dp, float scale) {
 
 absl::StatusOr<unique_ptr<SFP8SimdBlockTransposedDatabase>>
 SFP8SimdBlockTransposedDatabase::Build(
-    const DefaultDenseDatasetView<float>& float_dataset,
-    double noise_shaping_threshold, Int8TileSide side) {
-  const DimensionIndex dims = float_dataset.dimensionality();
-  std::vector<float> scales(float_dataset.size());
-  DenseDataset<int8_t> int_dataset;
-  int_dataset.set_dimensionality(dims);
-  int_dataset.Reserve(float_dataset.size());
-  std::vector<float> multipliers(dims, 1.0f);
-  std::string encoded;
-  constexpr double kNoiseShapingThreshold = NAN;
+    const DefaultDenseDatasetView<float>& float_dataset, Int8TileSide side,
+    float noise_shaping_threshold) {
+  return Build(static_cast<const DenseDatasetView<float>&>(float_dataset), side,
+               noise_shaping_threshold);
+}
+
+absl::StatusOr<unique_ptr<SFP8SimdBlockTransposedDatabase>>
+SFP8SimdBlockTransposedDatabase::Build(
+    const DenseDatasetView<float>& float_dataset, Int8TileSide side,
+    float noise_shaping_threshold) {
+  FixedPointCodec codec;
+  codec.set_dimension(float_dataset.dimensionality());
+  codec.set_per_dimension_bits(8);
+  codec.set_scale_encoding(ScaleEncoding::FLOAT32_SCALE_SUFFIX);
+  SCANN_ASSIGN_OR_RETURN(auto coder, FixedPointCoder::Create(codec));
+
+  DenseDataset<uint8_t> encoded_dataset;
+  encoded_dataset.set_dimensionality(coder->hashed_space_bytes());
+  encoded_dataset.Resize(float_dataset.size());
 
   for (DatapointIndex i : IndicesOf(float_dataset)) {
-    SCANN_RETURN_IF_ERROR(AppendQuantizeScaledFloatDatapointWithNoiseShaping(
-        8, MakeDatapointPtr(float_dataset.GetDatapointSpan(i)), multipliers,
-        ScaleEncoding::FLOAT32_SCALE_SUFFIX, kNoiseShapingThreshold, encoded));
-    absl::string_view data;
-    SCANN_RETURN_IF_ERROR(DecodeScaledDatapoint(
-        8, ScaleEncoding::FLOAT32_SCALE_SUFFIX, encoded, scales[i], data));
-    SCANN_RET_CHECK_EQ(data.size(), dims);
-    int_dataset.AppendOrDie(
-        MakeDatapointPtr(reinterpret_cast<const int8_t*>(data.data()), dims));
-    encoded.clear();
+    SCANN_RETURN_IF_ERROR(coder->EncodeDatapointWithNoiseShaping(
+        float_dataset.GetDatapointSpan(i), encoded_dataset.mutable_data(i),
+        noise_shaping_threshold));
   }
-  return std::make_unique<SFP8SimdBlockTransposedDatabase>(int_dataset, scales,
-                                                           side);
+  return Build(codec, DefaultDenseDatasetView<uint8_t>(encoded_dataset), side);
+}
+
+absl::StatusOr<unique_ptr<SFP8SimdBlockTransposedDatabase>>
+SFP8SimdBlockTransposedDatabase::Build(
+    const FixedPointCodec& codec,
+    const DenseDatasetView<uint8_t>& encoded_dataset, Int8TileSide side) {
+  SCANN_RET_CHECK_EQ(codec.fixed_point_method_case(),
+                     FixedPointCodec::FIXED_POINT_METHOD_NOT_SET);
+  SCANN_RET_CHECK_EQ(codec.per_dimension_bits(), 8);
+  SCANN_RET_CHECK_NE(codec.scale_encoding(),
+                     ScaleEncoding::UNSPECIFIED_SCALE_ENCODING);
+  SCANN_ASSIGN_OR_RETURN(
+      size_t encoded_bytes,
+      ScaledDatapointEncodedBytes(codec.per_dimension_bits(),
+                                  codec.scale_encoding(), codec.dimension()));
+  SCANN_RET_CHECK_EQ(encoded_bytes, encoded_dataset.dimensionality());
+  return std::make_unique<SFP8SimdBlockTransposedDatabase>(
+      codec, encoded_dataset, side);
 }
 
 SFP8SimdBlockTransposedDatabase::SFP8SimdBlockTransposedDatabase(
-    const DefaultDenseDatasetView<int8_t>& dataset, ConstSpan<float> scales,
+    const FixedPointCodec& codec, const DenseDatasetView<uint8_t>& dataset,
     Int8TileSide side)
-    : codec_(MakeCodec(dataset.dimensionality(), side)),
+    : fixed_point_codec_(codec),
+      resolved_scale_encoding_(
+          ResolveScaleEncoding(8, codec.scale_encoding(), codec.dimension())),
+      tile_codec_(MakeCodec(codec.dimension(), side)),
       size_(dataset.size()),
 
-      padded_size_(NextMultipleOf(size_, 2 * codec_->block_datapoints())),
-      payload_bytes_(padded_size_ * codec_->datapoint_bytes()),
+      padded_size_(NextMultipleOf(size_, 2 * tile_codec_->block_datapoints())),
+      payload_bytes_(padded_size_ * tile_codec_->datapoint_bytes()),
+      hashed_space_bytes_(dataset.dimensionality()),
 
       payload_(std::make_unique<int8_t[]>(payload_bytes_ +
-                                          codec_->register_bytes())),
+                                          tile_codec_->register_bytes())),
       scales_(std::make_unique<float[]>(padded_size_)),
       sums_(std::make_unique<int32_t[]>(padded_size_)),
       squared_l2_norms_(std::make_unique<float[]>(padded_size_)) {
-  CHECK_EQ(scales.size(), size_);
-
-  absl::c_copy(scales, scales_.get());
   std::fill(scales_.get() + size_, scales_.get() + padded_size_, 0.0f);
   std::fill(sums_.get() + size_, sums_.get() + padded_size_, 0);
   std::fill(squared_l2_norms_.get() + size_,
@@ -120,17 +119,42 @@ SFP8SimdBlockTransposedDatabase::SFP8SimdBlockTransposedDatabase(
   auto payload = MutableSpan<int8_t>(payload_.get(), payload_bytes_);
   absl::c_fill(payload, 0);
   for (DatapointIndex dp_idx : Seq(size_)) {
-    const auto dp = dataset.GetDatapointSpan(dp_idx);
+    const auto encoded = dataset.GetDatapointSpan(dp_idx);
+    float scale;
+    ConstSpan<uint8_t> uint8_dp;
+    CHECK_OK(DecodeScaledDatapoint(fixed_point_codec_.per_dimension_bits(),
+                                   resolved_scale_encoding_, encoded, scale,
+                                   uint8_dp));
+    const auto dp = CastCharSpan<const int8_t>(uint8_dp);
+    scales_[dp_idx] = scale;
     sums_[dp_idx] = absl::c_accumulate(dp, 0);
-    squared_l2_norms_[dp_idx] = SquaredL2Norm(dp, scales[dp_idx]);
-    codec_->EncodeDatapoint(dp, dp_idx, payload);
+    squared_l2_norms_[dp_idx] = SquaredL2Norm(dp, scale);
+    tile_codec_->EncodeDatapoint(dp, dp_idx, payload);
   }
 }
 
-Datapoint<int8_t> SFP8SimdBlockTransposedDatabase::ReconstructDatapoint(
-    DatapointIndex idx) const {
-  CHECK(idx < size_);
-  return codec_->ReconstructDatapoint(idx, payload());
+absl::Status SFP8SimdBlockTransposedDatabase::ReconstructDatapoint(
+    DatapointIndex idx, MutableSpan<uint8_t> encoded) const {
+  SCANN_RET_CHECK_LT(idx, size_);
+  SCANN_RET_CHECK_EQ(encoded.size(), hashed_space_bytes());
+  tile_codec_->ReconstructDatapoint(
+      idx, payload(),
+      CastCharSpan<int8_t>(encoded).subspan(0, dimensionality()));
+  if (resolved_scale_encoding_ == ResolvedScaleEncoding::kFloat32ScaleSuffix) {
+    absl::little_endian::Store32(encoded.end() - sizeof(uint32_t),
+                                 absl::bit_cast<uint32_t>(scales_[idx]));
+  }
+  return OkStatus();
+}
+
+absl::Status SFP8SimdBlockTransposedDatabase::ReconstructFloatDatapoint(
+    DatapointIndex idx, MutableSpan<float> float_dp) const {
+  SCANN_RET_CHECK_LT(idx, size_);
+  SCANN_RET_CHECK_EQ(float_dp.size(), dimensionality());
+
+  tile_codec_->ReconstructFloatDatapoint(idx, payload(), scales_[idx],
+                                         float_dp);
+  return OkStatus();
 }
 
 }  // namespace research_scann

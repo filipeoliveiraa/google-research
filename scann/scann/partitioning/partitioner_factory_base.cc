@@ -32,7 +32,7 @@ namespace research_scann {
 namespace {
 
 size_t ComputeSampleSize(const PartitioningConfig& config,
-                         const Dataset* dataset) {
+                         const DatasetView* dataset) {
   return config.has_expected_sample_size()
              ? std::min<size_t>(config.expected_sample_size(), dataset->size())
              : static_cast<size_t>(std::ceil(
@@ -44,9 +44,9 @@ size_t ComputeSampleSize(const PartitioningConfig& config,
 
 template <typename T>
 StatusOr<unique_ptr<Partitioner<T>>> PartitionerFactoryNoProjection(
-    const TypedDataset<T>* dataset, const PartitioningConfig& config,
+    const TypedDatasetView<T>* dataset, const PartitioningConfig& config,
     shared_ptr<ThreadPool> pool) {
-  const TypedDataset<T>* sampled;
+  const TypedDatasetView<T>* sampled;
   unique_ptr<TypedDataset<T>> sampled_mutable;
 
   const size_t sample_size = ComputeSampleSize(config, dataset);
@@ -77,9 +77,9 @@ StatusOr<unique_ptr<Partitioner<T>>> PartitionerFactoryNoProjection(
 
 template <typename T>
 StatusOr<unique_ptr<Partitioner<T>>> PartitionerFactoryWithProjection(
-    const TypedDataset<T>* dataset, const PartitioningConfig& config,
+    const TypedDatasetView<T>* dataset, const PartitioningConfig& config,
     shared_ptr<ThreadPool> pool) {
-  const TypedDataset<float>* sampled;
+  const TypedDatasetView<float>* sampled;
   unique_ptr<TypedDataset<float>> sampled_mutable;
   MTRandom rng(kDeterministicSeed + 1);
   const size_t sample_size = ComputeSampleSize(config, dataset);
@@ -102,7 +102,7 @@ StatusOr<unique_ptr<Partitioner<T>>> PartitionerFactoryWithProjection(
   }
 
   if (projected_is_sparse) {
-    sampled_mutable = make_unique<SparseDataset<float>>();
+    sampled_mutable = std::make_unique<SparseDataset<float>>();
     SCANN_RETURN_IF_ERROR(
         sampled_mutable->NormalizeByTag(dataset->normalization()));
     sampled_mutable->Reserve(sample.size());
@@ -125,7 +125,7 @@ StatusOr<unique_ptr<Partitioner<T>>> PartitionerFactoryWithProjection(
               sampled_storage.begin() + sample_idx * projected_dimensionality);
           return OkStatus();
         }));
-    sampled_mutable = make_unique<DenseDataset<float>>(
+    sampled_mutable = std::make_unique<DenseDataset<float>>(
         std::move(sampled_storage), sample.size());
     SCANN_RETURN_IF_ERROR(
         sampled_mutable->NormalizeByTag(dataset->normalization()));
@@ -144,7 +144,7 @@ StatusOr<unique_ptr<Partitioner<T>>> PartitionerFactoryWithProjection(
 
 template <typename T>
 StatusOr<unique_ptr<Partitioner<T>>> PartitionerFactory(
-    const TypedDataset<T>* dataset, const PartitioningConfig& config,
+    const TypedDatasetView<T>* dataset, const PartitioningConfig& config,
     shared_ptr<ThreadPool> pool) {
   auto fp = (config.has_projection()) ? (&PartitionerFactoryWithProjection<T>)
                                       : (&PartitionerFactoryNoProjection<T>);
@@ -153,7 +153,7 @@ StatusOr<unique_ptr<Partitioner<T>>> PartitionerFactory(
 
 template <typename T>
 StatusOr<unique_ptr<Partitioner<T>>> PartitionerFactoryPreSampledAndProjected(
-    const TypedDataset<T>* dataset, const PartitioningConfig& config,
+    const TypedDatasetView<T>* dataset, const PartitioningConfig& config,
     shared_ptr<ThreadPool> training_parallelization_pool) {
   if (config.tree_type() == PartitioningConfig::KMEANS_TREE) {
     return KMeansTreePartitionerFactoryPreSampledAndProjected(

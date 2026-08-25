@@ -122,6 +122,7 @@ Status CanonicalizeScannConfigImpl(ScannConfig* config,
 }  // namespace
 
 namespace {
+
 Status CanonicalizeScannConfigForRetrieval(ScannConfig* config,
                                            bool artifact_with_stable_base_name,
                                            bool artifact_must_exist) {

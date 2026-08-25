@@ -34,7 +34,7 @@ class EigenvalueOpqProjection : public Projection<T> {
  public:
   explicit EigenvalueOpqProjection(int32_t input_dims);
 
-  void Create(const Dataset& data, uint32_t num_blocks,
+  void Create(const DatasetView& data, uint32_t num_blocks,
               bool build_covariance = true, ThreadPool* pool = nullptr);
 
   Status Create(const SerializedProjection& serialized_projection);

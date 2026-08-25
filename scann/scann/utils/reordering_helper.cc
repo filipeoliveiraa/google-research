@@ -286,9 +286,9 @@ template <typename T>
 StatusOrPtr<SingleMachineSearcherBase<T>>
 ExactReorderingHelper<T>::CreateBruteForceSearcher(int32_t num_neighbors,
                                                    float epsilon) const {
-  return make_unique<BruteForceSearcher<T>>(exact_reordering_distance_,
-                                            exact_reordering_dataset_,
-                                            num_neighbors, epsilon);
+  return std::make_unique<BruteForceSearcher<T>>(exact_reordering_distance_,
+                                                 exact_reordering_dataset_,
+                                                 num_neighbors, epsilon);
 }
 
 template <typename T>
@@ -422,7 +422,7 @@ FixedPointFloatDenseDotProductReorderingHelper::CreateBruteForceSearcher(
     int32_t num_neighbors, float epsilon) const {
   return ScalarQuantizedBruteForceSearcher::
       CreateFromQuantizedDatasetAndInverseMultipliers(
-          make_unique<DotProductDistance>(), fixed_point_dataset_,
+          std::make_unique<DotProductDistance>(), fixed_point_dataset_,
           inverse_multipliers_, nullptr, num_neighbors, epsilon);
 }
 
@@ -479,7 +479,7 @@ Status FixedPointFloatDenseDotProductReorderingHelper::Reconstruct(
 StatusOr<ReorderingInterface<float>::Mutator*>
 FixedPointFloatDenseDotProductReorderingHelper::GetMutator() const {
   if (!mutator_) {
-    mutator_ = make_unique<Mutator>(
+    mutator_ = std::make_unique<Mutator>(
         const_cast<FixedPointFloatDenseDotProductReorderingHelper*>(this));
   }
   return mutator_.get();
@@ -563,7 +563,7 @@ FixedPointFloatDenseCosineReorderingHelper::CreateBruteForceSearcher(
     int32_t num_neighbors, float epsilon) const {
   return ScalarQuantizedBruteForceSearcher::
       CreateFromQuantizedDatasetAndInverseMultipliers(
-          make_unique<CosineDistance>(),
+          std::make_unique<CosineDistance>(),
           dot_product_helper_.fixed_point_dataset_,
           dot_product_helper_.inverse_multipliers_, nullptr, num_neighbors,
           epsilon);
@@ -572,7 +572,7 @@ FixedPointFloatDenseCosineReorderingHelper::CreateBruteForceSearcher(
 StatusOr<ReorderingInterface<float>::Mutator*>
 FixedPointFloatDenseCosineReorderingHelper::GetMutator() const {
   if (!mutator_) {
-    mutator_ = make_unique<Mutator>(
+    mutator_ = std::make_unique<Mutator>(
         const_cast<FixedPointFloatDenseCosineReorderingHelper*>(this));
   }
   return mutator_.get();
@@ -632,7 +632,7 @@ FixedPointFloatDenseSquaredL2ReorderingHelper::CreateBruteForceSearcher(
     int32_t num_neighbors, float epsilon) const {
   return ScalarQuantizedBruteForceSearcher::
       CreateFromQuantizedDatasetAndInverseMultipliers(
-          make_unique<SquaredL2Distance>(),
+          std::make_unique<SquaredL2Distance>(),
           dot_product_helper_.fixed_point_dataset_,
           dot_product_helper_.inverse_multipliers_,
           std::const_pointer_cast<vector<float>>(database_squared_l2_norms_),
@@ -760,11 +760,11 @@ Bfloat16ReorderingHelper<kIsDotProduct>::CreateBruteForceSearcher(
     int32_t num_neighbors, float epsilon) const {
   unique_ptr<const DistanceMeasure> distance;
   if constexpr (kIsDotProduct) {
-    distance = make_unique<DotProductDistance>();
+    distance = std::make_unique<DotProductDistance>();
   } else {
-    distance = make_unique<SquaredL2Distance>();
+    distance = std::make_unique<SquaredL2Distance>();
   }
-  return make_unique<Bfloat16BruteForceSearcher>(
+  return std::make_unique<Bfloat16BruteForceSearcher>(
       std::move(distance), bfloat16_dataset_, num_neighbors, epsilon,
       noise_shaping_threshold_);
 }
@@ -773,7 +773,7 @@ template <bool kIsDotProduct>
 StatusOr<ReorderingInterface<float>::Mutator*>
 Bfloat16ReorderingHelper<kIsDotProduct>::GetMutator() const {
   if (!mutator_) {
-    mutator_ = make_unique<Mutator>(
+    mutator_ = std::make_unique<Mutator>(
         const_cast<Bfloat16ReorderingHelper<kIsDotProduct>*>(this));
   }
   return mutator_.get();

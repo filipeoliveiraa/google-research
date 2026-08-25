@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifdef __x86_64__
+#if defined(__x86_64__)
 
 #define HWY_COMPILE_ONLY_STATIC
 
@@ -69,4 +69,76 @@ SCANN_OUTLINE HWY_ATTR size_t HwyCompact(uint32_t* indices, float* values,
 }
 
 }  // namespace research_scann
+#elif defined(__aarch64__)
+
+#define HWY_COMPILE_ONLY_STATIC
+
+#define HWY_BASELINE_TARGETS HWY_NEON
+
+#include <cstddef>
+#include <cstdint>
+
+#include "absl/log/check.h"
+#include "hwy/highway.h"
+#include "scann/utils/common.h"
+#include "scann/utils/hwy-compact.h"
+
+namespace research_scann {
+
+namespace hn = hwy::HWY_NAMESPACE;
+using DU8 = hn::FixedTag<uint8_t, 16>;
+using DU32 = hn::FixedTag<uint32_t, 4>;
+using DF32 = hn::FixedTag<float, 4>;
+
+HWY_INLINE static hn::Vec<DU8> PermutationForCompress(uint32_t mask) {
+  DCHECK_LT(mask, 16);
+
+  alignas(16) static constexpr uint8_t indices[16 * 16] = {
+      0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 0,  1,
+      2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 4,  5,  6,  7,
+      0,  1,  2,  3,  8,  9,  10, 11, 12, 13, 14, 15, 0,  1,  2,  3,  4,  5,
+      6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 8,  9,  10, 11, 0,  1,  2,  3,
+      4,  5,  6,  7,  12, 13, 14, 15, 0,  1,  2,  3,  8,  9,  10, 11, 4,  5,
+      6,  7,  12, 13, 14, 15, 4,  5,  6,  7,  8,  9,  10, 11, 0,  1,  2,  3,
+      12, 13, 14, 15, 0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
+      14, 15, 12, 13, 14, 15, 0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11,
+      0,  1,  2,  3,  12, 13, 14, 15, 4,  5,  6,  7,  8,  9,  10, 11, 4,  5,
+      6,  7,  12, 13, 14, 15, 0,  1,  2,  3,  8,  9,  10, 11, 0,  1,  2,  3,
+      4,  5,  6,  7,  12, 13, 14, 15, 8,  9,  10, 11, 8,  9,  10, 11, 12, 13,
+      14, 15, 0,  1,  2,  3,  4,  5,  6,  7,  0,  1,  2,  3,  8,  9,  10, 11,
+      12, 13, 14, 15, 4,  5,  6,  7,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
+      14, 15, 0,  1,  2,  3,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11,
+      12, 13, 14, 15};
+  return hn::Load(DU8{}, indices + 16 * mask);
+}
+
+SCANN_OUTLINE HWY_ATTR size_t HwyCompact(uint32_t* indices, float* values,
+                                         const uint32_t* masks,
+                                         size_t n_masks) {
+  size_t write_idx = 0;
+  for (size_t mask_idx : Seq(n_masks)) {
+    auto mask = masks[mask_idx];
+    for (size_t i = 0; i < 32; i += hn::Lanes(DU32{}), mask >>= 4) {
+      const size_t read_idx = mask_idx * 32 + i;
+      auto vindices = hn::LoadU(DU32{}, indices + read_idx);
+      auto vvalues = hn::LoadU(DF32{}, values + read_idx);
+
+      auto mask_u4 = mask & 0xF;
+      auto p = PermutationForCompress(mask_u4);
+      vindices = hn::BitCast(
+          DU32{}, hn::TableLookupBytes(hn::BitCast(DU8{}, vindices), p));
+      vvalues = hn::BitCast(
+          DF32{}, hn::TableLookupBytes(hn::BitCast(DU8{}, vvalues), p));
+
+      hn::StoreU(vindices, DU32{}, indices + write_idx);
+      hn::StoreU(vvalues, DF32{}, values + write_idx);
+
+      write_idx += __builtin_popcount(mask_u4);
+    }
+  }
+
+  return write_idx;
+}
+}  // namespace research_scann
+
 #endif

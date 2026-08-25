@@ -44,6 +44,11 @@ class BruteForceSearcher final : public SingleMachineSearcherBase<T> {
                      const int32_t default_pre_reordering_num_neighbors,
                      const float default_pre_reordering_epsilon);
 
+  BruteForceSearcher(shared_ptr<const DistanceMeasure> distance,
+                     DefaultDenseDatasetView<T> dataset,
+                     const int32_t default_pre_reordering_num_neighbors,
+                     const float default_pre_reordering_epsilon);
+
   ~BruteForceSearcher() final;
 
   bool supports_crowding() const final { return true; }
@@ -98,6 +103,8 @@ class BruteForceSearcher final : public SingleMachineSearcherBase<T> {
     StatusOr<DatapointIndex> LookupDatapointIndexOrError(
         string_view docid) const;
 
+    void FixView();
+
     BruteForceSearcher<T>* searcher_;
   };
 
@@ -110,11 +117,11 @@ class BruteForceSearcher final : public SingleMachineSearcherBase<T> {
                            NNResultsVector* result) const final;
 
   Status FindNeighborsBatchedImpl(
-      const TypedDataset<T>& queries, ConstSpan<SearchParameters> params,
+      const TypedDatasetView<T>& queries, ConstSpan<SearchParameters> params,
       MutableSpan<NNResultsVector> results) const final;
 
   Status FindNeighborsBatchedImpl(
-      const TypedDataset<T>& queries, ConstSpan<SearchParameters> params,
+      const TypedDatasetView<T>& queries, ConstSpan<SearchParameters> params,
       MutableSpan<FastTopNeighbors<float>*> results,
       ConstSpan<DatapointIndex> datapoint_index_mapping) const final;
 
@@ -135,21 +142,40 @@ class BruteForceSearcher final : public SingleMachineSearcherBase<T> {
                                      TopN* top_n_ptr) const;
 
   template <typename Float>
-  enable_if_t<IsSameAny<Float, float, double>(), void> FinishBatchedSearch(
-      const DenseDataset<Float>& db, const DenseDataset<Float>& queries,
+  std::enable_if_t<IsSameAny<Float, float, double>(), void> FinishBatchedSearch(
+      const DefaultDenseDatasetView<Float>& db,
+      const DefaultDenseDatasetView<Float>& queries,
       ConstSpan<SearchParameters> params,
       MutableSpan<NNResultsVector> results) const;
 
-  void FinishBatchedSearchSimple(const DenseDataset<float>& db,
-                                 const DenseDataset<float>& queries,
+  void FinishBatchedSearchSimple(const DefaultDenseDatasetView<float>& db,
+                                 const DefaultDenseDatasetView<float>& queries,
                                  ConstSpan<SearchParameters> params,
                                  MutableSpan<NNResultsVector> results) const;
 
   template <typename Float>
-  enable_if_t<!IsSameAny<Float, float, double>(), void> FinishBatchedSearch(
-      const DenseDataset<Float>& db, const DenseDataset<Float>& queries,
-      ConstSpan<SearchParameters> params,
-      MutableSpan<NNResultsVector> results) const;
+  std::enable_if_t<!IsSameAny<Float, float, double>(), void>
+  FinishBatchedSearch(const DefaultDenseDatasetView<Float>& db,
+                      const DefaultDenseDatasetView<Float>& queries,
+                      ConstSpan<SearchParameters> params,
+                      MutableSpan<NNResultsVector> results) const;
+
+  bool dataset_is_dense() const {
+    return dataset_view_.has_value() || this->dataset()->IsDense();
+  }
+
+  DatapointIndex dataset_size() const {
+    return dataset_view_.has_value() ? dataset_view_->size()
+                                     : this->dataset()->size();
+  }
+
+  DefaultDenseDatasetView<T> dataset_view() const {
+    if (dataset_view_.has_value()) return *dataset_view_;
+    return DefaultDenseDatasetView<T>(
+        *down_cast<const DenseDataset<T>*>(this->dataset()));
+  }
+
+  std::optional<DefaultDenseDatasetView<T>> dataset_view_ = std::nullopt;
 
   shared_ptr<const DistanceMeasure> distance_;
 

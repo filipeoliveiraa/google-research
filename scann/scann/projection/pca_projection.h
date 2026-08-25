@@ -32,10 +32,10 @@ class PcaProjection : public Projection<T> {
  public:
   PcaProjection(const int32_t input_dims, const int32_t projected_dims);
 
-  void Create(const Dataset& data, bool build_covariance,
+  void Create(const DatasetView& data, bool build_covariance,
               ThreadPool* parallelization_pool = nullptr);
 
-  void Create(const Dataset& data, float pca_significance_threshold,
+  void Create(const DatasetView& data, float pca_significance_threshold,
               float pca_truncation_threshold, bool build_covariance = true,
               ThreadPool* parallelization_pool = nullptr);
 

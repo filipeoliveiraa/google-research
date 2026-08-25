@@ -61,8 +61,8 @@ Status SpanToNumpy(absl::string_view filename, ConstSpan<T> data,
   std::string dict =
       absl::StrFormat("{'descr':%s, 'fortran_order':False, 'shape':%s}",
                       numpy_type_name<T>(), shape_str);
-  while ((pt1.size() + dict.size()) % 64 != 63) dict += " ";
-  dict += "\n";
+  while ((pt1.size() + dict.size()) % 64 != 63) dict += ' ';
+  dict += '\n';
   pt1[8] = dict.size() % 256;
   pt1[9] = dict.size() / 256;
   const std::string header = pt1 + dict;

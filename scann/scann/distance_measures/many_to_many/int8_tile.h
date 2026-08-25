@@ -21,11 +21,50 @@
 #include <cstdint>
 #include <ostream>
 
-#include "scann/data_format/datapoint.h"
 #include "scann/utils/common.h"
 #include "scann/utils/intrinsics/simd.h"
-
 namespace research_scann {
+
+#define SCANN_DISPATCH_INT8_TILE_HELPER(_namespace, _impl) \
+  {                                                        \
+    namespace simd_namespace = _namespace;                 \
+    if (simd_namespace::RuntimeSupportsSimd()) {           \
+      _impl;                                               \
+    }                                                      \
+  }
+#define SCANN_DISPATCH_INT8_TILE_LAST_HELPER(_namespace, _impl) \
+  {                                                             \
+    namespace simd_namespace = _namespace;                      \
+    _impl;                                                      \
+  }
+
+#ifdef __x86_64__
+
+#ifdef SCANN_HAVE_AMX
+#define SCANN_DISPATCH_INT8_TILE_AMX(_impl) \
+  SCANN_DISPATCH_INT8_TILE_HELPER(amx, _impl)
+#else
+#define SCANN_DISPATCH_INT8_TILE_AMX(_impl)
+#endif
+
+#define SCANN_DISPATCH_INT8_TILE(_impl)               \
+  SCANN_DISPATCH_INT8_TILE_AMX(_impl)                 \
+  SCANN_DISPATCH_INT8_TILE_HELPER(avx512_vnni, _impl) \
+  SCANN_DISPATCH_INT8_TILE_HELPER(avx512, _impl)      \
+  SCANN_DISPATCH_INT8_TILE_HELPER(avx2, _impl)        \
+  SCANN_DISPATCH_INT8_TILE_LAST_HELPER(fallback, _impl)
+
+#elif HWY_HAVE_CONSTEXPR_LANES
+
+#define SCANN_DISPATCH_INT8_TILE(_impl) \
+  SCANN_DISPATCH_INT8_TILE_LAST_HELPER(highway, _impl)
+
+#else
+
+#define SCANN_DISPATCH_INT8_TILE(_impl) \
+  SCANN_DISPATCH_INT8_TILE_LAST_HELPER(fallback, _impl)
+
+#endif
 
 enum class Int8TileSide {
   kQuery,
@@ -46,8 +85,11 @@ class Int8TileCodec {
 
   virtual void EncodeDatapoint(ConstSpan<int8_t> datapoint, size_t dp_idx,
                                MutableSpan<int8_t> payload) const = 0;
-  virtual Datapoint<int8_t> ReconstructDatapoint(
-      size_t dp_idx, ConstSpan<int8_t> payload) const = 0;
+  virtual void ReconstructDatapoint(size_t dp_idx, ConstSpan<int8_t> payload,
+                                    MutableSpan<int8_t> encoded) const = 0;
+  virtual void ReconstructFloatDatapoint(size_t dp_idx,
+                                         ConstSpan<int8_t> payload, float scale,
+                                         MutableSpan<float> encoded) const = 0;
 
   size_t dimensionality() const { return dimensionality_; }
   size_t datapoint_bytes() const { return datapoint_bytes_; }
@@ -240,6 +282,13 @@ namespace sse4 {
 #include "scann/distance_measures/many_to_many/int8_tile_codec.inc"
 #undef SCANN_SIMD_ATTRIBUTE
 }  // namespace sse4
+#elif HWY_HAVE_CONSTEXPR_LANES
+
+namespace highway {
+
+std::unique_ptr<Int8TileCodec> NewInt8TileCodec(size_t dims, Int8TileSide side);
+
+}
 
 #endif
 
@@ -284,7 +333,151 @@ class Int32AccumulatorTile {
 #include "scann/distance_measures/many_to_many/int8_tile_codec.inc"
 #undef SCANN_SIMD_ATTRIBUTE
 }  // namespace fallback
-
 }  // namespace research_scann
 
+#endif
+
+#if defined(SCANN_DISTANCE_MEASURES_MANY_TO_MANY_INT8_TILE_TOGGLE) == \
+    defined(HWY_TARGET_TOGGLE)
+#ifdef SCANN_DISTANCE_MEASURES_MANY_TO_MANY_INT8_TILE_TOGGLE
+#undef SCANN_DISTANCE_MEASURES_MANY_TO_MANY_INT8_TILE_TOGGLE
+#else
+#define SCANN_DISTANCE_MEASURES_MANY_TO_MANY_INT8_TILE_TOGGLE
+#endif
+
+#include "scann/utils/intrinsics/highway.h"
+
+#if !defined(__x86_64__) && HWY_HAVE_CONSTEXPR_LANES
+
+HWY_BEFORE_NAMESPACE();
+namespace research_scann {
+namespace HWY_NAMESPACE {
+#define SCANN_SIMD_ATTRIBUTE
+
+using Int8QueryExpander = NoopInt8QueryExpander;
+
+#if defined(__ARM_FEATURE_MATMUL_INT8) && HWY_TARGET_IS_NEON
+
+using Int8QueryExpander = NoopInt8QueryExpander;
+
+class Int8QueryTile {
+ public:
+  static constexpr size_t kPoints = 2;
+  static constexpr size_t kDims = 8;
+
+  static_assert(kPoints * kDims == Simd<int8_t>::kElementsPerRegister);
+
+  SCANN_SIMD_INLINE void Load(const int8_t* ptr) {
+    data_ = Simd<int8_t>::Load(ptr);
+  }
+
+ private:
+  friend class Int32AccumulatorTile;
+  Simd<int8_t> data_;
+};
+
+class Int8DatabaseTile {
+ public:
+  static constexpr size_t kPoints = 4;
+  static constexpr size_t kDims = 8;
+
+  static_assert(kPoints == Simd<int32_t>::kElementsPerRegister);
+
+  SCANN_SIMD_INLINE void Load(const int8_t* ptr) {
+    data_ = Simd<int8_t, 2>::Load(ptr);
+  }
+
+ private:
+  friend class Int32AccumulatorTile;
+  Simd<int8_t, 2> data_;
+};
+
+class Int32AccumulatorTile {
+ public:
+  SCANN_SIMD_INLINE Int32AccumulatorTile() = default;
+
+  SCANN_SIMD_INLINE void AccumulateDotProducts(
+      const Int8QueryTile& query, const Int8DatabaseTile& database) {
+    for (int i : Seq(2)) {
+      data_[i] = Simd<int32_t>::HwyType(vmmlaq_s32(
+          (*data_[i]).raw, (*query.data_).raw, (*database.data_[i]).raw));
+    }
+  }
+
+  using ResultType = Simd<int32_t, Int8QueryTile::kPoints>;
+  SCANN_SIMD_INLINE void GetResult(ResultType& result,
+                                   const int32_t* query_sums) {
+    const hn::ScalableTag<int64_t> d64;
+    const hn::ScalableTag<int32_t> d32;
+    auto d0 = hn::BitCast(d64, *data_[0]);
+    auto d1 = hn::BitCast(d64, *data_[1]);
+    result[0] = hn::BitCast(d32, hn::InterleaveLower(d64, d0, d1));
+    result[1] = hn::BitCast(d32, hn::InterleaveUpper(d64, d0, d1));
+  }
+
+ private:
+  Simd<int32_t, 2> data_{Zeros()};
+};
+
+#else
+
+class Int8QueryTile {
+ public:
+  static constexpr size_t kPoints = 1;
+  static constexpr size_t kDims = 4;
+
+  SCANN_SIMD_INLINE void Load(const int8_t* ptr) {
+    data_ = Simd<int8_t>(
+        Simd<int32_t>::Broadcast(*reinterpret_cast<const int32_t*>(ptr)));
+  }
+
+ private:
+  friend class Int32AccumulatorTile;
+  Simd<int8_t> data_;
+};
+
+class Int8DatabaseTile {
+ public:
+  static constexpr size_t kPoints = Simd<int32_t>::kNumElements;
+  static constexpr size_t kDims = 4;
+
+  SCANN_SIMD_INLINE void Load(const int8_t* ptr) {
+    data_ = Simd<int8_t>::Load(ptr);
+  }
+
+ private:
+  friend class Int32AccumulatorTile;
+  Simd<int8_t> data_;
+};
+
+class Int32AccumulatorTile {
+ public:
+  SCANN_SIMD_INLINE Int32AccumulatorTile() = default;
+
+  SCANN_SIMD_INLINE void AccumulateDotProducts(
+      const Int8QueryTile& query, const Int8DatabaseTile& database) {
+    namespace hn = hwy::HWY_NAMESPACE;
+    data_ = hn::SumOfMulQuadAccumulate(hn::ScalableTag<int32_t>(),
+                                       *database.data_, *query.data_, *data_);
+  }
+
+  using ResultType = Simd<int32_t>;
+  SCANN_SIMD_INLINE void GetResult(ResultType& result,
+                                   const int32_t* query_sums) {
+    result = data_;
+  }
+
+ private:
+  Simd<int32_t> data_{Zeros()};
+};
+#endif
+
+#include "scann/distance_measures/many_to_many/int8_tile_codec.inc"
+#undef SCANN_SIMD_ATTRIBUTE
+}  // namespace HWY_NAMESPACE
+}  // namespace research_scann
+
+HWY_AFTER_NAMESPACE();
+
+#endif
 #endif

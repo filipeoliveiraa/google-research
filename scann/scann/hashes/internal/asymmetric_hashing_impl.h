@@ -185,7 +185,7 @@ vector<T> ConvertLookupToFixedPoint(ConstSpan<float> raw_lookup,
 bool CanUseInt16Accumulator(ConstSpan<uint8_t> lookup_table, size_t num_blocks);
 
 template <typename LookupElement>
-inline enable_if_t<IsIntegerType<LookupElement>(), int32_t>
+inline std::enable_if_t<IsIntegerType<LookupElement>(), int32_t>
 ComputePossiblyFixedPointMaxDistance(float float_max_distance,
                                      float multiplier) {
   if (float_max_distance == numeric_limits<float>::infinity()) {
@@ -199,7 +199,7 @@ ComputePossiblyFixedPointMaxDistance(float float_max_distance,
 }
 
 template <typename LookupElement>
-inline enable_if_t<IsFloatingType<LookupElement>(), float>
+inline std::enable_if_t<IsFloatingType<LookupElement>(), float>
 ComputePossiblyFixedPointMaxDistance(float float_max_distance,
                                      float multiplier) {
   return float_max_distance;

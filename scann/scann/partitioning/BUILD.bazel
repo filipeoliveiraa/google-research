@@ -23,7 +23,6 @@ cc_library(
     hdrs = ["anisotropic.h"],
     deps = [
         "//scann/utils:common",
-        "//scann/utils/linear_algebra:eigen_utils",
         "//scann/utils/linear_algebra:types",
         "@com_google_googletest//:gtest",
         "@eigen",
@@ -140,6 +139,7 @@ cc_library(
         "//scann/oss_wrappers:scann_threadpool",
         "//scann/proto:partitioning_cc_proto",
         "//scann/tree_x_hybrid:tree_x_hybrid_smmd",
+        "//scann/tree_x_hybrid:tree_x_params",
         "//scann/trees/kmeans_tree",
         "//scann/utils:common",
         "//scann/utils:datapoint_utils",
@@ -256,10 +256,7 @@ py_proto_library(
 proto_library(
     name = "kmeans_tree_partitioner_proto",
     srcs = ["kmeans_tree_partitioner.proto"],
-    deps = [
-        "//scann/proto:partitioning_proto",
-        "//scann/trees/kmeans_tree:kmeans_tree_proto",
-    ],
+    deps = ["//scann/trees/kmeans_tree:kmeans_tree_proto"],
 )
 
 cc_proto_library(

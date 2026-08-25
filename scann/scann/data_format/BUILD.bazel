@@ -88,6 +88,7 @@ cc_library(
         "//scann/distance_measures/one_to_one:l2_distance",
         "//scann/oss_wrappers:scann_status",
         "//scann/proto:hashed_cc_proto",
+        "//scann/utils:atomic",
         "//scann/utils:common",
         "//scann/utils:datapoint_utils",
         "//scann/utils:iterators",
@@ -170,9 +171,7 @@ cc_library(
 cc_library(
     name = "sparse_low_level",
     hdrs = ["sparse_low_level.h"],
-    deps = [
-        "//scann/utils:types",
-    ],
+    deps = ["//scann/utils:types"],
 )
 
 # Unit Tests

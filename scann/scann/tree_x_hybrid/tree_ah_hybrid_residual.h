@@ -169,7 +169,8 @@ class TreeAHHybridResidual final : public SingleMachineSearcherBase<float> {
                            NNResultsVector* result) const final;
 
   Status FindNeighborsBatchedImpl(
-      const TypedDataset<float>& queries, ConstSpan<SearchParameters> params,
+      const TypedDatasetView<float>& queries,
+      ConstSpan<SearchParameters> params,
       MutableSpan<NNResultsVector> results) const final;
 
   Status EnableCrowdingImpl(
@@ -188,7 +189,7 @@ class TreeAHHybridResidual final : public SingleMachineSearcherBase<float> {
         : projected_query_storage_(std::move(projected_query_storage)),
           centers_to_search_(std::move(centers_to_search)),
           lookup_table_(
-              make_unique<
+              std::make_unique<
                   asymmetric_hashing2::AsymmetricHashingOptionalParameters>(
                   std::move(lookup_table))) {}
 
@@ -273,8 +274,8 @@ class TreeAHHybridResidual final : public SingleMachineSearcherBase<float> {
   StatusOr<DatapointPtr<float>> MaybeProjectQuery(
       const DatapointPtr<float>& query,
       Datapoint<float>* projected_query_storage) const;
-  StatusOr<const TypedDataset<float>*> MaybeProjectQueriesBatched(
-      const TypedDataset<float>* queries,
+  StatusOr<const TypedDatasetView<float>*> MaybeProjectQueriesBatched(
+      const TypedDatasetView<float>* queries,
       DenseDataset<float>* projected_query_storage) const;
 
   vector<unique_ptr<asymmetric_hashing2::SearcherBase<float>>> leaf_searchers_;

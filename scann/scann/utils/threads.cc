@@ -30,7 +30,7 @@ unique_ptr<ThreadPool> StartThreadPool(absl::string_view pool_name,
     return nullptr;
   }
 
-  auto pool = make_unique<ThreadPool>(pool_name, num_threads);
+  auto pool = std::make_unique<ThreadPool>(pool_name, num_threads);
   return pool;
 }
 

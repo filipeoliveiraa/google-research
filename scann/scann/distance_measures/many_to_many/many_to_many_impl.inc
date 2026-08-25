@@ -261,19 +261,25 @@ class M2MTransposer {
   };
 };
 
-template <typename FloatT>
+template <typename FloatT, bool kOrthogonalityAmplified = false>
 class DenseManyToManyTransposedBase : public VirtualDestructor {
  public:
   static constexpr size_t kElementsPerRegister =
       Simd<FloatT>::kElementsPerRegister;
+
   constexpr static size_t kSmallQueryStride = [] {
+    size_t stride = 0;
     if (kPlatformGeneration == kSapphireRapidsAmx) {
-      return 32;
+      stride = 32;
     } else if (kArmAggressiveUnrolling) {
-      return 10;
+      stride = 8;
     } else {
-      return 6;
+      stride = 6;
     }
+    if (kOrthogonalityAmplified) {
+      stride /= 2;
+    }
+    return stride;
   }();
   constexpr static size_t kResultsSize =
       2 * kSmallQueryStride * kElementsPerRegister;
@@ -338,14 +344,28 @@ class DenseManyToManyTransposedBase : public VirtualDestructor {
                              size_t first_dp_idx, size_t num_datapoints) = 0;
 
  protected:
-  template <typename F>
-  static const F* DatabaseToPtr(const DenseDataset<F>& db) {
-    return db[0].values();
-  }
-
   static const FP8SimdBlockTransposedDatabase* DatabaseToPtr(
       const FP8SimdBlockTransposedDatabase& db) {
     return &db;
+  }
+
+  template <typename F>
+  static const F* DatabaseToPtr(const DefaultDenseDatasetView<F>& db) {
+    return db.GetPtr(0);
+  }
+
+  template <typename AccumulatorT>
+  SCANN_SIMD_INLINE static bool ShouldSkip(const AccumulatorT& accumulators,
+                                           float best_dist) {
+    if constexpr (std::is_same_v<Simd<float>, fallback::Simd<float>>) {
+      return false;
+    }
+    auto cmp = (accumulators < Simd<float>::Broadcast(best_dist));
+    if constexpr (std::is_same_v<Simd<float>, Avx512<float>>) {
+      return _kortestz_mask16_u8(cmp[0], cmp[1]);
+    } else {
+      return (cmp[0] | cmp[1]).MaskFromHighBits() == 0;
+    }
   }
 
   template <size_t kNumQueries, typename AccumulatorT, typename CallbackT>
@@ -356,7 +376,12 @@ class DenseManyToManyTransposedBase : public VirtualDestructor {
       if (ABSL_PREDICT_TRUE(num_datapoints == 2 * kElementsPerRegister)) {
         for (size_t j : Seq(kNumQueries)) {
           const size_t query_idx = first_q_idx + j;
-          callback.InvokeOptimized(accumulators[j], first_dp_idx, query_idx);
+          if (ABSL_PREDICT_TRUE(ShouldSkip(accumulators[j],
+                                           callback.GetEpsilon(query_idx)))) {
+            continue;
+          }
+          auto results = accumulators[j].Store();
+          callback(MakeMutableSpan(results), first_dp_idx, query_idx);
         }
         return;
       }
@@ -385,9 +410,10 @@ template <bool kIsSquaredL2, bool kIsPretransposedFixed8, typename CallbackT,
 class DenseManyToManyTransposed final
     : public DenseManyToManyTransposedBase<FloatT> {
  public:
-  using DatabaseT = typename std::conditional<kIsPretransposedFixed8,
-                                              FP8SimdBlockTransposedDatabase,
-                                              DenseDataset<FloatT>>::type;
+  using DatabaseT =
+      typename std::conditional<kIsPretransposedFixed8,
+                                FP8SimdBlockTransposedDatabase,
+                                DefaultDenseDatasetView<FloatT>>::type;
   using DatabasePtrT =
       typename std::conditional<kIsPretransposedFixed8,
                                 const FP8SimdBlockTransposedDatabase*,
@@ -409,8 +435,7 @@ class DenseManyToManyTransposed final
     CHECK_EQ(queries_view.dimensionality(), database.dimensionality());
     if constexpr (!kIsPretransposedFixed8) {
       if (this->num_datapoints_ >= 2) {
-        DCHECK_EQ(this->database_ + this->dimensionality_,
-                  database[1].values());
+        DCHECK_EQ(this->database_ + this->dimensionality_, database.GetPtr(1));
       }
     }
 
@@ -569,7 +594,7 @@ class DenseManyToManyTransposed final
 template <bool kIsSquaredL2, typename CallbackT, typename FloatT>
 SCANN_INLINE void DenseManyToManyTransposedImpl(
     DefaultDenseDatasetView<FloatT> queries,
-    const DenseDataset<FloatT>& database, ThreadPool* pool,
+    const DefaultDenseDatasetView<FloatT>& database, ThreadPool* pool,
     CallbackT callback) {
   DenseManyToManyTransposed<kIsSquaredL2, false, CallbackT, FloatT>(
       queries, database, pool, std::move(callback))
@@ -578,7 +603,7 @@ SCANN_INLINE void DenseManyToManyTransposedImpl(
 
 template <typename CallbackT>
 SCANN_INLINE void DenseManyToManyFP8PretransposedImpl(
-    const DistanceMeasure& dist, const DenseDataset<float>& queries,
+    const DistanceMeasure& dist, const DefaultDenseDatasetView<float>& queries,
     const FP8SimdBlockTransposedDatabase& database, ThreadPool* pool,
     CallbackT callback) {
   const bool is_squared_l2 =
@@ -599,9 +624,10 @@ class DenseManyToManyOrthogonalityAmplified final
     : public DenseManyToManyTransposedBase<float> {
  public:
   using FloatT = float;
-  using DatabaseT = typename std::conditional<kIsPretransposedFixed8,
-                                              FP8SimdBlockTransposedDatabase,
-                                              DenseDataset<FloatT>>::type;
+  using DatabaseT =
+      typename std::conditional<kIsPretransposedFixed8,
+                                FP8SimdBlockTransposedDatabase,
+                                DefaultDenseDatasetView<FloatT>>::type;
   using DatabasePtrT =
       typename std::conditional<kIsPretransposedFixed8,
                                 const FP8SimdBlockTransposedDatabase*,
@@ -614,9 +640,10 @@ class DenseManyToManyOrthogonalityAmplified final
   static constexpr size_t kSmallQueryStride = Base::kSmallQueryStride / 2;
 
   SCANN_INLINE DenseManyToManyOrthogonalityAmplified(
-      const DenseDataset<FloatT>& queries,
-      const DenseDataset<FloatT>& normalized_residuals, const FloatT lambda,
-      const DatabaseT& database, ThreadPool* pool, CallbackT callback)
+      const DefaultDenseDatasetView<FloatT>& queries,
+      const DefaultDenseDatasetView<FloatT>& normalized_residuals,
+      const FloatT lambda, const DatabaseT& database, ThreadPool* pool,
+      CallbackT callback)
       : Base(queries, database.size(), pool),
         database_(Base::DatabaseToPtr(database)),
         normalized_residuals_(Base::DatabaseToPtr(normalized_residuals)),
@@ -627,8 +654,7 @@ class DenseManyToManyOrthogonalityAmplified final
     CHECK_EQ(queries.size(), normalized_residuals.size());
     if constexpr (!kIsPretransposedFixed8) {
       if (this->num_datapoints_ >= 2) {
-        DCHECK_EQ(this->database_ + this->dimensionality_,
-                  database[1].values());
+        DCHECK_EQ(this->database_ + this->dimensionality_, database.GetPtr(1));
       }
     }
   }
@@ -781,8 +807,8 @@ class DenseManyToManyOrthogonalityAmplified final
 
 template <typename DatabaseT, typename CallbackT>
 void DenseManyToManyOrthogonalityAmplifiedImpl(
-    const DenseDataset<float>& queries,
-    const DenseDataset<float>& normalized_residuals, float lambda,
+    const DefaultDenseDatasetView<float>& queries,
+    const DefaultDenseDatasetView<float>& normalized_residuals, float lambda,
     const DatabaseT& database, ThreadPool* pool, CallbackT callback) {
   if (queries.empty() || database.empty()) return;
   constexpr bool kIsPretransposedFixed8 =
@@ -806,11 +832,11 @@ class DenseManyToManyUntransposedBase : public VirtualDestructor {
 
   SCANN_INLINE DenseManyToManyUntransposedBase(
       DefaultDenseDatasetView<FloatT> queries,
-      const DenseDataset<FloatT>& database, ThreadPool* pool)
+      const DefaultDenseDatasetView<FloatT>& database, ThreadPool* pool)
       : dimensionality_(queries.dimensionality()),
         queries_(queries.GetPtr(0)),
         num_queries_(queries.size()),
-        database_(database[0].values()),
+        database_(database.GetPtr(0)),
         num_datapoints_(database.size()),
         pool_(pool) {
     CHECK_EQ(queries.dimensionality(), database.dimensionality());
@@ -820,7 +846,7 @@ class DenseManyToManyUntransposedBase : public VirtualDestructor {
     }
     DCHECK_GE(num_datapoints_, 1);
     if (num_datapoints_ >= 2) {
-      DCHECK_EQ(database_ + dimensionality_, database[1].values());
+      DCHECK_EQ(database_ + dimensionality_, database.GetPtr(1));
     }
   }
 
@@ -888,7 +914,7 @@ class DenseManyToManyUntransposed final
 
   SCANN_INLINE DenseManyToManyUntransposed(
       DefaultDenseDatasetView<FloatT> queries,
-      const DenseDataset<FloatT>& database, ThreadPool* pool,
+      const DefaultDenseDatasetView<FloatT>& database, ThreadPool* pool,
       CallbackT callback)
       : Base(queries, database, pool), callback_(std::move(callback)) {}
 
@@ -1053,7 +1079,7 @@ class DenseManyToManyUntransposed final
 template <bool kIsSquaredL2, typename CallbackT, typename FloatT>
 SCANN_INLINE void DenseManyToManyUntransposedImpl(
     DefaultDenseDatasetView<FloatT> queries,
-    const DenseDataset<FloatT>& database, ThreadPool* pool,
+    const DefaultDenseDatasetView<FloatT>& database, ThreadPool* pool,
     CallbackT callback) {
   static_assert(IsSameAny<FloatT, float, double>(), "");
   DenseManyToManyUntransposed<kIsSquaredL2, CallbackT, FloatT>(
@@ -1104,7 +1130,7 @@ static_assert(kPlatformGeneration != kSkylakeAvx512 ||
 template <typename FloatT, typename CallbackT>
 SCANN_INLINE void DenseDistanceManyToManyImpl(
     const DistanceMeasure& dist, DefaultDenseDatasetView<FloatT> queries,
-    const DenseDataset<FloatT>& database, ThreadPool* pool,
+    const DefaultDenseDatasetView<FloatT>& database, ThreadPool* pool,
     CallbackT callback) {
   static_assert(IsSameAny<FloatT, float, double>(),
                 "DenseDistanceManyToMany only works with float and double.");

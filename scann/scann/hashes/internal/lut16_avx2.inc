@@ -1,12 +1,13 @@
 #include <cstdint>
 
+#include "absl/base/prefetch.h"
+#include "scann/hashes/internal/lut16_args.h"
 #include "scann/hashes/internal/lut16_avx2.h"
 #include "scann/oss_wrappers/scann_bits.h"
 #include "scann/utils/common.h"
 
 #ifdef __x86_64__
 
-#include "absl/base/prefetch.h"
 #include "scann/utils/bits.h"
 #include "scann/utils/intrinsics/avx2.h"
 
@@ -52,7 +53,26 @@ SCANN_INLINE ssize_t ComputeSmartPrefetchIndex(size_t num_blocks,
                           static_cast<ssize_t>(num_32dp_simd_iters));
 }
 
-template <size_t kNumQueries, PrefetchStrategy kPrefetch>
+enum class PrefetchLookahead { kOff, kSeq, kNonSeq };
+enum class PrefetchHint { kT0, kNta };
+
+constexpr PrefetchLookahead kStrategyToLookahead[] = {
+    PrefetchLookahead::kOff,
+    PrefetchLookahead::kSeq,
+    PrefetchLookahead::kNonSeq,
+    PrefetchLookahead::kNonSeq,
+};
+
+template <PrefetchHint kHint>
+inline void Prefetch(const void* addr) {
+  if constexpr (kHint == PrefetchHint::kT0) {
+    absl::PrefetchToLocalCache(addr);
+  } else {
+    absl::PrefetchToLocalCacheNta(addr);
+  }
+}
+
+template <size_t kNumQueries, PrefetchLookahead kLookahead, PrefetchHint kHint>
 SCANN_AVX2_INLINE Avx2<int16_t, kNumQueries, 2> Avx2LUT16BottomLoop(
     const uint8_t* data_start, array<const uint8_t*, kNumQueries> lookup_starts,
     const DimensionIndex num_blocks, const uint8_t* prefetch_start) {
@@ -64,10 +84,10 @@ SCANN_AVX2_INLINE Avx2<int16_t, kNumQueries, 2> Avx2LUT16BottomLoop(
   DimensionIndex num_unroll_iter = num_blocks / 2;
   for (; num_unroll_iter != 0; --num_unroll_iter) {
     constexpr uint32_t kPointsPerIter = 32;
-    if constexpr (kPrefetch == PrefetchStrategy::kSeq) {
-      absl::PrefetchToLocalCache(data_start + kPrefetchBytesAhead);
-    } else if constexpr (kPrefetch == PrefetchStrategy::kSmart) {
-      absl::PrefetchToLocalCacheNta(prefetch_start);
+    if constexpr (kLookahead == PrefetchLookahead::kSeq) {
+      Prefetch<kHint>(data_start + kPrefetchBytesAhead);
+    } else if constexpr (kLookahead == PrefetchLookahead::kNonSeq) {
+      Prefetch<kHint>(prefetch_start);
       prefetch_start += kPointsPerIter;
     }
 
@@ -135,7 +155,7 @@ MakeBottomLevelBatchLookupArray(
   return result;
 }
 
-template <size_t kNumQueries, PrefetchStrategy kPrefetch>
+template <size_t kNumQueries, PrefetchLookahead kLookahead, PrefetchHint kHint>
 SCANN_AVX2_INLINE Avx2<int16_t, kNumQueries, 2> Avx2LUT16MiddleLoop(
     const uint8_t* data_start, array<const uint8_t*, kNumQueries> lookup_starts,
     const DimensionIndex num_blocks, const uint8_t* prefetch_start) {
@@ -154,7 +174,7 @@ SCANN_AVX2_INLINE Avx2<int16_t, kNumQueries, 2> Avx2LUT16MiddleLoop(
     const size_t start = j * kSizeA;
     auto bottom_level_lookups =
         MakeBottomLevelBatchLookupArray<kSizeA>(lookup_starts, start);
-    auto acc = Avx2LUT16BottomLoop<kSizeA, kPrefetch>(
+    auto acc = Avx2LUT16BottomLoop<kSizeA, kLookahead, kHint>(
         data_start, bottom_level_lookups, num_blocks, prefetch_start);
     for (size_t jj : Seq(kSizeA)) {
       result[start + jj] = acc[jj];
@@ -165,7 +185,7 @@ SCANN_AVX2_INLINE Avx2<int16_t, kNumQueries, 2> Avx2LUT16MiddleLoop(
     const size_t start = kNumA * kSizeA + j * kSizeB;
     auto bottom_level_lookups =
         MakeBottomLevelBatchLookupArray<kSizeB>(lookup_starts, start);
-    auto acc = Avx2LUT16BottomLoop<kSizeB, kPrefetch>(
+    auto acc = Avx2LUT16BottomLoop<kSizeB, kLookahead, kHint>(
         data_start, bottom_level_lookups, num_blocks, prefetch_start);
     for (size_t jj : Seq(kSizeB)) {
       result[start + jj] = acc[jj];
@@ -179,21 +199,28 @@ SCANN_AVX2_INLINE Avx2<int16_t, kNumQueries, 2> PrefetchDispatcher(
     const uint8_t* data_start, array<const uint8_t*, kNumQueries> lookups,
     const DimensionIndex num_blocks, const uint8_t* next_partition,
     ssize_t* __restrict__ next_prefetch_idx) {
-  if constexpr (kPrefetch == PrefetchStrategy::kSmart) {
+  if constexpr (kPrefetch == PrefetchStrategy::kSmart ||
+                kPrefetch == PrefetchStrategy::kSmartT0) {
+    constexpr PrefetchHint kHint = (kPrefetch == PrefetchStrategy::kSmart)
+                                       ? PrefetchHint::kNta
+                                       : PrefetchHint::kT0;
     if ((*next_prefetch_idx) >= 0) {
       const uint8_t* prefetch_start =
           next_partition + (*next_prefetch_idx) * 16 * num_blocks;
       (*next_prefetch_idx)++;
-      return Avx2LUT16MiddleLoop<kNumQueries, kPrefetch>(
-          data_start, lookups, num_blocks, prefetch_start);
+      return Avx2LUT16MiddleLoop<kNumQueries, PrefetchLookahead::kNonSeq,
+                                 kHint>(data_start, lookups, num_blocks,
+                                        prefetch_start);
     } else {
       (*next_prefetch_idx)++;
-      return Avx2LUT16MiddleLoop<kNumQueries, PrefetchStrategy::kSeq>(
+      return Avx2LUT16MiddleLoop<kNumQueries, PrefetchLookahead::kSeq, kHint>(
           data_start, lookups, num_blocks, nullptr);
     }
   } else {
-    return Avx2LUT16MiddleLoop<kNumQueries, kPrefetch>(data_start, lookups,
-                                                       num_blocks, nullptr);
+    constexpr PrefetchLookahead kLookahead =
+        kStrategyToLookahead[static_cast<size_t>(kPrefetch)];
+    return Avx2LUT16MiddleLoop<kNumQueries, kLookahead, PrefetchHint::kT0>(
+        data_start, lookups, num_blocks, nullptr);
   }
 }
 
@@ -207,18 +234,26 @@ SCANN_AVX2_INLINE Avx2<int32_t, kNumQueries, 4> Avx2LUT16MiddleLoopInt32(
     DimensionIndex reaccumulate_limit = std::min(num_blocks - k, uint64_t{256});
 
     auto int16_accums = [&]() SCANN_AVX2_INLINE_LAMBDA {
-      if constexpr (kPrefetch == PrefetchStrategy::kSmart) {
+      if constexpr (kPrefetch == PrefetchStrategy::kSmart ||
+                    kPrefetch == PrefetchStrategy::kSmartT0) {
+        constexpr PrefetchHint kHint = (kPrefetch == PrefetchStrategy::kSmart)
+                                           ? PrefetchHint::kNta
+                                           : PrefetchHint::kT0;
         if ((*next_prefetch_idx) >= 0) {
           const uint8_t* prefetch_start =
               next_partition + (*next_prefetch_idx) * 16 * num_blocks + k * 16;
-          return Avx2LUT16MiddleLoop<kNumQueries, kPrefetch>(
-              data_start, lookup_starts, reaccumulate_limit, prefetch_start);
+          return Avx2LUT16MiddleLoop<kNumQueries, PrefetchLookahead::kNonSeq,
+                                     kHint>(data_start, lookup_starts,
+                                            reaccumulate_limit, prefetch_start);
         } else {
-          return Avx2LUT16MiddleLoop<kNumQueries, PrefetchStrategy::kSeq>(
-              data_start, lookup_starts, reaccumulate_limit, nullptr);
+          return Avx2LUT16MiddleLoop<kNumQueries, PrefetchLookahead::kSeq,
+                                     kHint>(data_start, lookup_starts,
+                                            reaccumulate_limit, nullptr);
         }
       } else {
-        return Avx2LUT16MiddleLoop<kNumQueries, kPrefetch>(
+        constexpr PrefetchLookahead kLookahead =
+            kStrategyToLookahead[static_cast<size_t>(kPrefetch)];
+        return Avx2LUT16MiddleLoop<kNumQueries, kLookahead, PrefetchHint::kT0>(
             data_start, lookup_starts, reaccumulate_limit, nullptr);
       }
     }();
@@ -229,7 +264,10 @@ SCANN_AVX2_INLINE Avx2<int32_t, kNumQueries, 4> Avx2LUT16MiddleLoopInt32(
       lookup_starts[j] += 16 * reaccumulate_limit;
     }
   }
-  if constexpr (kPrefetch == PrefetchStrategy::kSmart) (*next_prefetch_idx)++;
+  if constexpr (kPrefetch == PrefetchStrategy::kSmart ||
+                kPrefetch == PrefetchStrategy::kSmartT0) {
+    (*next_prefetch_idx)++;
+  }
   return int32_accumulators;
 }
 
@@ -395,14 +433,23 @@ SCANN_AVX2_OUTLINE void LUT16Avx2<kNumQueries, kPrefetch>::GetTopInt16Distances(
 }
 
 SCANN_AVX2_INLINE int16_t GetInt16Threshold(float float_threshold) {
-  constexpr float kMaxValue = numeric_limits<int16_t>::max();
+  constexpr float kMinValue = std::numeric_limits<int16_t>::min();
+  constexpr float kMaxValue = std::numeric_limits<int16_t>::max();
+  return std::max(kMinValue, std::min(kMaxValue, float_threshold));
+}
 
-  return std::min(float_threshold, kMaxValue);
+SCANN_AVX2_INLINE int32_t GetInt32Threshold(float float_threshold) {
+  constexpr float kMinValue = std::numeric_limits<int32_t>::min();
+
+  static const float kMaxValue =
+      std::nextafterf(std::numeric_limits<int32_t>::max(), 0);
+  return std::max(kMinValue, std::min(kMaxValue, float_threshold));
 }
 
 namespace {
 template <size_t kNumQueries, PrefetchStrategy kPrefetch, bool kHasAnyPredicate,
-          bool kWithSpilling = false, typename TopN>
+          bool kWithSpilling = false, bool kUseInt32Accumulator = false,
+          typename TopN>
 SCANN_AVX2_INLINE void GetTopFloatDistancesImpl(
     LUT16ArgsTopN<float, TopN> args) {
   static_assert(
@@ -429,12 +476,16 @@ SCANN_AVX2_INLINE void GetTopFloatDistancesImpl(
     inv_mults[j] = 1.0 / mults[j];
   }
 
-  Avx2<int16_t> simd_thresholds[kNumQueries];
+  using ThresholdT = std::conditional_t<kUseInt32Accumulator, int32_t, int16_t>;
+  Avx2<ThresholdT> simd_thresholds[kNumQueries];
   for (size_t j : Seq(kNumQueries)) {
     const float epsilon = args.fast_topns[j]->epsilon();
     const float float_threshold = (epsilon - biases[j]) * mults[j];
-    const int16_t int16_threshold = GetInt16Threshold(float_threshold);
-    simd_thresholds[j] = int16_threshold;
+    if constexpr (kUseInt32Accumulator) {
+      simd_thresholds[j] = GetInt32Threshold(float_threshold);
+    } else {
+      simd_thresholds[j] = GetInt16Threshold(float_threshold);
+    }
   }
 
   typename TopN::Mutator topn_mutators[kNumQueries];
@@ -459,19 +510,35 @@ SCANN_AVX2_INLINE void GetTopFloatDistancesImpl(
     if (can_skip_batch) continue;
 
     const uint8_t* data_start = packed_dataset + k * 16 * num_blocks;
-    auto int16_accums = PrefetchDispatcher<kNumQueries, kPrefetch>(
-        data_start, lookups, num_blocks, next_partition, &next_prefetch_idx);
+    auto accums = [&]() SCANN_AVX2_INLINE_LAMBDA {
+      if constexpr (kUseInt32Accumulator) {
+        return Avx2LUT16MiddleLoopInt32<kNumQueries, kPrefetch>(
+            data_start, lookups, num_blocks, next_partition,
+            &next_prefetch_idx);
+      } else {
+        return PrefetchDispatcher<kNumQueries, kPrefetch>(
+            data_start, lookups, num_blocks, next_partition,
+            &next_prefetch_idx);
+      }
+    }();
+
     for (size_t j : Seq(kNumQueries)) {
       auto compute_push_mask = [&]() SCANN_AVX2_INLINE_LAMBDA {
-        return GetComparisonMask(int16_accums[j] < simd_thresholds[j]);
+        return GetComparisonMask(accums[j] < simd_thresholds[j]);
       };
       uint32_t push_mask = compute_push_mask();
 
       if (!push_mask) continue;
 
-      auto fvals = int16_accums[j]
-                       .template ExpandTo<int32_t>()
-                       .template ConvertTo<float>();
+      auto fvals = [&]() SCANN_AVX2_INLINE_LAMBDA {
+        if constexpr (kUseInt32Accumulator) {
+          return accums[j].template ConvertTo<float>();
+        } else {
+          return accums[j]
+              .template ExpandTo<int32_t>()
+              .template ConvertTo<float>();
+        }
+      }();
 
       (fvals * inv_mults[j] + simd_biases[j]).Store(distances_buffer);
 
@@ -515,8 +582,12 @@ SCANN_AVX2_INLINE void GetTopFloatDistancesImpl(
 
           const float new_epsilon = topn_mutators[j].epsilon();
           const float float_threshold = (new_epsilon - biases[j]) * mults[j];
-          const int16_t int16_threshold = GetInt16Threshold(float_threshold);
-          simd_thresholds[j] = int16_threshold;
+
+          if constexpr (kUseInt32Accumulator) {
+            simd_thresholds[j] = GetInt32Threshold(float_threshold);
+          } else {
+            simd_thresholds[j] = GetInt16Threshold(float_threshold);
+          }
 
           push_mask &= compute_push_mask();
         }
@@ -526,14 +597,28 @@ SCANN_AVX2_INLINE void GetTopFloatDistancesImpl(
 }
 }  // namespace
 
+template <size_t kNumQueries, PrefetchStrategy kPrefetch, bool kHasAnyPredicate,
+          bool kWithSpilling = false, typename TopN>
+SCANN_AVX2_INLINE void GetTopFloatDistancesChooseAccum(
+    LUT16ArgsTopN<float, TopN> args) {
+  const bool use_int32 = args.num_blocks >= 256;
+  if (use_int32) {
+    GetTopFloatDistancesImpl<kNumQueries, kPrefetch, kHasAnyPredicate,
+                             kWithSpilling, true>(std::move(args));
+  } else {
+    GetTopFloatDistancesImpl<kNumQueries, kPrefetch, kHasAnyPredicate,
+                             kWithSpilling, false>(std::move(args));
+  }
+}
+
 template <size_t kNumQueries, PrefetchStrategy kPrefetch>
 SCANN_AVX2_OUTLINE void LUT16Avx2<kNumQueries, kPrefetch>::GetTopFloatDistances(
     LUT16ArgsTopN<float> args) {
   if (args.batch_filter_predicate || args.datapoint_translation_predicate) {
-    return GetTopFloatDistancesImpl<kNumQueries, kPrefetch, true>(
+    GetTopFloatDistancesChooseAccum<kNumQueries, kPrefetch, true, false>(
         std::move(args));
   } else {
-    return GetTopFloatDistancesImpl<kNumQueries, kPrefetch, false>(
+    GetTopFloatDistancesChooseAccum<kNumQueries, kPrefetch, false, false>(
         std::move(args));
   }
 }

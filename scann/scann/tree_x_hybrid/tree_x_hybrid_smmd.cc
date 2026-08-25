@@ -89,6 +89,17 @@ DatapointIndex TreeXHybridSMMD<T>::optimal_batch_size() const {
   return (kmeans_partitioner->SupportsLowLevelQueryBatching()) ? 256 : 1;
 }
 
+template <typename T>
+StatusOr<DatapointIndex> TreeXHybridSMMD<T>::DatasetSize() const {
+  if (this->dataset() || this->hashed_dataset() || this->docids()) {
+    return SingleMachineSearcherBase<T>::DatasetSize();
+  }
+  if (num_datapoints_ > 0 || !leaf_searchers_.empty()) {
+    return num_datapoints_;
+  }
+  return SingleMachineSearcherBase<T>::DatasetSize();
+}
+
 namespace {
 
 template <typename T>
@@ -176,7 +187,24 @@ Status TreeXHybridSMMD<T>::BuildLeafSearchers(
   leaf_searchers_.resize(n_tokens);
   for (int32_t token = 0; token < n_tokens; ++token) {
     const absl::Time token_start = absl::Now();
-    if (!hashed_dataset) {
+    if (dataset != nullptr && hashed_dataset != nullptr) {
+      shared_ptr<TypedDataset<T>> dataset_partition(
+          PartitionDataset(*dataset, datapoints_by_token[token]));
+      shared_ptr<DenseDataset<uint8_t>> hashed_dataset_partition(
+          down_cast<DenseDataset<uint8_t>*>(
+              PartitionDataset(*hashed_dataset, datapoints_by_token[token])));
+      SCANN_ASSIGN_OR_RETURN(
+          unique_ptr<SingleMachineSearcherBase<T>> leaf_searcher,
+          leaf_searcher_builder(dataset_partition, hashed_dataset_partition,
+                                token));
+      if (!leaf_searcher->needs_dataset()) {
+        leaf_searcher->ReleaseDatasetAndDocids();
+      }
+      if (!leaf_searcher->needs_hashed_dataset()) {
+        leaf_searcher->ReleaseHashedDataset();
+      }
+      leaf_searchers_[token] = std::move(leaf_searcher);
+    } else if (dataset != nullptr) {
       shared_ptr<TypedDataset<T>> dataset_partition(
           PartitionDataset(*dataset, datapoints_by_token[token]));
       SCANN_ASSIGN_OR_RETURN(
@@ -188,7 +216,7 @@ Status TreeXHybridSMMD<T>::BuildLeafSearchers(
       }
 
       leaf_searchers_[token] = std::move(leaf_searcher);
-    } else {
+    } else if (hashed_dataset != nullptr) {
       shared_ptr<DenseDataset<uint8_t>> hashed_dataset_partition(
           down_cast<DenseDataset<uint8_t>*>(
               PartitionDataset(*hashed_dataset, datapoints_by_token[token])));
@@ -198,6 +226,11 @@ Status TreeXHybridSMMD<T>::BuildLeafSearchers(
       if (!leaf_searcher->needs_hashed_dataset()) {
         leaf_searcher->ReleaseHashedDataset();
       }
+      leaf_searchers_[token] = std::move(leaf_searcher);
+    } else {
+      SCANN_ASSIGN_OR_RETURN(
+          unique_ptr<SingleMachineSearcherBase<T>> leaf_searcher,
+          leaf_searcher_builder(nullptr, nullptr, token));
       leaf_searchers_[token] = std::move(leaf_searcher);
     }
 
@@ -521,16 +554,16 @@ Status TreeXHybridSMMD<T>::FindNeighborsImpl(const DatapointPtr<T>& query,
     bool override = false;
 
     if (tree_x_params) {
-      const auto num_partitions_to_search_override =
+      ConstSpan<int32_t> num_partitions_to_search_override =
           tree_x_params->num_partitions_to_search_override();
-      if (num_partitions_to_search_override > 0) {
+      if (!num_partitions_to_search_override.empty()) {
         const auto* kmeans_tokenizer =
             down_cast<const KMeansTreeLikePartitioner<T>*>(
                 query_tokenizer_.get());
         if (!kmeans_tokenizer)
           return InvalidArgumentError(
-              "num_partitions_to_search_override is > 0, but the tokenizer is "
-              "not a KMeansTreeLikePartitioner.");
+              "num_partitions_to_search_override is not empty, but the "
+              "tokenizer is not a KMeansTreeLikePartitioner.");
 
         vector<pair<DatapointIndex, float>> pairs_storage;
         SCANN_RETURN_IF_ERROR(kmeans_tokenizer->TokensForDatapointWithSpilling(
@@ -563,7 +596,7 @@ Status TreeXHybridSMMD<T>::FindNeighborsImpl(const DatapointPtr<T>& query,
 
 template <typename T>
 Status TreeXHybridSMMD<T>::FindNeighborsBatchedImpl(
-    const TypedDataset<T>& queries, ConstSpan<SearchParameters> params,
+    const TypedDatasetView<T>& queries, ConstSpan<SearchParameters> params,
     MutableSpan<NNResultsVector> results) const {
   if (is_streaming_result_) {
     return FailedPreconditionError(
@@ -620,7 +653,7 @@ Status TreeXHybridSMMD<T>::FindNeighborsBatchedImpl(
     }
   } else {
     query_tokens_storage.resize(queries.size());
-    vector<int32_t> max_centers_override(queries.size(), 0);
+    vector<std::vector<int32_t>> max_centers_override(queries.size());
     bool override = false;
 
     for (int i = 0; i < queries.size(); ++i) {
@@ -628,31 +661,38 @@ Status TreeXHybridSMMD<T>::FindNeighborsBatchedImpl(
           params[i]
               .searcher_specific_optional_parameters<TreeXOptionalParameters>();
       if (tree_x_params)
-        max_centers_override[i] =
-            tree_x_params->num_partitions_to_search_override();
-      if (max_centers_override[i] > 0) override = true;
+        max_centers_override[i] = std::vector<int32_t>(
+            tree_x_params->num_partitions_to_search_override().begin(),
+            tree_x_params->num_partitions_to_search_override().end());
+      if (!max_centers_override[i].empty()) override = true;
     }
 
     if (override) {
       const auto* kmeans_tokenizer =
-          down_cast<const KMeansTreePartitioner<T>*>(query_tokenizer_.get());
+          down_cast<const KMeansTreeLikePartitioner<T>*>(
+              query_tokenizer_.get());
       if (!kmeans_tokenizer)
         return InvalidArgumentError(
             "num_partitions_to_search_override is > 0, but the tokenizer is "
-            "not a KMeansTreePartitioner.");
+            "not a KMeansTreeLikePartitioner.");
 
+      vector<vector<pair<DatapointIndex, float>>> pairs_storage(queries.size());
       SCANN_RETURN_IF_ERROR(
-          kmeans_tokenizer->TokensForDatapointWithSpillingBatchedAndOverride(
-              queries, max_centers_override,
-              MakeMutableSpan(query_tokens_storage)))
+          kmeans_tokenizer->TokensForDatapointWithSpillingBatched(
+              queries, max_centers_override, MakeMutableSpan(pairs_storage)))
           << typeid(*kmeans_tokenizer).name();
+      for (size_t i = 0; i < queries.size(); ++i) {
+        query_tokens_storage[i].resize(pairs_storage[i].size());
+        for (const auto [j, pair] : Enumerate(pairs_storage[i])) {
+          query_tokens_storage[i][j] = pair.first;
+        }
+      }
     } else {
       SCANN_RETURN_IF_ERROR(
           query_tokenizer_->TokensForDatapointWithSpillingBatched(
               queries, MakeMutableSpan(query_tokens_storage)))
           << typeid(*query_tokenizer_).name();
     }
-
     for (size_t i = 0; i < queries.size(); ++i) {
       query_tokens[i] = query_tokens_storage[i];
     }
@@ -670,7 +710,7 @@ Status TreeXHybridSMMD<T>::FindNeighborsBatchedImpl(
 
 template <typename T>
 Status TreeXHybridSMMD<T>::FindNeighborsPreTokenizedBatchedGenericImpl(
-    const TypedDataset<T>& queries, ConstSpan<SearchParameters> params,
+    const TypedDatasetView<T>& queries, ConstSpan<SearchParameters> params,
     ConstSpan<ConstSpan<int32_t>> query_tokens,
     MutableSpan<NNResultsVector> results) const {
   DCHECK_EQ(queries.size(), params.size());
@@ -717,7 +757,7 @@ size_t MaxQueriesPerPartition(
 
 template <typename T>
 Status TreeXHybridSMMD<T>::FindNeighborsPreTokenizedBatchedOptimizedImpl(
-    const TypedDataset<T>& queries, ConstSpan<SearchParameters> params,
+    const TypedDatasetView<T>& queries, ConstSpan<SearchParameters> params,
     ConstSpan<ConstSpan<int32_t>> query_tokens,
     MutableSpan<NNResultsVector> results) const {
   DCHECK(queries.IsDense());
@@ -1071,8 +1111,7 @@ TreeXHybridSMMD<T>::TokenizeAndMaybeResidualize(const TypedDataset<T>& dps) {
 template <typename T>
 StatusOr<SingleMachineFactoryOptions>
 TreeXHybridSMMD<T>::ExtractSingleMachineFactoryOptions() {
-  SCANN_ASSIGN_OR_RETURN(const int dataset_size,
-                         UntypedSingleMachineSearcherBase::DatasetSize());
+  SCANN_ASSIGN_OR_RETURN(const int dataset_size, this->DatasetSize());
   auto int8_query_processor = std::dynamic_pointer_cast<
       const TreeScalarQuantizationPreprocessedQueryCreator>(
       leaf_searcher_optional_parameter_creator_);
@@ -1125,8 +1164,7 @@ TreeXHybridSMMD<T>::SharedFloatDatasetIfNeeded() {
     SCANN_RETURN_IF_ERROR(ptr_or.status());
     datasets[i] = ptr_or->get();
   }
-  SCANN_ASSIGN_OR_RETURN(const int dataset_size,
-                         UntypedSingleMachineSearcherBase::DatasetSize());
+  SCANN_ASSIGN_OR_RETURN(const int dataset_size, this->DatasetSize());
   const auto get_dataset = [&](int leaf_idx) { return datasets[leaf_idx]; };
 
   SCANN_ASSIGN_OR_RETURN(
@@ -1151,16 +1189,22 @@ Status TreeXHybridSMMD<T>::PreprocessQueryIntoParamsUnlocked(
                                params->leaf_tokens_to_search().end());
     } else {
       const auto* kmeans_tokenizer =
-          dynamic_cast<const KMeansTreePartitioner<T>*>(query_tokenizer_.get());
+          dynamic_cast<const KMeansTreeLikePartitioner<T>*>(
+              query_tokenizer_.get());
       if (!kmeans_tokenizer)
         return InvalidArgumentError(
-            "num_partitions_to_search_override is > 0, but the tokenizer is "
-            "not a KMeansTreePartitioner.");
+            "num_partitions_to_search_override is provided, but the tokenizer "
+            "is not a KMeansTreeLikePartitioner.");
 
-      int max_centers_override = params->num_partitions_to_search_override();
-      SCANN_RETURN_IF_ERROR(
-          kmeans_tokenizer->TokensForDatapointWithSpillingAndOverride(
-              query, max_centers_override, &centers_to_search));
+      ConstSpan<int32_t> max_centers_override =
+          params->num_partitions_to_search_override();
+      vector<pair<DatapointIndex, float>> centers_and_distances;
+      SCANN_RETURN_IF_ERROR(kmeans_tokenizer->TokensForDatapointWithSpilling(
+          query, max_centers_override, &centers_and_distances));
+      centers_to_search.reserve(centers_and_distances.size());
+      for (const auto& center_and_distance : centers_and_distances) {
+        centers_to_search.push_back(center_and_distance.first);
+      }
     }
   } else {
     SCANN_RETURN_IF_ERROR(query_tokenizer_->TokensForDatapointWithSpilling(

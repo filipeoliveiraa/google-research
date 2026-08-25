@@ -20,14 +20,17 @@
 #include <cstdint>
 #include <optional>
 
+#include "absl/base/attributes.h"
 #include "absl/time/time.h"
 #include "scann/oss_wrappers/scann_threadpool.h"
 #include "scann/proto/partitioning.pb.h"
 #include "scann/utils/common.h"
 #include "scann/utils/gmm_utils.h"
-#include "scann/utils/types.h"
 
 namespace research_scann {
+
+ABSL_ATTRIBUTE_PURE_FUNCTION static inline std::string ToString(
+    GmmUtils::Options::CenterInitializationType type);
 
 struct KMeansTreeTrainingOptions {
   KMeansTreeTrainingOptions();
@@ -66,6 +69,8 @@ struct KMeansTreeTrainingOptions {
   double convergence_epsilon = 1e-5;
 
   int32_t min_cluster_size = 1;
+
+  int32_t balancing_num_nearest_centroids = -1;
 
   int32_t seed = 0;
 

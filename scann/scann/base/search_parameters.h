@@ -41,11 +41,13 @@ class SearchParameters {
   SearchParameters(
       int32_t pre_reordering_num_neighbors, float pre_reordering_epsilon,
       int32_t post_reordering_num_neighbors = numeric_limits<int32_t>::max(),
-      float post_reordering_epsilon = numeric_limits<float>::infinity())
+      float post_reordering_epsilon = numeric_limits<float>::infinity(),
+      float min_distance = -numeric_limits<float>::infinity())
       : pre_reordering_num_neighbors_(pre_reordering_num_neighbors),
         post_reordering_num_neighbors_(post_reordering_num_neighbors),
         pre_reordering_epsilon_(pre_reordering_epsilon),
-        post_reordering_epsilon_(post_reordering_epsilon) {}
+        post_reordering_epsilon_(post_reordering_epsilon),
+        min_distance_(min_distance) {}
 
   ~SearchParameters() {}
 
@@ -75,6 +77,9 @@ class SearchParameters {
   void set_post_reordering_epsilon(float val) {
     post_reordering_epsilon_ = val;
   }
+
+  float min_distance() const { return min_distance_; }
+  void set_min_distance(float val) { min_distance_ = val; }
 
   int32_t per_crowding_attribute_pre_reordering_num_neighbors() const {
     return per_crowding_attribute_pre_reordering_num_neighbors_;
@@ -179,6 +184,7 @@ class SearchParameters {
   int32_t post_reordering_num_neighbors_ = -1;
   float pre_reordering_epsilon_ = NAN;
   float post_reordering_epsilon_ = NAN;
+  float min_distance_ = -numeric_limits<float>::infinity();
   int per_crowding_attribute_pre_reordering_num_neighbors_ =
       numeric_limits<int32_t>::max();
   int per_crowding_attribute_post_reordering_num_neighbors_ =

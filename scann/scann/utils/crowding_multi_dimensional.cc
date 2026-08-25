@@ -75,6 +75,8 @@ bool CrowdingMultiDimensional::Add(DatapointIndex index) {
     int& quota = dimension_[i].MutableQuota(crowding_attributes[i]);
     if (quota < 1) {
       for (int j = 0; j < i; ++j) {
+        if (j < used_dimensions_mask_.size() && !used_dimensions_mask_[j])
+          continue;
         dimension_[j].MutableQuota(crowding_attributes[j]) += weight;
       }
       return false;

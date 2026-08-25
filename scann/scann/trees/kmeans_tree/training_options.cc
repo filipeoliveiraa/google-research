@@ -16,15 +16,61 @@
 
 #include "scann/trees/kmeans_tree/training_options.h"
 
+#include "absl/base/no_destructor.h"
+#include "absl/container/flat_hash_map.h"
 #include "absl/log/log.h"
 #include "absl/time/time.h"
 #include "scann/proto/partitioning.pb.h"
 #include "scann/utils/common.h"
 #include "scann/utils/gmm_utils.h"
 
+ABSL_FLAG(std::string, experimental_default_center_initialization_type,
+          research_scann::ToString(
+              research_scann::GmmUtils::Options().center_initialization_type),
+          "The center initialization type to use for default KMeans tree "
+          "training options instances. This is an experimental flag intended "
+          "to be used for experiments only since this is not the expected way "
+          "to set the center initialization type. This flag will be removed at "
+          "any point in the future so production code should not rely on it.");
+
 namespace research_scann {
 
-KMeansTreeTrainingOptions::KMeansTreeTrainingOptions() {}
+std::string ToString(
+    GmmUtils::Options::CenterInitializationType center_initialization_type) {
+  switch (center_initialization_type) {
+    case GmmUtils::Options::KMEANS_PLUS_PLUS:
+      return "KMEANS_PLUS_PLUS";
+    case GmmUtils::Options::MEAN_DISTANCE_INITIALIZATION:
+      return "MEAN_DISTANCE_INITIALIZATION";
+    case GmmUtils::Options::RANDOM_INITIALIZATION:
+      return "RANDOM_INITIALIZATION";
+    default:
+      return "UNKNOWN";
+  }
+}
+
+static const absl::NoDestructor<absl::flat_hash_map<
+    absl::string_view, GmmUtils::Options::CenterInitializationType>>
+    kCenterInitializationTypeMap(
+        absl::flat_hash_map<absl::string_view,
+                            GmmUtils::Options::CenterInitializationType>({
+            {"KMEANS_PLUS_PLUS", GmmUtils::Options::KMEANS_PLUS_PLUS},
+            {"MEAN_DISTANCE_INITIALIZATION",
+             GmmUtils::Options::MEAN_DISTANCE_INITIALIZATION},
+            {"RANDOM_INITIALIZATION", GmmUtils::Options::RANDOM_INITIALIZATION},
+        }));
+
+KMeansTreeTrainingOptions::KMeansTreeTrainingOptions() {
+  const std::string target_type =
+      absl::GetFlag(FLAGS_experimental_default_center_initialization_type);
+  auto it = kCenterInitializationTypeMap->find(target_type);
+  if (it != kCenterInitializationTypeMap->end()) {
+    center_initialization_type = it->second;
+  } else {
+    LOG(WARNING) << "Unmapped center initialization type: " << target_type
+                 << ". Using KMEANS_PLUS_PLUS instead.";
+  }
+}
 
 KMeansTreeTrainingOptions::KMeansTreeTrainingOptions(
     const PartitioningConfig& config)
@@ -37,6 +83,7 @@ KMeansTreeTrainingOptions::KMeansTreeTrainingOptions(
       max_iterations(config.max_clustering_iterations()),
       convergence_epsilon(config.clustering_convergence_tolerance()),
       min_cluster_size(config.min_cluster_size()),
+      balancing_num_nearest_centroids(config.balancing_num_nearest_centroids()),
       seed(config.clustering_seed()) {
   switch (config.balancing_type()) {
     case PartitioningConfig::DEFAULT_UNBALANCED:
@@ -47,6 +94,12 @@ KMeansTreeTrainingOptions::KMeansTreeTrainingOptions(
       break;
     case PartitioningConfig::UNBALANCED_FLOAT32:
       balancing_type = GmmUtils::Options::UNBALANCED_FLOAT32;
+      break;
+    case PartitioningConfig::SINGLE_PASS_UNBALANCED_FLOAT32:
+      balancing_type = GmmUtils::Options::SINGLE_PASS_UNBALANCED_FLOAT32;
+      break;
+    case PartitioningConfig::SINGLE_PASS_GREEDY_BALANCED:
+      balancing_type = GmmUtils::Options::SINGLE_PASS_GREEDY_BALANCED;
       break;
   }
   switch (config.trainer_type()) {

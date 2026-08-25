@@ -14,25 +14,23 @@
 
 
 
-#include "scann/distance_measures/many_to_many/fp8_transposed.h"
-#include "scann/distance_measures/many_to_many/many_to_many.h"
-#include "scann/distance_measures/many_to_many/many_to_many_templates.h"
+#include "scann/distance_measures/many_to_many/many_to_many_internal.h"
 
 namespace research_scann {
 namespace mm_internal {
 
 template Status DenseDistanceManyToManyFP8PretransposedImpl(
-    const DistanceMeasure &dist, const DenseDataset<float> &queries,
+    const DistanceMeasure &dist, const DefaultDenseDatasetView<float> &queries,
     const FP8SimdBlockTransposedDatabase &database, ThreadPool *pool,
     ManyToManyResultsCallback<float> callback);
 
 template Status DenseDistanceManyToManyFP8PretransposedImpl(
-    const DistanceMeasure &dist, const DenseDataset<float> &queries,
+    const DistanceMeasure &dist, const DefaultDenseDatasetView<float> &queries,
     const FP8SimdBlockTransposedDatabase &database, ThreadPool *pool,
     EpsilonFilteringOffsetWrapper<float> callback);
 
 template Status DenseDistanceManyToManyFP8PretransposedImpl(
-    const DistanceMeasure &dist, const DenseDataset<float> &queries,
+    const DistanceMeasure &dist, const DefaultDenseDatasetView<float> &queries,
     const FP8SimdBlockTransposedDatabase &database, ThreadPool *pool,
     EpsilonFilteringCallback<float> callback);
 

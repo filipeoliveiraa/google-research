@@ -67,13 +67,19 @@ class TreeXOptionalParameters final
     all_leaf_optional_params_ = std::move(val);
   }
 
-  int32_t num_partitions_to_search_override() const {
+  ConstSpan<int32_t> num_partitions_to_search_override() const {
     return num_partitions_to_search_override_;
   }
 
   void set_num_partitions_to_search_override(
-      int32_t num_partitions_to_search_override) {
+      vector<int32_t> num_partitions_to_search_override) {
     num_partitions_to_search_override_ = num_partitions_to_search_override;
+  }
+
+  void set_num_partitions_to_search_override(
+      int32_t num_partitions_to_search_override) {
+    num_partitions_to_search_override_.assign(
+        {num_partitions_to_search_override});
   }
 
  private:
@@ -81,7 +87,7 @@ class TreeXOptionalParameters final
 
   vector<pair<DatapointIndex, float>> centers_to_search_ = {};
 
-  int32_t num_partitions_to_search_override_ = 0;
+  vector<int32_t> num_partitions_to_search_override_;
 
   shared_ptr<const SearcherSpecificOptionalParameters>
       all_leaf_optional_params_;

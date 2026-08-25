@@ -12,6 +12,11 @@ package(
 # ========================================================================
 
 cc_library(
+    name = "atomic",
+    hdrs = ["atomic.h"],
+)
+
+cc_library(
     name = "alignment",
     srcs = ["alignment.cc"],
     hdrs = ["alignment.h"],
@@ -101,12 +106,23 @@ cc_library(
 )
 
 cc_library(
+    name = "heap_topn",
+    hdrs = ["heap_topn.h"],
+    deps = [
+        ":common",
+        ":types",
+        "@com_google_absl//absl/log:check",
+    ],
+)
+
+cc_library(
     name = "gmm_utils",
     srcs = ["gmm_utils.cc"],
     hdrs = ["gmm_utils.h"],
     deps = [
         ":common",
         ":datapoint_utils",
+        ":heap_topn",
         ":parallel_for",
         ":top_n_amortized_constant",
         ":types",
@@ -125,10 +141,11 @@ cc_library(
         "//scann/proto:partitioning_cc_proto",
         "@com_google_absl//absl/base:endian",
         "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/container:inlined_vector",
         "@com_google_absl//absl/numeric:bits",
         "@com_google_absl//absl/random",
         "@com_google_absl//absl/random:distributions",
-        "@com_google_absl//absl/time",
+        "@com_google_absl//absl/synchronization",
         "@eigen",
     ],
 )
@@ -443,12 +460,7 @@ cc_library(
     deps = [
         ":common",
         ":threads",
-        ":types",
-        "//scann/oss_wrappers:scann_status",
-        "//scann/oss_wrappers:scann_threadpool",
         "@com_google_absl//absl/base:core_headers",
-        "@com_google_absl//absl/functional:any_invocable",
-        "@com_google_absl//absl/functional:function_ref",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/synchronization",
     ],
@@ -636,6 +648,7 @@ cc_library(
         ":util_functions",
         "//scann/data_format:datapoint",
         "//scann/distance_measures/one_to_many:one_to_many_helpers",
+        "//scann/distance_measures/one_to_many:resolved_scale_encoding",
         "//scann/distance_measures/one_to_many:scale_encoding_cc_proto",
         "//scann/oss_wrappers:scann_status",
         "@com_google_absl//absl/base",
@@ -650,4 +663,10 @@ cc_library(
     name = "multi_stage_batch_pipeline",
     hdrs = ["multi_stage_batch_pipeline.h"],
     deps = [":common"],
+)
+
+cc_library(
+    name = "vector_no_resize",
+    hdrs = ["vector_no_resize.h"],
+    deps = ["@com_google_absl//absl/types:span"],
 )

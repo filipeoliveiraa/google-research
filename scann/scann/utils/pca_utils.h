@@ -28,7 +28,7 @@
 namespace research_scann {
 
 template <typename T>
-void ComputePcaDense(DefaultDenseDatasetView<T> data, int32_t num_eigenvectors,
+void ComputePcaDense(const DenseDatasetView<T>& data, int32_t num_eigenvectors,
                      vector<Datapoint<float>>* eigenvectors,
                      vector<float>* eigenvalues, ThreadPool* pool = nullptr);
 
@@ -39,14 +39,14 @@ void PostprocessPcaToSignificance(float significance_threshold,
 
 class PcaUtils {
  public:
-  static void ComputePca(bool use_propack_if_available, const Dataset& data,
+  static void ComputePca(bool use_propack_if_available, const DatasetView& data,
                          int32_t num_eigenvectors, bool build_covariance,
                          vector<Datapoint<float>>* eigenvectors,
                          vector<float>* eigenvalues,
                          ThreadPool* pool = nullptr);
 
   static void ComputePcaWithSignificanceThreshold(
-      bool use_propack_if_available, const Dataset& data,
+      bool use_propack_if_available, const DatasetView& data,
       float significance_threshold, float truncation_threshold,
       bool build_covariance, vector<Datapoint<float>>* eigenvectors,
       vector<float>* eigenvalues, ThreadPool* pool = nullptr);
@@ -56,7 +56,7 @@ class PcaUtils {
 };
 
 template <typename T>
-void ComputePcaDense(const DefaultDenseDatasetView<T> data,
+void ComputePcaDense(const DenseDatasetView<T>& data,
                      const int32_t num_eigenvectors,
                      vector<Datapoint<float>>* eigenvectors,
                      vector<float>* eigenvalues, ThreadPool* pool) {

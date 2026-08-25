@@ -32,7 +32,7 @@ def _factory_decorator(key):
       self.params[key] = kwargs
       return self
 
-    inner.proto_maker = f
+    inner.proto_maker = f  # pyrefly: ignore[missing-attribute]
     return inner
 
   return func_taker
@@ -131,7 +131,7 @@ class ScannBuilder(object):
       anisotropic_quantization_threshold=float("nan"),
   ):
     """Configure an additional tree layer; REQUIRES tree() call in builder."""
-    scoring_mode = {
+    scoring_mode = {  # pyrefly: ignore[bad-assignment]
         ReorderType.INT8: "FIXED8",
         ReorderType.BFLOAT16: "BFLOAT16",
         ReorderType.FLOAT32: "FLOAT32",
@@ -251,7 +251,7 @@ class ScannBuilder(object):
       lookup_type = "INT8"
     else:
       raise ValueError(f"hash_type must be one of {hash_types}")
-    full_blocks, partial_block_dims = divmod(n_dims, dimensions_per_block)  # pytype: disable=wrong-arg-types
+    full_blocks, partial_block_dims = divmod(n_dims, dimensions_per_block)
     if projection is not None:
       # Projection will be set by C++ logic.
       proj_config = f"""

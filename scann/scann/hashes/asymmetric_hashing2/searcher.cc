@@ -171,6 +171,17 @@ SearcherBase<T>::SearcherBase(SearcherOptions<T> opts,
              opts_.asymmetric_queryer_) {}
 
 template <typename T>
+StatusOr<DatapointIndex> SearcherBase<T>::DatasetSize() const {
+  if (this->dataset() || this->hashed_dataset() || this->docids()) {
+    return SingleMachineSearcherBase<T>::DatasetSize();
+  }
+  if (!this->norm_inv_or_bias_.empty()) {
+    return this->norm_inv_or_bias_.size();
+  }
+  return this->packed_dataset_.num_datapoints;
+}
+
+template <typename T>
 StatusOr<const LookupTable*> SearcherBase<T>::GetOrCreateLookupTable(
     const DatapointPtr<T>& query, const SearchParameters& params,
     LookupTable* created_lookup_table_storage) const {
@@ -255,7 +266,7 @@ Status Searcher<T>::FindNeighborsImpl(const DatapointPtr<T>& query,
 
 template <typename T>
 Status Searcher<T>::FindNeighborsBatchedImpl(
-    const TypedDataset<T>& queries, ConstSpan<SearchParameters> params,
+    const TypedDatasetView<T>& queries, ConstSpan<SearchParameters> params,
     MutableSpan<NNResultsVector> results) const {
   bool crowding_enabled_for_any_query = false;
   for (const auto& p : params) {

@@ -5,6 +5,15 @@ class Int8TileCodecImpl : public Int8TileCodec {
   static constexpr bool kUnsigned =
       IsSame<Int8Tile, avx512_vnni::Int8DatabaseTile>();
   static constexpr int kUnsignedOffset = kUnsigned ? 128 : 0;
+  static constexpr uint32_t kUnsignedOffsetsX4 =
+      kUnsignedOffset | (kUnsignedOffset << 8) | (kUnsignedOffset << 16) |
+      (kUnsignedOffset << 24);
+
+  static constexpr size_t kContiguousDims = []() -> size_t {
+    if (IsSame<Int8Tile, amx::Int8DatabaseTile>()) return 4;
+    if (Int8Tile::kPoints == 1) return 0;
+    return Int8Tile::kDims;
+  }();
 
  public:
   explicit Int8TileCodecImpl(uint32_t dimensionality)
@@ -24,15 +33,46 @@ class Int8TileCodecImpl : public Int8TileCodec {
     }
   }
 
-  Datapoint<int8_t> ReconstructDatapoint(
-      size_t dp_idx, ConstSpan<int8_t> payload) const override {
+  void ReconstructDatapoint(size_t dp_idx, ConstSpan<int8_t> payload,
+                            MutableSpan<int8_t> encoded) const override {
+    DCHECK_EQ(encoded.size(), dimensionality());
     auto block = payload.subspan(BlockStart(dp_idx), block_bytes_);
-    std::vector<int8_t> data(dimensionality_);
-
-    for (DimensionIndex dim_idx : Seq(dimensionality_)) {
-      data[dim_idx] = block[PayloadIndex(dp_idx, dim_idx)] - kUnsignedOffset;
+    const size_t dims = dimensionality_;
+    if constexpr (kContiguousDims == 0) {
+      static_assert(kUnsignedOffset == 0);
+      memcpy(encoded.data(), block.data(), dims);
+      return;
     }
-    return Datapoint<int8_t>({}, std::move(data), dimensionality_);
+    DimensionIndex dim_idx = 0;
+#pragma unroll 4
+    for (; dim_idx + kContiguousDims <= dims; dim_idx += kContiguousDims) {
+      memcpy(&encoded[dim_idx], &block[PayloadIndex(dp_idx, dim_idx)],
+             kContiguousDims);
+      if constexpr (kUnsignedOffset) {
+        static_assert(kContiguousDims == 4);
+
+        static_assert(kUnsignedOffset == 0b10000000);
+
+        *reinterpret_cast<uint32_t*>(&encoded[dim_idx]) ^= kUnsignedOffsetsX4;
+      }
+    }
+    for (; dim_idx < dims; ++dim_idx) {
+      encoded[dim_idx] = block[PayloadIndex(dp_idx, dim_idx)] - kUnsignedOffset;
+    }
+  }
+
+  void ReconstructFloatDatapoint(size_t dp_idx, ConstSpan<int8_t> payload,
+                                 float scale,
+                                 MutableSpan<float> encoded) const override {
+    DCHECK_EQ(encoded.size(), dimensionality());
+    auto block = payload.subspan(BlockStart(dp_idx), block_bytes_);
+    for (DimensionIndex dim_idx : Seq(dimensionality_)) {
+      int value = block[PayloadIndex(dp_idx, dim_idx)];
+      if (kUnsigned) {
+        value = static_cast<uint8_t>(value) - kUnsignedOffset;
+      }
+      encoded[dim_idx] = value * scale;
+    }
   }
 
  private:
@@ -58,3 +98,13 @@ class Int8TileCodecImpl : public Int8TileCodec {
            tile_col;
   }
 };
+
+inline std::unique_ptr<Int8TileCodec> NewInt8TileCodec(size_t dims,
+                                                       Int8TileSide side) {
+  switch (side) {
+    case Int8TileSide::kQuery:
+      return std::make_unique<Int8TileCodecImpl<Int8TileSide::kQuery>>(dims);
+    case Int8TileSide::kDatabase:
+      return std::make_unique<Int8TileCodecImpl<Int8TileSide::kDatabase>>(dims);
+  }
+}

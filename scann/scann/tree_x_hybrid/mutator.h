@@ -851,7 +851,7 @@ TreeXHybridMutator<Searcher>::ComputePrecomputedMutationArtifacts(
     LOG_FIRST_N(WARNING, 10) << tokenization_result_or_error.status();
     return nullptr;
   }
-  auto result = make_unique<TreeXPrecomputedMutationArtifacts>(
+  auto result = std::make_unique<TreeXPrecomputedMutationArtifacts>(
       std::move(tokenization_result_or_error.value()));
   result->leaf_precomputed_artifacts.resize(result->tokens.size());
   for (auto [token_idx, token] : Enumerate(result->tokens)) {
@@ -889,8 +889,8 @@ TreeXHybridMutator<Searcher>::ComputePrecomputedMutationArtifacts(
   }
 
   for (size_t i : IndicesOf(result)) {
-    result_upcast[i] =
-        make_unique<TreeXPrecomputedMutationArtifacts>(std::move(result[i]));
+    result_upcast[i] = std::make_unique<TreeXPrecomputedMutationArtifacts>(
+        std::move(result[i]));
   }
   return result_upcast;
 }

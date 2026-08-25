@@ -37,13 +37,7 @@ bool TryEnableAmx();
 
 #ifdef __x86_64__
 
-#ifdef SCANN_FORCE_SSE4
-inline bool RuntimeSupportsAvx1() { return false; }
-inline bool RuntimeSupportsAvx2() { return false; }
-inline bool RuntimeSupportsAvx512() { return false; }
-inline bool RuntimeSupportsAvx512Vnni() { return false; }
-inline bool RuntimeSupportsAmx() { return false; }
-#else
+inline bool RuntimeSupportsSse4() { return true; }
 
 inline bool RuntimeSupportsAvx1() { return true; }
 inline bool RuntimeSupportsAvx2() { return flags_internal::should_use_avx2; }
@@ -70,18 +64,14 @@ inline bool RuntimeSupportsAmx() {
 
 #endif
 
-#endif
-
-inline bool RuntimeSupportsSse4() { return true; }
-
 #else
 
+inline bool RuntimeSupportsSse4() { return false; }
+inline bool RuntimeSupportsAvx1() { return false; }
 inline bool RuntimeSupportsAvx2() { return false; }
 inline bool RuntimeSupportsAvx512() { return false; }
 inline bool RuntimeSupportsAvx512Vnni() { return false; }
 inline bool RuntimeSupportsAmx() { return false; }
-inline bool RuntimeSupportsSse4() { return false; }
-inline bool RuntimeSupportsAvx1() { return false; }
 
 #endif
 
@@ -108,6 +98,8 @@ inline string_view PlatformName(PlatformGeneration x86_arch) {
   switch (x86_arch) {
     case kFallbackForNonX86:
       return "FallbackForNonX86";
+    case kHighway:
+      return "Highway";
     case kBaselineSse4:
       return "SSE4";
     case kSandyBridgeAvx1:
@@ -123,6 +115,9 @@ inline string_view PlatformName(PlatformGeneration x86_arch) {
     default:
       return "INVALID_X86_ARCH";
   }
+}
+inline std::ostream& operator<<(std::ostream& os, PlatformGeneration x86_arch) {
+  return os << PlatformName(x86_arch);
 }
 
 class ScopedPlatformOverride {

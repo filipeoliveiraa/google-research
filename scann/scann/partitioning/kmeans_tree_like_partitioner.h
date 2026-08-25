@@ -45,11 +45,12 @@ class KMeansTreeLikePartitioner : public Partitioner<T> {
   using Partitioner<T>::TokenForDatapointBatched;
 
   virtual Status TokensForDatapointWithSpilling(
-      const DatapointPtr<T>& dptr, int32_t max_centers_override,
+      const DatapointPtr<T>& dptr, ConstSpan<int32_t> max_centers_override,
       vector<pair<DatapointIndex, float>>* result) const = 0;
 
   virtual Status TokensForDatapointWithSpillingBatched(
-      const TypedDataset<T>& queries, ConstSpan<int32_t> max_centers_override,
+      const TypedDatasetView<T>& queries,
+      ConstSpan<std::vector<int32_t>> max_centers_override,
       MutableSpan<std::vector<pair<DatapointIndex, float>>> results,
       ThreadPool* pool = nullptr) const = 0;
 
@@ -58,11 +59,11 @@ class KMeansTreeLikePartitioner : public Partitioner<T> {
       pair<DatapointIndex, float>* result) const = 0;
 
   virtual Status TokenForDatapointBatched(
-      const TypedDataset<T>& queries,
+      const TypedDatasetView<T>& queries,
       std::vector<pair<DatapointIndex, float>>* result,
       ThreadPool* pool) const = 0;
   Status TokenForDatapointBatched(
-      const TypedDataset<T>& queries,
+      const TypedDatasetView<T>& queries,
       std::vector<pair<DatapointIndex, float>>* result) const {
     return TokenForDatapointBatched(queries, result, nullptr);
   }
@@ -85,6 +86,31 @@ class KMeansTreeLikePartitioner : public Partitioner<T> {
 
   virtual QuerySpillingConfig::SpillingType query_spilling_type() const {
     return QuerySpillingConfig::NO_SPILLING;
+  }
+
+  virtual int bottom_up_depth() const { return 1; }
+
+  ABSL_DEPRECATED("Use ConstSpan overload instead.")
+  Status TokensForDatapointWithSpilling(
+      const DatapointPtr<T>& dptr, int32_t max_centers_override,
+      vector<pair<DatapointIndex, float>>* result) const {
+    return TokensForDatapointWithSpilling(
+        dptr, ConstSpan<int32_t>{max_centers_override}, result);
+  }
+
+  ABSL_DEPRECATED("Use ConstSpan overload instead.")
+  Status TokensForDatapointWithSpillingBatched(
+      const TypedDatasetView<T>& queries,
+      ConstSpan<int32_t> max_centers_override,
+      MutableSpan<std::vector<pair<DatapointIndex, float>>> results,
+      ThreadPool* pool = nullptr) const {
+    vector<std::vector<int32_t>> max_centers_override_vec(
+        max_centers_override.size());
+    for (size_t i : IndicesOf(max_centers_override)) {
+      max_centers_override_vec[i] = {max_centers_override[i]};
+    }
+    return TokensForDatapointWithSpillingBatched(
+        queries, max_centers_override_vec, results, pool);
   }
 };
 

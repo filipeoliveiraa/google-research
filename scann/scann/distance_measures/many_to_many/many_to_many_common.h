@@ -45,68 +45,9 @@ class EpsilonFilteringCallback {
                            ManyToManyResultsCallback<FloatT> slow_path_fn)
       : epsilons_(epsilons), slow_path_fn_(std::move(slow_path_fn)) {}
 
-#ifdef __x86_64__
-
-  SCANN_AVX512_INLINE void InvokeOptimized(Avx512<float, 2> simd_dists,
-                                           size_t first_dp_idx,
-                                           size_t query_idx) {
-    float best_dist = epsilons_[query_idx].load(std::memory_order_relaxed);
-
-    auto cmp = (simd_dists < Avx512<float>::Broadcast(best_dist));
-    if (ABSL_PREDICT_TRUE(_kortestz_mask16_u8(cmp[0], cmp[1]))) return;
-
-    auto dists = simd_dists.Store();
-    slow_path_fn_(MakeMutableSpan(dists), first_dp_idx, query_idx);
+  SCANN_INLINE FloatT GetEpsilon(size_t query_idx) const {
+    return epsilons_[query_idx].load(std::memory_order_relaxed);
   }
-
-  SCANN_AVX1_INLINE void InvokeOptimized(Avx1<float, 2> simd_dists,
-                                         size_t first_dp_idx,
-                                         size_t query_idx) {
-    float best_dist = epsilons_[query_idx].load(std::memory_order_relaxed);
-
-    auto cmp = (simd_dists < Avx1<float>::Broadcast(best_dist));
-    if (ABSL_PREDICT_TRUE((cmp[0] | cmp[1]).MaskFromHighBits() == 0)) return;
-
-    auto dists = simd_dists.Store();
-    slow_path_fn_(MakeMutableSpan(dists), first_dp_idx, query_idx);
-  }
-
-  SCANN_SSE4_INLINE void InvokeOptimized(Sse4<float, 2> simd_dists,
-                                         size_t first_dp_idx,
-                                         size_t query_idx) {
-    float best_dist = epsilons_[query_idx].load(std::memory_order_relaxed);
-
-    auto cmp = (simd_dists < Sse4<float>::Broadcast(best_dist));
-    if (ABSL_PREDICT_TRUE((cmp[0] | cmp[1]).MaskFromHighBits() == 0)) return;
-
-    auto dists = simd_dists.Store();
-    slow_path_fn_(MakeMutableSpan(dists), first_dp_idx, query_idx);
-  }
-
-#else
-
-  SCANN_INLINE void InvokeOptimized(fallback::Simd<float, 2> dists,
-                                    size_t first_dp_idx, size_t query_idx) {
-    FloatT candidates[] = {dists[0].Unwrap(), dists[1].Unwrap()};
-    Invoke(MakeMutableSpan(candidates, 2), first_dp_idx, query_idx);
-  }
-
-#endif
-
-#if HWY_HAVE_CONSTEXPR_LANES
-
-  SCANN_INLINE void InvokeOptimized(Highway<float, 2> simd_dists,
-                                    size_t first_dp_idx, size_t query_idx) {
-    float best_dist = epsilons_[query_idx].load(std::memory_order_relaxed);
-
-    auto cmp = (simd_dists < Highway<float>::Broadcast(best_dist));
-    if (ABSL_PREDICT_TRUE((cmp[0] | cmp[1]).MaskFromHighBits() == 0)) return;
-
-    auto dists = simd_dists.Store();
-    slow_path_fn_(MakeMutableSpan(dists), first_dp_idx, query_idx);
-  }
-
-#endif
 
   SCANN_INLINE void operator()(MutableSpan<FloatT> block, size_t first_dp_idx,
                                size_t query_idx) {
@@ -115,7 +56,7 @@ class EpsilonFilteringCallback {
 
   SCANN_INLINE void Invoke(MutableSpan<FloatT> block, size_t first_dp_idx,
                            size_t query_idx) {
-    FloatT best_dist = epsilons_[query_idx].load(std::memory_order_relaxed);
+    FloatT best_dist = GetEpsilon(query_idx);
 
     bool update_needed = false;
     for (size_t j : Seq(block.size())) {
@@ -144,8 +85,8 @@ class ManyToManyTop1Callback {
       MutableSpan<pair<DatapointIndex, FloatT>> top1_result_by_query,
       bool needs_thread_safety)
       : top1_result_by_query_(top1_result_by_query.data()),
-        epsilons_(
-            make_unique<std::atomic<FloatT>[]>(top1_result_by_query.size())),
+        epsilons_(std::make_unique<std::atomic<FloatT>[]>(
+            top1_result_by_query.size())),
         mutexes_(needs_thread_safety
                      ? make_shared<std::array<absl::base_internal::SpinLock,
                                               kNumSpinLocks>>()
@@ -213,6 +154,7 @@ class ManyToManyTop1Callback {
   shared_ptr<std::array<absl::base_internal::SpinLock, kNumSpinLocks>> mutexes_;
 };
 
+template <typename TopN>
 class ManyToManyTopKCallback {
  public:
   SCANN_DECLARE_COPYABLE_CLASS(ManyToManyTopKCallback);
@@ -221,7 +163,7 @@ class ManyToManyTopKCallback {
   static_assert((kNumMutexes & (kNumMutexes - 1)) == 0,
                 "kNumMutexes has to be power of 2");
 
-  explicit ManyToManyTopKCallback(MutableSpan<FastTopNeighbors<float>> topns,
+  explicit ManyToManyTopKCallback(MutableSpan<TopN> topns,
                                   bool needs_thread_safety)
       : topns_(topns.data()),
         epsilons_(make_unique<std::atomic<float>[]>(topns.size())),
@@ -253,12 +195,13 @@ class ManyToManyTopKCallback {
   std::atomic<float>* epsilons() const { return epsilons_.get(); }
 
  private:
-  FastTopNeighbors<float>* topns_;
+  TopN* topns_;
 
   shared_ptr<std::atomic<float>[]> epsilons_;
   shared_ptr<std::array<absl::Mutex, kNumMutexes>> mutexes_;
 };
 
+template <typename TopN>
 class ManyToManyTopKCallbackRemapped {
  public:
   SCANN_DECLARE_COPYABLE_CLASS(ManyToManyTopKCallbackRemapped);
@@ -268,7 +211,7 @@ class ManyToManyTopKCallbackRemapped {
                 "kNumMutexes has to be power of 2");
 
   explicit ManyToManyTopKCallbackRemapped(
-      MutableSpan<FastTopNeighbors<float>*> topns,
+      MutableSpan<TopN*> topns,
       ConstSpan<DatapointIndex> datapoint_index_mapping,
       bool needs_thread_safety)
       : topns_(topns.data()),
@@ -288,7 +231,7 @@ class ManyToManyTopKCallbackRemapped {
                   size_t query_idx) {
     auto impl2 = [&](auto remap) SCANN_INLINE_LAMBDA {
       auto& topn = *topns_[query_idx];
-      FastTopNeighbors<float>::Mutator mut;
+      typename TopN::Mutator mut;
       topn.AcquireMutator(&mut);
       float eps = topn.epsilon();
       for (size_t i : IndicesOf(block)) {
@@ -323,7 +266,7 @@ class ManyToManyTopKCallbackRemapped {
   std::atomic<float>* epsilons() const { return epsilons_.get(); }
 
  private:
-  FastTopNeighbors<float>** topns_;
+  TopN** topns_;
   const DatapointIndex* datapoint_index_mapping_;
 
   shared_ptr<std::atomic<float>[]> epsilons_;
@@ -342,43 +285,8 @@ class EpsilonFilteringOffsetWrapper {
         dp_idx_offset_(dp_idx_offset),
         query_idx_table_(query_idx_table) {}
 
-#ifdef __x86_64__
-
-  SCANN_AVX512_INLINE void InvokeOptimized(Avx512<float, 2> simd_dists,
-                                           size_t first_dp_idx,
-                                           size_t query_idx) {
-    base_.InvokeOptimized(simd_dists, first_dp_idx + dp_idx_offset_,
-                          query_idx_table_[query_idx]);
-  }
-
-  SCANN_AVX1_INLINE void InvokeOptimized(Avx1<float, 2> simd_dists,
-                                         size_t first_dp_idx,
-                                         size_t query_idx) {
-    base_.InvokeOptimized(simd_dists, first_dp_idx + dp_idx_offset_,
-                          query_idx_table_[query_idx]);
-  }
-
-  SCANN_SSE4_INLINE void InvokeOptimized(Sse4<float, 2> simd_dists,
-                                         size_t first_dp_idx,
-                                         size_t query_idx) {
-    base_.InvokeOptimized(simd_dists, first_dp_idx + dp_idx_offset_,
-                          query_idx_table_[query_idx]);
-  }
-
-#endif
-
-#if HWY_HAVE_CONSTEXPR_LANES
-  SCANN_INLINE void InvokeOptimized(Highway<float, 2> dists,
-                                    size_t first_dp_idx, size_t query_idx) {
-    base_.InvokeOptimized(dists, first_dp_idx + dp_idx_offset_,
-                          query_idx_table_[query_idx]);
-  }
-#endif
-
-  SCANN_INLINE void InvokeOptimized(fallback::Simd<float, 2> dists,
-                                    size_t first_dp_idx, size_t query_idx) {
-    base_.InvokeOptimized(dists, first_dp_idx + dp_idx_offset_,
-                          query_idx_table_[query_idx]);
+  SCANN_INLINE FloatT GetEpsilon(size_t query_idx) const {
+    return base_.GetEpsilon(query_idx_table_[query_idx]);
   }
 
   SCANN_INLINE void operator()(MutableSpan<FloatT> block, size_t first_dp_idx,
@@ -426,16 +334,13 @@ template <typename FloatT>
 struct IsOptimizedCallback<EpsilonFilteringOffsetWrapper<FloatT>> {
   static constexpr bool value = std::is_same_v<FloatT, float>;
 };
-template <>
-struct IsOptimizedCallback<ManyToManyTopKCallback> {
-  static constexpr bool value = true;
-};
 
 #define SCANN_INSTANTIATE_MANY_TO_MANY_2(EXTERN_OR_NOTHING, METHOD_NAME, T, \
                                          CALLBACK)                          \
   EXTERN_OR_NOTHING template void METHOD_NAME(                              \
       const DistanceMeasure& dist, DefaultDenseDatasetView<T> queries,      \
-      const DenseDataset<T>& database, ThreadPool* pool, CALLBACK callback);
+      const DefaultDenseDatasetView<T>& database, ThreadPool* pool,         \
+      CALLBACK callback);
 
 #define SCANN_INSTANTIATE_MANY_TO_MANY_1(EXTERN_OR_NOTHING, METHOD_NAME, T) \
   SCANN_INSTANTIATE_MANY_TO_MANY_2(EXTERN_OR_NOTHING, METHOD_NAME, T,       \
@@ -450,7 +355,8 @@ struct IsOptimizedCallback<ManyToManyTopKCallback> {
 #define SCANN_INSTANTIATE_MANY_TO_MANY_FP8_1(EXTERN_OR_NOTHING, METHOD_NAME, \
                                              CALLBACK)                       \
   EXTERN_OR_NOTHING template Status METHOD_NAME(                             \
-      const DistanceMeasure& dist, const DenseDataset<float>& queries,       \
+      const DistanceMeasure& dist,                                           \
+      const DefaultDenseDatasetView<float>& queries,                         \
       const FP8SimdBlockTransposedDatabase& database, ThreadPool* pool,      \
       CALLBACK callback);
 

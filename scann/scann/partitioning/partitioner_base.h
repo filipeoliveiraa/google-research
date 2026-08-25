@@ -81,16 +81,17 @@ class Partitioner : public UntypedPartitioner {
   virtual Status TokensForDatapointWithSpilling(
       const DatapointPtr<T>& query, std::vector<int32_t>* result) const = 0;
 
-  virtual Status TokenForDatapointBatched(const TypedDataset<T>& queries,
+  virtual Status TokenForDatapointBatched(const TypedDatasetView<T>& queries,
                                           std::vector<int32_t>* results,
                                           ThreadPool* pool = nullptr) const;
 
   virtual Status TokensForDatapointWithSpillingBatched(
-      const TypedDataset<T>& queries, MutableSpan<std::vector<int32_t>> results,
+      const TypedDatasetView<T>& queries,
+      MutableSpan<std::vector<int32_t>> results,
       ThreadPool* pool = nullptr) const;
 
   virtual StatusOr<vector<std::vector<DatapointIndex>>> TokenizeDatabase(
-      const TypedDataset<T>& database, ThreadPool* pool_or_null) const;
+      const TypedDatasetView<T>& database, ThreadPool* pool_or_null) const;
 
   int8_t TypeTag() const final { return TagForType<T>(); }
 };

@@ -28,6 +28,7 @@
 #include <vector>
 
 #include "absl/container/flat_hash_set.h"
+#include "absl/log/log.h"
 #include "scann/data_format/datapoint.h"
 #include "scann/data_format/dataset.h"
 #include "scann/distance_measures/distance_measure_base.h"
@@ -160,13 +161,14 @@ Status PostprocessDistancesForSpilling(
 
 }  // namespace kmeans_tree_internal
 
-Status KMeansTreeNode::Train(const Dataset& training_data,
+Status KMeansTreeNode::Train(const DatasetView& training_data,
                              vector<DatapointIndex> subset,
                              const DistanceMeasure& training_distance,
                              int32_t k_per_level, int32_t current_level,
                              KMeansTreeTrainingOptions* opts) {
   indices_ = std::move(subset);
-  if (indices_.size() <= opts->max_leaf_size) {
+
+  if (opts->max_leaf_size >= 0 && indices_.size() <= opts->max_leaf_size) {
     return OkStatus();
   }
 
@@ -184,6 +186,8 @@ Status KMeansTreeNode::Train(const Dataset& training_data,
   gmm_opts.partition_assignment_type = opts->balancing_type;
   gmm_opts.center_reassignment_type = opts->reassignment_type;
   gmm_opts.center_initialization_type = opts->center_initialization_type;
+  gmm_opts.balancing_num_nearest_centroids =
+      opts->balancing_num_nearest_centroids;
   GmmUtils gmm(MakeDummyShared(&training_distance), gmm_opts);
 
   vector<vector<DatapointIndex>> subpartitions;

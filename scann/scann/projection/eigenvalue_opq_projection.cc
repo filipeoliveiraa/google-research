@@ -63,7 +63,7 @@ vector<EigenvalueGroup> GroupEigenvalues(ConstSpan<float> eigen_vals,
 }  // namespace
 
 template <typename T>
-void EigenvalueOpqProjection<T>::Create(const Dataset& data,
+void EigenvalueOpqProjection<T>::Create(const DatasetView& data,
                                         const uint32_t num_blocks,
                                         const bool build_covariance,
                                         ThreadPool* pool) {

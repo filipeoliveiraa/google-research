@@ -51,11 +51,28 @@ cc_library(
         ":projection_base",
         "//scann/data_format:datapoint",
         "//scann/oss_wrappers:scann_random",
+        "//scann/projection/internal:random_orthogonal_matrix_creator",
         "//scann/utils:datapoint_utils",
         "//scann/utils:types",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/random",
-        "@eigen",
+    ],
+)
+
+cc_library(
+    name = "blockwise_random_orthogonal",
+    srcs = ["blockwise_random_orthogonal.cc"],
+    hdrs = ["blockwise_random_orthogonal.h"],
+    deps = [
+        ":projection_base",
+        "//scann/data_format:datapoint",
+        "//scann/data_format:dataset",
+        "//scann/oss_wrappers:scann_random",
+        "//scann/projection/internal:random_orthogonal_matrix_creator",
+        "//scann/utils:common",
+        "//scann/utils:datapoint_utils",
+        "//scann/utils:types",
+        "@com_google_absl//absl/random",
     ],
 )
 
@@ -117,11 +134,13 @@ cc_library(
         "//conditions:default": [
         ],
     }) + [
+        ":blockwise_random_orthogonal",
         ":chunking_projection",
         ":eigenvalue_opq_projection",
         ":identity_projection",
         ":pca_projection",
         ":projection_base",
+        ":random_orthogonal_projection",
         ":truncate_projection",
         "//scann/data_format:dataset",
         "//scann/proto:projection_cc_proto",

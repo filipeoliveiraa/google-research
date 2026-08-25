@@ -65,12 +65,15 @@ class TreeBruteForceSecondLevelWrapper final
   using Partitioner<T>::TokenForDatapoint;
   using Partitioner<T>::TokenForDatapointBatched;
 
+  using KMeansTreeLikePartitioner<T>::TokensForDatapointWithSpilling;
   Status TokensForDatapointWithSpilling(
-      const DatapointPtr<T>& dptr, int32_t max_centers_override,
+      const DatapointPtr<T>& dptr, ConstSpan<int32_t> max_centers_override,
       vector<pair<DatapointIndex, float>>* result) const final;
 
+  using KMeansTreeLikePartitioner<T>::TokensForDatapointWithSpillingBatched;
   Status TokensForDatapointWithSpillingBatched(
-      const TypedDataset<T>& queries, ConstSpan<int32_t> max_centers_override,
+      const TypedDatasetView<T>& queries,
+      ConstSpan<std::vector<int32_t>> max_centers_override,
       MutableSpan<std::vector<pair<DatapointIndex, float>>> results,
       ThreadPool* pool = nullptr) const final;
 
@@ -81,7 +84,7 @@ class TreeBruteForceSecondLevelWrapper final
   }
 
   Status TokenForDatapointBatched(
-      const TypedDataset<T>& queries,
+      const TypedDatasetView<T>& queries,
       std::vector<pair<DatapointIndex, float>>* result,
       ThreadPool* pool) const final {
     SCANN_RET_CHECK_EQ(this->tokenization_mode(), UntypedPartitioner::DATABASE);
@@ -109,7 +112,7 @@ class TreeBruteForceSecondLevelWrapper final
   Status TokensForDatapointWithSpilling(
       const DatapointPtr<T>& query, std::vector<int32_t>* result) const final;
 
-  Status TokenForDatapointBatched(const TypedDataset<T>& queries,
+  Status TokenForDatapointBatched(const TypedDatasetView<T>& queries,
                                   std::vector<int32_t>* results,
                                   ThreadPool* pool = nullptr) const final {
     SCANN_RET_CHECK_EQ(this->tokenization_mode(), UntypedPartitioner::DATABASE);
@@ -117,7 +120,8 @@ class TreeBruteForceSecondLevelWrapper final
   }
 
   StatusOr<vector<std::vector<DatapointIndex>>> TokenizeDatabase(
-      const TypedDataset<T>& database, ThreadPool* pool_or_null) const final {
+      const TypedDatasetView<T>& database,
+      ThreadPool* pool_or_null) const final {
     return base_->TokenizeDatabase(database, pool_or_null);
   }
 
@@ -128,6 +132,14 @@ class TreeBruteForceSecondLevelWrapper final
   const KMeansTreeLikePartitioner<T>* base() const { return base_.get(); }
   KMeansTreeLikePartitioner<T>* base() { return base_.get(); }
   const TreeXHybridSMMD<float>* top_level() const { return top_level_.get(); }
+
+  int bottom_up_depth() const final {
+    if (!top_level_) return -1;
+    return base_->bottom_up_depth() +
+           down_cast<const KMeansTreeLikePartitioner<float>*>(
+               top_level_->query_tokenizer().get())
+               ->bottom_up_depth();
+  }
 
  private:
   void OnSetTokenizationMode() final {
