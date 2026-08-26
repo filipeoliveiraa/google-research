@@ -13,6 +13,8 @@
 // limitations under the License.
 
 #include "unfair-prophet.h"
+
+#include <cmath>
 #include <functional>
 namespace fair_secretary {
 

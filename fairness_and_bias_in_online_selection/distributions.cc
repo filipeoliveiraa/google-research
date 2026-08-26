@@ -14,6 +14,8 @@
 
 #include "distributions.h"
 
+#include <cmath>
+
 namespace fair_secretary {
 
 using std::vector;
