@@ -21,7 +21,6 @@ from typing import Any
 from absl import logging
 import jax
 from jax import numpy as jnp
-from jax.experimental.shard_alike import shard_alike
 from jax.interpreters import pxla
 from jax.sharding import PartitionSpec as P
 
@@ -152,16 +151,7 @@ class PlacedComputations:
         # No sharding expected, don't worry about it.
         return replicated_tensor
       else:
-
-        def _shard_slice_like_arg(s):
-          s_sharded, _ = shard_alike(s, x)
-          return s_sharded
-
-        original_dims_constrained = jax.vmap(_shard_slice_like_arg, in_axes=0)(
-            replicated_tensor
-        )
-        fully_constrained = _constrain_if_mesh(original_dims_constrained, pspec)
-        return fully_constrained
+        return _constrain_if_mesh(replicated_tensor, pspec)
 
     return jax.jit(single_arg_broadcast)(arg)
 
@@ -227,14 +217,9 @@ class PlacedComputations:
     """
 
     def _constrain_at_placement_with_slices_like(x, y):
+      del y  # Unused.
       pspec = P(placement, *([P.UNCONSTRAINED] * (len(x.shape) - 1)))
-      placement_constrained = _constrain_if_mesh(x, pspec)
-
-      def _shard_slice(s):
-        s_sharded, _ = shard_alike(s, y[0])
-        return s_sharded
-
-      return jax.vmap(_shard_slice, in_axes=0)(placement_constrained)
+      return _constrain_if_mesh(x, pspec)
 
     # `spmd_axis_name`` causes any internal with_sharding_constraints or
     # shard_map calls inside the `vmapped` function to respect the
